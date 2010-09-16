@@ -1,0 +1,50 @@
+<orzoj-prob-conf version="1.0">
+
+	<input>input file name</input>
+	<input>output file name</input>
+
+	<compiler>
+		<name>name of the compiler (specified in orzoj-judge config)</name>
+		<opt>additional option (like -O2 for gcc) ($DATA is the problem data directory)</opt>
+	</compiler>
+	<!-- for additional compiler options -->
+
+	<limiter>
+		<Linux>
+			<name>name of the limiter</name>
+			<opt>options</opt>
+		</Linux>
+	</limiter>
+	<!-- replace limiter options set in the confiuration file -->
+
+	<verifier standard="1"></verifier>
+	<!-- standard verifier ignore trailing spaces of each line-->
+
+	<verifier>
+		<Linux>executable name</Linux>
+		<Unix>executable name</Unix>
+		<Windows>executable name</Windows>
+		<!-- operation system should match the retun value of platform.system()
+			 custom verifier takes four arguments:
+				the fullscore
+				the standard input file path
+				the standard output file path
+				the contestant's output file path
+			  and write the final score to standard output
+			  (all scores are integer)
+			 -->
+		<source lang="language">compile and/or execute the verifier from source.
+			lang must exist in the configuration file of the judge</source>
+	</verifier>
+
+	<extra>extra input file to be copied from data directory</extra>
+
+	<case>
+		<input>standard input file name (must be in the problem data directory)</input>
+		<output>standard output file name</output>
+		<time>integer, time limit in milliseconds</time>
+		<mem>integer, memory limit in kb (0 means do not limit)</mem>
+		<score>integer</score>
+	</case>
+
+</orzoj-prob-conf>

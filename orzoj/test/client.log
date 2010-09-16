@@ -1,0 +1,12 @@
+[2010-09-12 21:28:36,945] [ERROR] from snc.__init__ at snc.py:52 :
+SSLError: SSLError(336265218, '_ssl.c:337: error:140B0002:SSL routines:SSL_CTX_use_PrivateKey_file:system lib')
+[2010-09-12 21:29:35,612] [ERROR] from snc.__init__ at snc.py:52 :
+SSLError: SSLError(1, '_ssl.c:480: error:14094418:SSL routines:SSL3_READ_BYTES:tlsv1 alert unknown ca')
+[2010-09-12 21:30:31,872] [ERROR] from snc.write_all at snc.py:99 :
+socket error: error(32, 'Broken pipe')
+[2010-09-12 21:30:31,876] [ERROR] from snc.close at snc.py:139 :
+socket error: error(11, 'Resource temporarily unavailable')
+[2010-09-13 16:44:09,263] [ERROR] from snc.close at snc.py:136 :
+SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
+[2010-09-14 11:09:35,780] [ERROR] from snc.close at snc.py:136 :
+SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')

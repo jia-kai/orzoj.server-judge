@@ -1,0 +1,44 @@
+[2010-09-11 19:49:38,098] [INFO] from test-log.<module> at test-log.py:5 :
+info
+[2010-09-11 19:49:38,098] [WARNING] from test-log.<module> at test-log.py:6 :
+warning
+[2010-09-11 19:49:38,099] [ERROR] from test-log.<module> at test-log.py:7 :
+error
+[2010-09-11 19:49:38,099] [CRITICAL] from test-log.<module> at test-log.py:8 :
+critical
+[2010-09-11 19:50:24,202] [INFO] from test-log.do_log at test-log.py:6 :
+info
+[2010-09-11 19:50:24,202] [WARNING] from test-log.do_log at test-log.py:7 :
+warning
+[2010-09-11 19:50:24,202] [ERROR] from test-log.do_log at test-log.py:8 :
+error
+[2010-09-11 19:50:24,203] [CRITICAL] from test-log.do_log at test-log.py:9 :
+critical
+[2010-09-11 19:51:17,249] [INFO] from test-log.do_log at test-log.py:6 :
+info
+[2010-09-11 19:51:17,250] [WARNING] from test-log.do_log at test-log.py:7 :
+warning
+[2010-09-11 19:51:17,250] [ERROR] from test-log.do_log at test-log.py:8 :
+error
+[2010-09-11 19:51:17,250] [CRITICAL] from test-log.do_log at test-log.py:9 :
+critical
+[2010-09-12 20:00:27,663] [INFO] from test-log.do_log at test-log.py:6 :
+info
+[2010-09-12 20:00:27,812] [WARNING] from test-log.do_log at test-log.py:7 :
+warning
+[2010-09-12 20:00:27,812] [ERROR] from test-log.do_log at test-log.py:8 :
+error
+[2010-09-12 20:00:27,812] [CRITICAL] from test-log.do_log at test-log.py:9 :
+critical
+[2010-09-12 20:35:50,563] [CRITICAL] from test-log.do_log at test-log.py:9 :
+critical
+[2010-09-12 20:36:09,021] [DEBUG] from test-log.do_log at test-log.py:5 :
+debug
+[2010-09-12 20:36:09,022] [INFO] from test-log.do_log at test-log.py:6 :
+info
+[2010-09-12 20:36:09,022] [WARNING] from test-log.do_log at test-log.py:7 :
+warning
+[2010-09-12 20:36:09,022] [ERROR] from test-log.do_log at test-log.py:8 :
+error
+[2010-09-12 20:36:09,022] [CRITICAL] from test-log.do_log at test-log.py:9 :
+critical
