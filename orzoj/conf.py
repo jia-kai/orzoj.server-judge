@@ -1,6 +1,6 @@
 # $File: conf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 15 10:29:29 2010 +0800
+# $Date: Fri Sep 17 15:22:03 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -127,14 +127,14 @@ def parse_file(filename):
 
 class simple_conf_handler:
     def _handler(self, args):
-        if args == None:
-            if self.default == None:
-                sys.exit("Option {0!r} must be specified in the configuration file." .
+        if args is None:
+            if self.default is None:
+                raise UserError("Option {0!r} must be specified in the configuration file." .
                         format(self.opt))
             self.call_back(self.default)
         else:
             if len(args) != 1:
-                sys.exit("Option {0!r} takes 1 argument, but {1} is(are) given." .
+                raise UserError("Option {0!r} takes 1 argument, but {1} is(are) given." .
                         format(self.opt, len(args)))
             self.call_back(args[0])
 

@@ -3,14 +3,14 @@ import conf
 print "testing conf module..."
 def f0(args):
     print 'f0 called with: ', args
-    print 'args == None ? '
-    print args == None
+    print 'args is None ? '
+    print args is None
     print '=' * 20
 
 def f1(args):
     print 'f1 called with: ', args
-    print 'args == None ? '
-    print args == None
+    print 'args is None ? '
+    print args is None
     print '=' * 20
 
 class Fmsg:

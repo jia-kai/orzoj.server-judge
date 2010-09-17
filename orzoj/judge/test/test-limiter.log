@@ -1,0 +1,42 @@
+[2010-09-17 15:30:07,462] [DEBUG] from limiter.run at limiter.py:107 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 15:32:07,856] [DEBUG] from limiter.run at limiter.py:107 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 15:33:00,102] [DEBUG] from limiter.run at limiter.py:107 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 15:33:29,695] [DEBUG] from limiter.run at limiter.py:107 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 15:33:33,943] [DEBUG] from limiter.run at limiter.py:107 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 15:33:42,815] [DEBUG] from limiter.run at limiter.py:107 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 15:34:39,422] [DEBUG] from limiter.run at limiter.py:107 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 15:34:39,422] [ERROR] from limiter.run at limiter.py:122 :
+error while calling Popen: AttributeError("'str' object has no attribute 'fileno'",)
+[2010-09-17 15:37:28,922] [DEBUG] from limiter.run at limiter.py:107 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 15:37:28,922] [ERROR] from limiter.run at limiter.py:122 :
+error while calling Popen: AttributeError("'str' object has no attribute 'fileno'",)
+[2010-09-17 15:40:44,523] [DEBUG] from limiter.run at limiter.py:107 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 15:40:49,100] [DEBUG] from limiter.run at limiter.py:107 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 15:43:03,824] [DEBUG] from limiter.run at limiter.py:110 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 15:43:50,366] [DEBUG] from limiter.run at limiter.py:110 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--error', '--exec', './prog']
+[2010-09-17 15:44:15,390] [DEBUG] from limiter.run at limiter.py:110 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 16:37:50,850] [DEBUG] from limiter.run at limiter.py:118 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 16:38:12,312] [DEBUG] from limiter.run at limiter.py:118 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 16:38:34,019] [DEBUG] from limiter.run at limiter.py:118 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 16:38:35,310] [DEBUG] from limiter.run at limiter.py:118 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 16:38:54,883] [DEBUG] from limiter.run at limiter.py:118 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 16:38:56,162] [DEBUG] from limiter.run at limiter.py:118 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']

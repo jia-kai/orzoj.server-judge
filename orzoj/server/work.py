@@ -48,7 +48,7 @@ class _thread_fetch_task(threading.Thread):
         while not control.test_termination_flag():
             while True:
                 task = web.fetch_task()
-                if task == None:
+                if task is None:
                     break
                 _task_queue.put(task, True)
 
@@ -70,10 +70,10 @@ class thread_work(threading.Thread):
                 with _lock_judge_online:
                     for (i, j) in _judge_online.iteritems():
                         if task.lang in j.lang_supported:
-                            if judge == None or j.queue.qsize() < judge.queue.qsize():
+                            if judge is None or j.queue.qsize() < judge.queue.qsize():
                                 judge = j
 
-                if judge == None:
+                if judge is None:
                     web.report_no_judge(task)
                 else:
                     with _lock_judge_online: # the chosen judge may have just deleted itself, so we have to lock
@@ -180,7 +180,7 @@ class thread_new_judge_connection(threading.Thread):
         self._cur_task = task
 
         datalist = _get_file_list(task.prob)
-        if datalist == None:
+        if datalist is None:
             self._cur_task = None
             log.error("No data for problem {0!r}, task discarded" . format(task.prob))
             web.report_no_data(task)

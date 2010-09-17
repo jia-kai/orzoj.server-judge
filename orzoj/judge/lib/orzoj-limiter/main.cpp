@@ -1,7 +1,7 @@
 /*
  * $File: main.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Thu Sep 16 16:34:25 2010 +0800
+ * $Date: Thu Sep 16 19:51:42 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -140,7 +140,12 @@ int main(int argc, char **argv)
 		if (sockfd != -1)
 		{
 			exe_arg.extra_info = "limiter error";
-			report_result(sockfd, EXESTS_SYSTEM_ERROR, exe_arg);
+			try
+			{
+				report_result(sockfd, EXESTS_SYSTEM_ERROR, exe_arg);
+			} catch (Cleanup)
+			{
+			}
 		}
 	}
 	catch (Cleanup)

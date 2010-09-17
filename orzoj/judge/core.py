@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 15 18:33:04 2010 +0800
+# $Date: Fri Sep 17 10:29:50 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,5 +23,5 @@
 and executes (by running the executor under limiter) user's
 program and verifies the output"""
 
-
+from orzoj.judge import limiter
 
