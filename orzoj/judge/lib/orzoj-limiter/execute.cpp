@@ -1,7 +1,7 @@
 /*
  * $File: execute.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Thu Sep 16 16:26:55 2010 +0800
+ * $Date: Fri Sep 17 21:17:26 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -64,22 +64,44 @@ struct Thread_watch_arg
 };
 static void* thread_watch(void *arg);
 
+struct Thread_limitout_arg
+{
+	bool error, exceeded;
+	int fd, fd_target, size;
+	pid_t pgid;
+	std::string error_str;
+	Thread_limitout_arg(pid_t pgid_) :
+		error(false), exceeded(false), pgid(pgid_)
+	{}
+};
+static void* thread_limitout(void *arg);
+
 static void read_string(int fd, std::string &str);
 
 int execute(char * const argv[], Execute_arg &arg)
 {
-	int pipe_fd[2];
-	if (pipe2(pipe_fd, O_CLOEXEC))
+	int pipe_msg[2], pipe_stdout[2], pipe_stderr[2];
+	if (pipe2(pipe_msg, O_CLOEXEC))
 	{
 		arg.extra_info = get_error_message("pipe2");
+		return EXESTS_SYSTEM_ERROR;
+	}
+
+	if (arg.stdout_size && pipe(pipe_stdout))
+	{
+		arg.extra_info = get_error_message("pipe");
+		return EXESTS_SYSTEM_ERROR;
+	}
+
+	if (arg.stderr_size && pipe(pipe_stderr))
+	{
+		arg.extra_info = get_error_message("pipe");
 		return EXESTS_SYSTEM_ERROR;
 	}
 
 	pid_t pid = fork();
 	if (pid < 0)
 	{
-		close(pipe_fd[0]);
-		close(pipe_fd[1]);
 		arg.extra_info = get_error_message("fork");
 		return EXESTS_SYSTEM_ERROR;
 	}
@@ -90,10 +112,24 @@ int execute(char * const argv[], Execute_arg &arg)
 		do \
 		{ \
 			const std::string &msg = get_error_message(_func_); \
-			write(pipe_fd[1], msg.c_str(), msg.length()); \
+			write(pipe_msg[1], msg.c_str(), msg.length()); \
 			_exit(-1); \
 		} while (0)
-		close(pipe_fd[0]);
+		close(pipe_msg[0]);
+
+		if (arg.stdout_size)
+		{
+			close(pipe_stdout[0]);
+			if (dup2(pipe_stdout[1], STDOUT_FILENO) < 0)
+				ERROR("dup2");
+		}
+
+		if (arg.stderr_size)
+		{
+			close(pipe_stderr[0]);
+			if (dup2(pipe_stderr[1], STDERR_FILENO) < 0)
+				ERROR("dup2");
+		}
 
 		if (setsid() < 0)
 			ERROR("setsid");
@@ -162,7 +198,7 @@ int execute(char * const argv[], Execute_arg &arg)
 			return EXESTS_SYSTEM_ERROR; \
 		} while (0)
 
-		close(pipe_fd[1]);
+		close(pipe_msg[1]);
 
 		pthread_t pt_watch;
 		Thread_watch_arg thread_watch_arg(pid, arg.hard_time);
@@ -173,11 +209,37 @@ int execute(char * const argv[], Execute_arg &arg)
 				ERROR("pthread_create");
 		}
 
+		Thread_limitout_arg limit_stdout_arg(pid), limit_stderr_arg(pid);
+		if (arg.stdout_size)
+		{
+			close(pipe_stdout[1]);
+			limit_stdout_arg.fd = pipe_stdout[0];
+			limit_stdout_arg.fd_target = STDOUT_FILENO;
+			limit_stdout_arg.size = arg.stdout_size;
+			int ret;
+			pthread_t pt;
+			if ((ret = pthread_create(&pt, NULL, thread_limitout, &limit_stdout_arg)))
+				ERROR("pthread_create");
+		}
+
+		if (arg.stderr_size)
+		{
+			close(pipe_stderr[1]);
+			limit_stderr_arg.fd = pipe_stderr[0];
+			limit_stderr_arg.fd_target = STDOUT_FILENO;
+			limit_stderr_arg.size = arg.stderr_size;
+			int ret;
+			pthread_t pt;
+			if ((ret = pthread_create(&pt, NULL, thread_limitout, &limit_stderr_arg)))
+				ERROR("pthread_create");
+		}
+
 		int status;
 		struct rusage ru;
 
 		if (arg.syscall_left || arg.log_syscall)
 		{
+			// check for system calls
 			bool first_stop = true;
 			while (1)
 			{
@@ -193,7 +255,6 @@ int execute(char * const argv[], Execute_arg &arg)
 					{
 						if (!first_stop) // first stop is caused by execv and we don't care
 						{
-							// check for system calls
 							struct user_regs_struct regs;
 							if (ptrace(PTRACE_GETREGS, pid, NULL, &regs))
 							{
@@ -241,8 +302,9 @@ int execute(char * const argv[], Execute_arg &arg)
 		}
 
 		killpg(pid, SIGKILL);
+		kill(pid, SIGKILL);
 		// it may fork a child
-		// it can also setsid, so it's necessary to 
+		// it can also setsid or setpgid, so it's necessary to 
 		// ptrace and limit nproc
 
 		if (arg.hard_time)
@@ -256,7 +318,37 @@ int execute(char * const argv[], Execute_arg &arg)
 			}
 		}
 
-		read_string(pipe_fd[0], arg.extra_info);
+		if (arg.stdout_size)
+		{
+			close(pipe_stdout[0]);
+			if (limit_stdout_arg.error)
+			{
+				arg.extra_info = limit_stdout_arg.error_str;
+				return EXESTS_SYSTEM_ERROR;
+			}
+			if (limit_stdout_arg.exceeded)
+			{
+				arg.extra_info = "stdout size exceeded";
+				return EXESTS_SIGKILL;
+			}
+		}
+
+		if (arg.stderr_size)
+		{
+			close(pipe_stderr[0]);
+			if (limit_stderr_arg.error)
+			{
+				arg.extra_info = limit_stderr_arg.error_str;
+				return EXESTS_SYSTEM_ERROR;
+			}
+			if (limit_stderr_arg.exceeded)
+			{
+				arg.extra_info = "stderr size exceeded";
+				return EXESTS_SIGKILL;
+			}
+		}
+
+		read_string(pipe_msg[0], arg.extra_info);
 		if (!arg.extra_info.empty())
 			return EXESTS_SYSTEM_ERROR;
 
@@ -316,6 +408,7 @@ void* thread_watch(void *arg0)
 		arg.error_str = get_error_message(_func_); \
 		arg.error = true; \
 		killpg(arg.pgid, SIGKILL); \
+		kill(arg.pgid, SIGKILL); \
 		return NULL; \
 	} while (0)
 
@@ -332,11 +425,46 @@ void* thread_watch(void *arg0)
 		if (errno != EINTR)
 			ERROR("clock_nanosleep");
 
-	kill(arg.pgid, SIGKILL);
 	killpg(arg.pgid, SIGKILL);
-	// ignore errors of killpg
+	kill(arg.pgid, SIGKILL);
 	return NULL;
 #undef ERROR
+}
+
+void* thread_limitout(void *arg0)
+{
+	Thread_limitout_arg &arg = *static_cast<Thread_limitout_arg*>(arg0);
+	const int BUF_SIZE = 4096;
+	char buf[BUF_SIZE];
+	int tot = 0;
+	while (1)
+	{
+		ssize_t s = read(arg.fd, buf, BUF_SIZE);
+		if (s > 0)
+		{
+			tot += s;
+			if (tot > arg.size)
+			{
+				arg.exceeded = true;
+				killpg(arg.pgid, SIGKILL);
+				kill(arg.pgid, SIGKILL);
+			}
+			for (ssize_t cnt = 0; cnt < s; )
+			{
+				ssize_t t = write(arg.fd_target, buf, BUF_SIZE);
+				if (t < 0)
+				{
+					arg.error = true;
+					arg.error_str = "failed to write: ";
+					arg.error_str.append(strerror(errno));
+					killpg(arg.pgid, SIGKILL);
+					kill(arg.pgid, SIGKILL);
+					return NULL;
+				}
+				cnt += t;
+			}
+		} else return NULL;
+	}
 }
 
 void read_string(int fd, std::string &str)

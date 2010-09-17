@@ -30,7 +30,7 @@
 				the standard input file path
 				the standard output file path
 				the contestant's output file path
-			  and write the final score to standard output
+			  and write the final score to standard output on first line, extra info to remaining lines
 			  (all scores are integer)
 			 -->
 		<source lang="language">compile and/or execute the verifier from source.

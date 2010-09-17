@@ -1,6 +1,6 @@
 # $File: limiter.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Sep 17 16:41:45 2010 +0800
+# $Date: Fri Sep 17 20:00:41 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -21,7 +21,7 @@
 #
 """parse limiter configuration and export functions to use limiter"""
 
-import subprocess, socket, tempfile, struct, os, platform, sys
+import subprocess, socket, tempfile, struct, os, platform, sys, time
 
 from orzoj import conf, log
 
@@ -83,7 +83,8 @@ class _Limiter:
 
         if self._type == _LIMITER_SOCKET:
             try:
-                socket_name = "orzoj-limiter-socket"
+                socket_name = "orzoj-limiter-socket.{0}.{1}" . format(
+                        os.getpid(), time.time()) # use pid and time to avoid conflicting
 
                 s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                 s.bind("\0{0}".format(socket_name))
@@ -166,6 +167,8 @@ class _Limiter:
                         self.exe_extra_info = f.read(info_len)
                     else:
                         self.exe_extra_info = ''
+                os.close(ftmp[0])
+                os.remove(ftmp[1])
             except Exception as e:
                 log.error("[limiter {0!r}] failed to retrieve data through file: {1!r}" .
                         format(self._name, e))

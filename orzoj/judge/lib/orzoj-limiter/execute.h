@@ -1,7 +1,7 @@
 /*
  * $File: execute.h
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Thu Sep 16 16:27:20 2010 +0800
+ * $Date: Fri Sep 17 20:13:36 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -36,7 +36,8 @@ struct Execute_arg
 		chroot, chdir, extra_info;
 	// extra_info will be for retrieving message from execute()
 	int time, hard_time, mem, user, group, nproc,
-		*syscall_left, syscall_left_size; // set syscall_left to NULL if do not limit syscall
+		*syscall_left, syscall_left_size, // set syscall_left to NULL if do not limit syscall
+		stdout_size, stderr_size;
 
 	bool log_syscall;
 	std::map<int, int> syscall_cnt;
@@ -46,6 +47,7 @@ struct Execute_arg
 	Execute_arg():
 		time(0), hard_time(0), mem(0), user(0), group(0), nproc(0),
 		syscall_left(NULL), syscall_left_size(0),
+		stdout_size(0), stderr_size(0),
 		log_syscall(false),
 		result_time(0), result_mem(0)
 	{}

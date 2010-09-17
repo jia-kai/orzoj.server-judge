@@ -1,6 +1,6 @@
 # $File: msg.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Sep 14 16:34:48 2010 +0800
+# $Date: Fri Sep 17 17:38:32 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -49,6 +49,8 @@ ANS_QEURY, # c2s
 PREPARE_DATA, # s2c 
 # packet format: (NEED_FILE, filename:string)
 NEED_FILE, # c2s 
+# packet format: (DATA_ERROR, reason:string)
+DATA_ERROR, #c2s
 # packet format:  (DATA_OK, cnt:uint32_t,
 # for(0<=i<cnt) case time limit[i]:uint32_t)
 # case time limit is measured by millisecond
@@ -78,7 +80,7 @@ OFTP_FDATA_RECVED,
 OFTP_CHECK_OK, 
 OFTP_CHECK_FAIL, 
 OFTP_END, 
-OFTP_SYSTEM_ERROR) = range(23)
+OFTP_SYSTEM_ERROR) = range(24)
 
 COMPILE_MAX_TIME = 30
 #maximal compiling time in seconds

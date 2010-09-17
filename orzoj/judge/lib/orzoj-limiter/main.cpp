@@ -1,7 +1,7 @@
 /*
  * $File: main.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Thu Sep 16 19:51:42 2010 +0800
+ * $Date: Fri Sep 17 20:16:29 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -66,10 +66,12 @@ int main(int argc, char **argv)
 				{"nproc", required_argument, NULL, 6},
 				{"user", required_argument, NULL, 7},
 				{"group", required_argument, NULL, 8},
-				{"syscall", required_argument, NULL, 9},
-				{"gen-list", required_argument, NULL, 10},
-				{"help", no_argument, NULL, 11},
-				{"exec", no_argument, NULL, 12},
+				{"stdout-max", required_argument, NULL, 9},
+				{"stderr-max", required_argument, NULL, 10},
+				{"syscall", required_argument, NULL, 11},
+				{"gen-list", required_argument, NULL, 12},
+				{"help", no_argument, NULL, 13},
+				{"exec", no_argument, NULL, 14},
 				{0, 0, 0, 0}
 			};
 			int opt = getopt_long(argc, argv, "", longopt, NULL);
@@ -102,10 +104,12 @@ int main(int argc, char **argv)
 					SET(6, nproc, str2int)
 					SET(7, user, str2int)
 					SET(8, group, str2int)
-				case 9:
+					SET(9, stdout_size, str2int)
+					SET(10, stderr_size, str2int)
+				case 11:
 						init_syscall(exe_arg, optarg);
 						break;
-				case 10:
+				case 12:
 						if (syscall_flog)
 						{
 							fprintf(stderr, "duplicated --gen-list option.\n");
@@ -119,10 +123,10 @@ int main(int argc, char **argv)
 						}
 						exe_arg.log_syscall = true;
 						break;
-				case 11:
+				case 13:
 						usage(argv[0]);
 						break;
-				case 12:
+				case 14:
 						if (sockfd == -1)
 						{
 							fprintf(stderr, "option --socket not found.\n");
@@ -191,6 +195,8 @@ static void usage(const char *argv0)
 			"                       and count is the maximal times to call that syscall. If count is\n"
 			"                       negative, that syscall can be called for arbitrary times.\n"
 			" --gen-list LIST    -- generate a list containing system calls called by target.\n"
+			" --stdout-max SIZE  -- limit the max output to stdout to SIZE bytes\n"
+			" --stderr-max SIZE  -- limit the max output to stderr to SIZE bytes\n"
 			" --help             -- show this message and exit\n"
 			"\n\nWritten by jiakai<jia.kai66@gmail.com>\n"
 			"report bugs to: jia.kai66@gmail.com\n"

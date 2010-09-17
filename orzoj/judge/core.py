@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Sep 17 10:29:50 2010 +0800
+# $Date: Fri Sep 17 17:16:42 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,5 +23,40 @@
 and executes (by running the executor under limiter) user's
 program and verifies the output"""
 
+from orzoj import conf, log
 from orzoj.judge import limiter
+
+_dir_chroot = None
+_dir_temp = None
+_exe_uid = None
+_exe_gid = None
+
+_compiler_dict = {}
+
+class _Compiler:
+    def __init__(self, args):
+        if len(args) < 3:
+            raise conf.UserError("Option AddCompiler takes at least three arguments")
+
+        global _compiler_dict
+        if args[0] in _compiler_dict:
+            raise conf.UserError("duplicated compiler name: {0!r}" . foramt(args[0]))
+
+        if args[1] not in limiter.limiter_dict:
+            raise conf.UserError("unknown limiter {0!r} for compiler {1!r}" . 
+                    format(args[1], args[0]))
+
+        self._limiter = limiter.limiter_dict[args[1]]
+        self._name = args[0]
+        self._args = args[2:]
+
+    def __run__(self, src):
+        """compile the source code src and return a tuple (success, info),
+        where success is a boolean value indicating whether it's compiled successfully,
+        while info is the compiler output or a string indicating some system error (human readable)
+            
+        no exceptions are raised"""
+
+        try:
+
 

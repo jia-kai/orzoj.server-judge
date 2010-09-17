@@ -40,3 +40,11 @@ executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter
 executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
 [2010-09-17 16:38:56,162] [DEBUG] from limiter.run at limiter.py:118 :
 executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket', '--exec', './prog']
+[2010-09-17 20:00:55,145] [DEBUG] from limiter.run at limiter.py:119 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket.4494.1284724855.15', '--exec', './prog']
+[2010-09-17 20:00:56,452] [DEBUG] from limiter.run at limiter.py:119 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket.4494.1284724856.45', '--exec', './prog']
+[2010-09-17 20:02:56,622] [DEBUG] from limiter.run at limiter.py:119 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket.4769.1284724976.62', '--exec', './prog']
+[2010-09-17 20:02:57,902] [DEBUG] from limiter.run at limiter.py:119 :
+executing command: ['../lib/orzoj-limiter/test/main', '--socket', 'orzoj-limiter-socket.4769.1284724977.9', '--exec', './prog']

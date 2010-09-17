@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 16 14:18:32 2010 +0800
+# $Date: Fri Sep 17 17:27:05 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -198,9 +198,19 @@ class thread_new_judge_connection(threading.Thread):
             m = _read_msg()
             if m == msg.DATA_OK:
                 break
+
+            if m == msg.DATA_ERROR:
+                self._cur_task = None
+                reason = _read_str()
+                log.error("judge {0!r} reports data error [prob: {1!r}]: {2!r}" . 
+                        format(judge.id, task.prob, reason))
+                web.report_error(task, "data error: {0!r}" . format(reason))
+                return
+
             if m != msg.NEED_FILE:
                 log.warning("message check error.")
                 raise _internal_error
+
             fpath = os.path.normpath(os.path.join(task.prob, _read_str()))
             speed = filetrans.send(fpath, self._snc)
             log.info("file transfer speed with judge {0!r}: {1} kb/s" .
