@@ -10,7 +10,7 @@ l = limiter.limiter_dict["default"]
 for i in range(2):
 
     with open("prog.in", "r") as f:
-        l.run({"TARGET" : "./prog"}, stdin = f,
+        l.run({"TARGET" : ["./prog", "arg1", "arg2"]}, stdin = f,
                 stdout = limiter.SAVE_OUTPUT, stderr = limiter.NULL)
 
     print "l.stdout={0!r}\nl.stderr={1!r}".format(l.stdout, l.stderr)

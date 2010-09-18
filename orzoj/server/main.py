@@ -1,6 +1,6 @@
 # $File: main.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 15 14:11:24 2010 +0800
+# $Date: Sat Sep 18 19:33:41 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -138,22 +138,23 @@ def run_server():
 
 
 def _ch_set_ipv6(arg):
-    if arg != None:
-        if len(arg):
-            raise conf.UserError("Option UseIPv6 takes no argument")
+    if len(arg) > 2 or (len(arg) == 2 and arg[1]):
+        raise conf.UserError("Option UseIPv6 takes no argument")
+    if len(arg) == 2:
         global _use_ipv6
         _use_ipv6 = True
 
 def _set_port(arg):
     global _port
-    _port = int(arg)
+    _port = int(arg[1])
     if _port <= 0 or _port > 65535:
         raise conf.UserError("port must be between 0 and 65536")
 
 def _set_pid_file(arg):
     global _pid_file
-    _pid_file = arg
+    _pid_file = arg[1]
 
 conf.register_handler("UseIPv6", _ch_set_ipv6)
 conf.simple_conf_handler("Listen", _set_port)
 conf.simple_conf_handler("PidFile", _set_pid_file)
+

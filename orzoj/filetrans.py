@@ -114,7 +114,7 @@ def send(fpath, conn):
                 format(e.errno, e.filename, e.strerror))
         conn.write_uint32(msg.OFTP_SYSTEM_ERROR)
         raise OFTPError
-    except snc.SncError:
+    except snc.Error:
         log.warning("failed to transfer file because of network error.")
         raise OFTPError
 
@@ -172,7 +172,7 @@ def recv(fpath, conn):
                 format(e.errno, e.filename, e.strerror))
         conn.write_uint32(msg.OFTP_SYSTEM_ERROR)
         raise OFTPError
-    except snc.SncError:
+    except snc.Error:
         log.warning("failed to transfer file because of network error.")
         raise OFTPError
 

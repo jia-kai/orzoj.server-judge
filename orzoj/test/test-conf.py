@@ -3,14 +3,10 @@ import conf
 print "testing conf module..."
 def f0(args):
     print 'f0 called with: ', args
-    print 'args is None ? '
-    print args is None
     print '=' * 20
 
 def f1(args):
     print 'f1 called with: ', args
-    print 'args is None ? '
-    print args is None
     print '=' * 20
 
 class Fmsg:
@@ -26,8 +22,8 @@ def string(arg):
     print '=' * 20
 
 def hd_int(arg):
-    print "hd_int called with value={0}" . format(int(arg))
-    x = int(arg)
+    print "hd_int called with arg={0!r}" . format(arg)
+    x = int(arg[1])
     if x < 0:
         raise conf.UserError("must >= 0")
     print '=' * 20
@@ -39,7 +35,14 @@ def init():
 conf.register_handler('test', f0)
 conf.register_handler('testmsg', Fmsg('hello').work)
 conf.register_handler('test-default-args', f1)
-conf.simple_conf_handler("string", string)
+conf.simple_conf_handler("string", string, "default string")
 conf.simple_conf_handler("int", hd_int, "0")
 conf.register_init_func(init)
+
+def dup(arg):
+    pass
+
+conf.simple_conf_handler("no-dup", dup, no_dup = True)
+
 conf.parse_file("test-conf.conf")
+

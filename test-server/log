@@ -8,3 +8,15 @@ reveived signal 2, terminating...
 socket error: error(4, 'Interrupted system call')
 [2010-09-15 14:13:41,219] [INFO] from main.run_server at main.py:128 :
 all threads ended, program exiting
+[2010-09-18 19:55:15,633] [INFO] from run_server in main at main.py:109 :
+orzoj-server started, listening on 9351
+
+[2010-09-18 19:55:30,893] [INFO] from sig_handler in control at control.py:47 :
+reveived signal 15, terminating...
+
+[2010-09-18 19:55:30,894] [ERROR] from run_server in main at main.py:117 :
+socket error: error(4, 'Interrupted system call')
+
+[2010-09-18 19:55:31,895] [INFO] from run_server in main at main.py:128 :
+all threads ended, program exiting
+

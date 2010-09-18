@@ -1,21 +1,10 @@
 <orzoj-prob-conf version="1.0">
 
-	<input>input file name</input>
-	<input>output file name</input>
-
 	<compiler>
 		<name>name of the compiler (specified in orzoj-judge config)</name>
 		<opt>additional option (like -O2 for gcc) ($DATA is the problem data directory)</opt>
 	</compiler>
 	<!-- for additional compiler options -->
-
-	<limiter>
-		<Linux>
-			<name>name of the limiter</name>
-			<opt>options</opt>
-		</Linux>
-	</limiter>
-	<!-- replace limiter options set in the confiuration file -->
 
 	<verifier standard="1"></verifier>
 	<!-- standard verifier ignore trailing spaces of each line-->

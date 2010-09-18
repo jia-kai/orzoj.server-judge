@@ -1,6 +1,6 @@
 # $File: structures.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 16 10:03:27 2010 +0800
+# $Date: Sat Sep 18 17:18:13 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -41,7 +41,8 @@ class task:
         self.output = None
         # all attributes except self.id should be string
 
-(EXESTS_RIGHT,
+(
+EXESTS_RIGHT,
 EXESTS_PARTIALLY_RIGHT,
 EXESTS_WRONG_ANSWER,
 EXESTS_TLE,
@@ -50,7 +51,21 @@ EXESTS_SIGSEGV,
 EXESTS_SIGNAL,
 EXESTS_ILLEGAL_CALL,  # illegal syscall
 EXESTS_EXIT_NONZERO,
-EXESTS_SYSTEM_ERROR) = range(10)
+EXESTS_SYSTEM_ERROR
+) = range(10)
+
+EXECUTION_STATUS_STR = {
+    EXESTS_RIGHT : "right",
+    EXESTS_PARTIALLY_RIGHT : "partially right",
+    EXESTS_WRONG_ANSWER : "wrong answer",
+    EXESTS_TLE : "time limit exceeded",
+    EXESTS_SIGKILL : "received SIGKILL",
+    EXESTS_SIGSEGV : "received SIGSEGV",
+    EXESTS_SIGNAL : "terminated by signal",
+    EXESTS_ILLEGAL_CALL : "illegal system call",
+    EXESTS_EXIT_NONZERO : "non-zero exit code",
+    EXESTS_SYSTEM_ERROR : "system error"
+}
 
 class case_result:
     def __init__(self):
@@ -74,10 +89,10 @@ class case_result:
 
 class prob_result:
     def __init__(self):
-        self.total_score = None
-        self.full_score = None
-        self.total_time = None
-        self.max_mem = None
+        self.total_score = 0
+        self.full_score = 0
+        self.total_time = 0
+        self.max_mem = 0
     def write(self, snc, timeout = 0):
         snc.write_uint32(self.total_score)
         snc.write_uint32(self.full_score)

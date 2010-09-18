@@ -1,6 +1,6 @@
 # $File: log.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 11 20:32:56 2010 +0800
+# $Date: Sat Sep 18 19:49:32 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -47,38 +47,39 @@ _LEVELS = {'debug': logging.DEBUG,
 
 def _seg_filename(arg):
     global _filename
-    _filename = arg
+    _filename = arg[1]
 
 def _seg_level(arg):
     global _LEVELS, _level
-    if arg not in _LEVELS:
-        raise conf.UserError("unknown LogLevel: {0}" . format(arg))
-    _level = _LEVELS[arg]
+    if arg[1] not in _LEVELS:
+        raise conf.UserError("unknown log level: {0}" . format(arg[1]))
+    _level = _LEVELS[arg[1]]
 
 def _seg_max_bytes(arg):
     global _max_bytes
-    _max_bytes = int(arg)
+    _max_bytes = int(arg[1])
     if _max_bytes < 0:
-        raise conf.UserError("LogMaxBytes can't be less than 0")
+        raise conf.UserError("{0} can't be less than 0" . format(arg[0]))
 
 def _seg_backup_count(arg):
     global _backup_count
-    _backup_count = int(arg)
+    _backup_count = int(arg[1])
     if _backup_count < 0:
-        raise conf.UserError("LogBackupCount can't be less than 0")
+        raise conf.UserError("{0} can't be less than 0" . format(arg[0]))
 
 def _init():
     global _logger, _filename, _level, _max_bytes, _backup_count
     handler = logging.handlers.RotatingFileHandler(
             _filename, maxBytes = _max_bytes, backupCount = _backup_count)
     handler.setFormatter(logging.Formatter(
-        "[%(asctime)s] [%(levelname)s] from %(module)s.%(funcName)s at %(filename)s:%(lineno)d :\n%(message)s"))
+        "[%(asctime)s] [%(levelname)s] from %(funcName)s in %(module)s at %(filename)s:%(lineno)d :\n%(message)s\n"))
     _logger.setLevel(_level)
     _logger.addHandler(handler)
 
 
 conf.simple_conf_handler("LogFile", _seg_filename)
-conf.simple_conf_handler("LogLevel", _seg_level, 'info')
-conf.simple_conf_handler("LogMaxBytes", _seg_max_bytes, '0')
-conf.simple_conf_handler("LogBackupCount", _seg_backup_count, '0')
+conf.simple_conf_handler("LogLevel", _seg_level, default = "info")
+conf.simple_conf_handler("LogMaxBytes", _seg_max_bytes, default = "0")
+conf.simple_conf_handler("LogBackupCount", _seg_backup_count, default = "0")
 conf.register_init_func(_init)
+

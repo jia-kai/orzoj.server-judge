@@ -1,6 +1,6 @@
 # $File: probconf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Sep 17 17:38:01 2010 +0800
+# $Date: Sat Sep 18 16:47:32 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -37,14 +37,14 @@ class Case_conf:
 class Prob_conf:
     def __init__(self, filename):
         """may raise Error"""
-        self.input = None       # string
-        self.output = None      # string
-        self.compiler = None    # dict, or None
-        self.limiter = None     # dict, or None
-        self.verify_func = None # function(full score:int, stdinpath:string, stdoutpath:string, useroutpath:string):(score:int, info:string)
+        self.compiler = None    # dict of list, or None
+        self.verify_func = None # function(full score:int, stdinpath:string, stdoutpath:string, 
+                                # useroutpath:string):(score:int, info:string)
         self.extra_input = None # list, or None
         self.case = []          # list of Case_conf
+
         self._parse(filename)
 
     def _parse(filename):
+        pass
 

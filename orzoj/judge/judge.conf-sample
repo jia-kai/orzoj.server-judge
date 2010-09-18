@@ -69,7 +69,8 @@ DataCache /home/orzoj/data
 #					the limiter will receive two arguments, "java" and "%s" respectively)
 #   TIME		--	time limit, in milliseconds
 #   MEMORY		--	memory limit, in kb
-#   WORKDIR		--	working directory
+#   WORKDIR		--	working directory (if ChrootDir is set, it's relative to ChrootDir)
+#   WORKDIR_ABS --  absolute working directory (relative to the current root directory, regardless of ChrootDir)
 #   DATADIR		--	problem data directory
 #   SOCKNAME	--	socket name for communication (Unix only)
 #   FILENAME	--	file name for communication
@@ -87,62 +88,61 @@ DataCache /home/orzoj/data
 #
 # on Windows, CHROOT_DIR, USER and GROUP are not supported
 #
-AddLimiter default socket /usr/bin/orzoj-limiter --socket $SOCKNAME --chroot $CHROOT_DIR \
+AddLimiter lim-default socket /usr/bin/orzoj-limiter --socket $SOCKNAME --chroot $CHROOT_DIR \
 	--time $TIME --hard-time "$TIME + 5000" --mem $MEMORY --chdir $WORKDIR --user $USER --group $GROUP \
 	--nproc 1 --syscall /etc/orzoj/syscall.allowed --exec $TARGET
 
-AddLimiter java socket /usr/bin/orzoj-limiter --socket $SOCKNAME --time "$TIME * 2" --hard-time "$TIME * 2 + 5000" \
-	--chdir $WORKDIR --user $USER --group $GROUP --syscall /etc/orzoj/syscall.allowed.java --exec $TARGET 
+AddLimiter lim-java socket /usr/bin/orzoj-limiter --socket $SOCKNAME --time "$TIME * 2" --hard-time "$TIME * 2 + 5000" \
+	--chdir $WORKDIR_ABS --user $USER --group $GROUP --syscall /etc/orzoj/syscall.allowed.java --exec $TARGET 
 
 
-# compiler limiter is necessary because some bad code 
+# compiler limiters is necessary because some bad code 
 # might cause the compiler to run for a long time
 #
-# Note:
-#   only TARGET, TIME, SOCKNAME and FILENAME are available variables
-#   here TIME is compilation time limit (defined in msg.py) in milliseconds
+# and maximal output length should be limited because
+# some code can cause the compiler to produce large error infomation
 #
-AddLimiter compiler socket /usr/bin/orzoj-limiter --socket $SOCKNAME --time $TIME --exec $TARGET
+# additional variable:
+#   COMPILE_TIME	--	maximal compilation time
+AddLimiter lim-compiler socket /usr/bin/orzoj-limiter --socket $SOCKNAME \
+	--time $COMPILE_TIME --stderr-max 65536 --exec $TARGET
 
 
-# AddCompiler: add a local compiler
-# format: AddCompiler <compiler name> <limiter name> <full path to executable> <arg0> <arg1> ...
+# AddExecutor: add an executor, which is used to execute the compiler or target program
+# format: AddExecutor <executor name> <limiter name> <executable path> <arg0> <arg1> ...
+#
 # in the args, use %s to represent the source file name without extension.
 #
-# note: this is the basic part of compilation arguments, while another part
-# is stored in the problem configuration. DO NOT include optimization flags.
+# Note: for compiler executors, this is the basic part of compilation arguments,
+# while another part is stored in the problem configuration
 #
-# usable variables:
-#   TIME		--	time limit, in milliseconds
-#   MEMORY		--	memory limit, in kb
-#   DATADIR		--	problem data directory
-#
-AddCompiler gcc		compiler	/usr/bin/gcc %s.c -o %s -static -lm
-AddCompiler g++		compiler	/usr/bin/g++ %s.cpp -o %s -static
-AddCompiler fpc		compiler	/usr/bin/fpc %s.pas -Xt
-AddCompiler java	compiler	/usr/bin/javac %s.java
+# variables except TARGET in AddLimiter except can also be used
 
-# AddExecutor: add an executor
-# format: AddExecutor <executor name> <executable path> <arg0> <arg1> ...
-#
-# variables in AddCompiler section can also be used
-AddExecutor java	/usr/bin/java "$\"-Xmx{0}k\".format(MEMORY)" %s
+# compiler executors:
+AddExecutor cmp-gcc		lim-compiler	/usr/bin/gcc %s.c -o %s -static -lm
+AddExecutor cmp-g++		lim-compiler	/usr/bin/g++ %s.cpp -o %s -static
+AddExecutor cmp-fpc		lim-compiler	/usr/bin/fpc %s.pas -Xt
+AddExecutor cmp-java	lim-compiler	/usr/bin/javac %s.java
+# program executors:
+AddExecutor exe-default	lim-default		%s
+AddExecutor exe-java	lim-java		/usr/bin/java "$\"-Xmx{0}k\".format(MEMORY)" %s
 
 # AddLang: add a language
-# format: AddLang <language> <source file extention> <compiler name> <executor name> <limiter name>
+# format: AddLang <language> <source file extention> <compiler executor> <program executor> 
 #
-# <compiler name> or <executor name> can be set to "None" if not needed
-AddLang c++		cpp		g++		None	default
-AddLang	c		c		gcc		None	default
-AddLang	pascal	pas		fpc		None	default
-AddLang	java	java	java	java	java
+# <compiler executor> can be set to "None" if not needed
+# <language> must match the language on the website
+AddLang	gcc		c		cmp-gcc		exe-default
+AddLang g++		cpp		cmp-g++		exe-default
+AddLang	fpc		pas		cmp-fpc		exe-default
+AddLang	java	java	cmp-java	exe-java
 #AddLang binary	""		None	None	default
 
 
 # ChrootDir: directory to chroot to (Unix only)
 # it should be an absolute path
 #
-# note: you can choose either to put neccessary libraries
+# Note: you can choose either to put neccessary libraries
 # in correct structure in the directory or compile programs statically
 ChrootDir /home/orzoj/chroot
 

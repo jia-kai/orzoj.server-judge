@@ -1,6 +1,6 @@
 # $File: conf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Sep 17 15:22:03 2010 +0800
+# $Date: Sat Sep 18 19:45:32 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -25,9 +25,10 @@
 import shlex, sys
 
 class _Handler:
-    def __init__(self, func):
+    def __init__(self, func, no_dup):
         self.func = func
         self.used = False
+        self.no_dup = no_dup
 
 _hd_dict = {}
 _init_func = []
@@ -38,18 +39,19 @@ class UserError(Exception):
         self.msg = msg
 
 
-def register_handler(cmd, func):
+def register_handler(cmd, func, no_dup = False):
     """register a command handler
 
     Keyword arguments:
     func -- the function which will be called when @cmd is found in the configuration file.
-            It should take a list as argument, indicating the options.
-            The argument will be given None if @cmd is not found, and then default value should be used.
+            It should take a list as argument, indicating the option and arguments (like argv of main() in C).
+            The argument will be given None if no arguments are given (list = [optname, None])
+            if @cmd is not found, the list will only contain option name
 
-    exceptions IOError, KeyError and ValueError are caught
+    exceptions IOError, KeyError, ValueError and Exception are caught by parse_file
     """
     global _hd_dict
-    _hd_dict[cmd.lower()] = _Handler(func)
+    _hd_dict[cmd.lower()] = _Handler(func, no_dup)
 
 def register_init_func(func):
     """register an initialization function, which will be called right after finishing parsing
@@ -81,28 +83,26 @@ def parse_file(filename):
                     else:
                         break
 
-                line = line.strip()
+                slist = shlex.split(line, comments = True)
 
-                if not line or line[0] == '#':  # ignore comment lines and empty lines
-                    continue
-
-                slist = line.split(None, 1)
-
-                if not slist:
+                if not slist: # may be comment line or empty line
                     continue
 
                 h = _hd_dict[slist[0].lower()]
                 # options are case insensitive
 
+                if h.used and h.no_dup:
+                    raise UserError("duplicated option {0}" .
+                            format(slist[0]))
+
                 h.used = True
                 if len(slist) == 1:
-                    h.func([])
-                else:
-                    h.func(shlex.split(slist[1], True))
+                    slist.append(None)
+                h.func(slist)
 
         for (cmd, func) in _hd_dict.iteritems():
             if not func.used:
-                func.func(None)
+                func.func([cmd])
 
         for i in _init_func:
             i()
@@ -126,31 +126,31 @@ def parse_file(filename):
 
 
 class simple_conf_handler:
-    def _handler(self, args):
-        if args is None:
-            if self.default is None:
-                raise UserError("Option {0!r} must be specified in the configuration file." .
-                        format(self.opt))
-            self.call_back(self.default)
-        else:
-            if len(args) != 1:
-                raise UserError("Option {0!r} takes 1 argument, but {1} is(are) given." .
-                        format(self.opt, len(args)))
-            self.call_back(args[0])
-
-    def __init__(self, opt, call_back, default = None):
-        """generate and register a simple configuration handler that takes only 1 argument
+    def __init__(self, opt, call_back, default = None, required = True, no_dup = False):
+        """generate and register a configuration handler that takes exactly 1 argument
         
 
         Keyword arguments:
-        call_back -- a function taken a string as argument, which will be called
-                     with the argument value
-        default -- if not set to None, it will be given as the value if @opt does not
-                   appear in the configuration file
-        
+        call_back -- a function taking a list containing option name the argument as argument
         """
-        self.opt = opt
-        self.call_back = call_back
-        self.default = default
-        register_handler(opt, self._handler)
+        self._call_back = call_back
+        self._default = default
+        self._required = required
+        register_handler(opt, self._handler, no_dup)
+
+    def _handler(self, args):
+        if len(args) == 1:
+            if self._default is None:
+                if self._required:
+                    raise UserError("Option {0} must be specified in the configuration file." .
+                            format(self.opt))
+                else:
+                    return
+            args.append(self._default)
+            self._call_back(args)
+        else:
+            if len(args) != 2:
+                raise UserError("Option {0} takes 1 argument, but {1} is(are) given." .
+                        format(args[0], len(args) - 1))
+            self._call_back(args)
 

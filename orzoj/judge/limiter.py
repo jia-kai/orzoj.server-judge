@@ -1,6 +1,6 @@
 # $File: limiter.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Sep 17 20:00:41 2010 +0800
+# $Date: Sat Sep 18 19:54:12 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -49,24 +49,24 @@ except Exception as e:
 
 class _Limiter:
     def __init__(self, args):
-        if len(args) < 3:
-            raise conf.UserError("Option AddLimiter takes at least three arguments")
+        if len(args) < 4:
+            raise conf.UserError("Option {0} takes at least three arguments" . format(args[0]))
 
-        self._name = args[0]
+        self._name = args[1]
 
-        if args[1] == 'socket':
+        if args[2] == 'socket':
             self._type = _LIMITER_SOCKET
-        elif args[1] == 'file':
+        elif args[2] == 'file':
             self._type = _LIMITER_FILE
         else:
             raise conf.UserError("unknown limiter communication method: {0!r}" .
-                    format(args[1]))
-        self._args = args[2:]
+                    format(args[2]))
+        self._args = args[3:]
 
         global limiter_dict
         if args[0] in limiter_dict:
-            raise conf.UserError("duplicated limiter name: {0!r}" . format(args[0]))
-        limiter_dict[args[0]] = self
+            raise conf.UserError("duplicated limiter name: {0!r}" . format(args[1]))
+        limiter_dict[args[1]] = self
 
     def run(self, var_dict, stdin = None, stdout = None, stderr = None):
         """run the limiter under variables defined in @var_dict
@@ -104,17 +104,21 @@ class _Limiter:
                 raise SysError("limiter socket error")
 
 
-        def _eval(s):
-            if s[0] != '$':
-                return s
-            try:
-                return str(eval(s[1:], trans_dict, var_dict))
-            except Exception as e:
-                log.error("[limiter {0!r}] error while evaluating argument {1!r}: {2!r}" .
-                        format(self._name, s, e))
-                raise SysError("limiter configuration error")
-
-        args = [_eval(i) for i in self._args]
+        args = []
+        for i in self._args:
+            if i[0] != '$':
+                args.append(i)
+            else:
+                try:
+                    v = eval(i[1:], trans_dict, var_dict)
+                    if type(v) is list:
+                        args.extend(v)
+                    else:
+                        args.append(str(v))
+                except Exception as e:
+                    log.error("[limiter {0!r}] error while evaluating argument {1!r}: {2!r}" .
+                            format(self._name, i, e))
+                    raise SysError("limiter configuration error")
 
         log.debug("executing command: {0!r}" . format(args))
 
@@ -181,10 +185,10 @@ class _Limiter:
             except Exception as e:
                 log.warning("failed to close socket: {0!r}".format(e))
 
-def _ch_add_limiter(arg):
-    if arg is None:
-        raise UserError("Option AddLimiter must be specified in the configuration file.")
-    _Limiter(arg)
+def _ch_add_limiter(args):
+    if len(args) == 1:
+        raise UserError("Option {0} must be specified in the configuration file." . format(args[0]))
+    _Limiter(args)
 
 conf.register_handler("AddLimiter", _ch_add_limiter)
 

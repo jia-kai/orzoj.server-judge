@@ -9,11 +9,14 @@ int f(int n)
 	return f(n - 1) + f(n - 2);
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	int n;
 	scanf("%d", &n);
 	printf("stdout: %d\n", f(n));
 	fprintf(stderr, "this is stderr.\n");
+	printf("args:\n");
+	while (*argv)
+		printf("%s\n", *(argv ++));
 }
 

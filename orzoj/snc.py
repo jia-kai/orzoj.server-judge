@@ -1,6 +1,6 @@
 # $File: snc.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Sep 13 16:43:40 2010 +0800
+# $Date: Sat Sep 18 19:16:57 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -21,6 +21,7 @@
 #
 
 import ssl, socket, struct
+
 import conf, log
 
 _timeout    = 0
@@ -28,13 +29,13 @@ _cert_file  = ''
 _key_file   = ''
 _ca_file    = ''
 
-class SncError(Exception):
+class Error(Exception):
     pass
 
 class Snc:
     """secure network connection, a wrapper for python ssl module
 
-    SncError may be raised by any method
+    Error may be raised by any method
     Key method arguments:
             timeout -- the timeout set on reading and writing, expressing in seconds,
                        besides default timeout. Setting it to a negative value disables timeouts.
@@ -50,13 +51,13 @@ class Snc:
             self._closed = False  # now successfully initialized
         except ssl.SSLError as e:
             log.error("SSLError: {0!r}" . format(e))
-            raise SncError
+            raise Error
         except socket.error as e:
             log.error("socket error: {0!r}" . format(e))
-            raise SncError
+            raise Error
         except socket.timeout:
             log.error("socket timeout")
-            raise SncError
+            raise Error
 
     def read_all(self, count, timeout = 0):
         """read repeatedly until @count bytes are read"""
@@ -72,13 +73,13 @@ class Snc:
             return ret
         except ssl.SSLError as e:
             log.error("SSLError: {0!r}" . format(e))
-            raise SncError
+            raise Error
         except socket.error as e:
             log.error("socket error: {0!r}" . format(e))
-            raise SncError
+            raise Error
         except socket.timeout:
             log.error("socket timeout")
-            raise SncError
+            raise Error
 
     def write_all(self, data, timeout = 0):
         """write repeatedly until all data are writen"""
@@ -93,13 +94,13 @@ class Snc:
                 tot += self._ssl.write(data[tot:])
         except ssl.SSLError as e:
             log.error("SSLError: {0!r}" . format(e))
-            raise SncError
+            raise Error
         except socket.error as e:
             log.error("socket error: {0!r}" . format(e))
-            raise SncError
+            raise Error
         except socket.timeout:
             log.error("socket timeout")
-            raise SncError
+            raise Error
 
     def read_int32(self, timeout = 0):
         """read a signed 32-bit integer and return it"""
@@ -150,23 +151,24 @@ def _init():
 
 def _set_timeout(arg):
     global _timeout
-    _timeout = float(arg)
+    _timeout = float(arg[1])
     if _timeout <= 1:
-        raise conf.UserError("Option NetworkTimeout can not be less than 1 second.")
+        raise conf.UserError("Option {0} can not be less than 1 second." .
+                format(arg[0]))
 
 def _set_cert_file(arg):
     global _cert_file
-    _cert_file = arg
+    _cert_file = arg[1]
 
 def _set_key_file(arg):
     global _key_file
-    _key_file = arg
+    _key_file = arg[1]
 
 def _set_ca_file(arg):
     global _ca_file
-    _ca_file = arg
+    _ca_file = arg[1]
 
-conf.simple_conf_handler("NetworkTimeout", _set_timeout, "2")
+conf.simple_conf_handler("NetworkTimeout", _set_timeout, default = "2")
 conf.simple_conf_handler("CertificateFile", _set_cert_file)
 conf.simple_conf_handler("PrivateKeyFile", _set_key_file)
 conf.simple_conf_handler("CAFile", _set_ca_file)

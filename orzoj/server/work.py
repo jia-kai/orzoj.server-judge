@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Sep 17 17:27:05 2010 +0800
+# $Date: Sat Sep 18 19:54:48 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -337,7 +337,7 @@ class thread_new_judge_connection(threading.Thread):
             while not control.test_termination_flag():
                 self._solve_task()
 
-        except snc.SncError:
+        except snc.Error:
             log.warning("failed to serve judge because of network error.")
             _clean()
             return
@@ -360,19 +360,20 @@ class thread_new_judge_connection(threading.Thread):
 
 def _set_refresh_interval(arg):
     global _refresh_interval
-    _refresh_interval = float(arg)
+    _refresh_interval = float(arg[1])
     if _refresh_interval < 1:
-        raise conf.UserError("Option RefreshInterval can not be less than 1 second.")
+        raise conf.UserError("Option {0} can not be less than 1 second" . format(arg[0]))
 
 def _set_id_max_len(arg):
     global _id_max_len
-    _id_max_len = int(arg)
+    _id_max_len = int(arg[1])
     if _id_max_len < 1:
-        raise conf.UserError("Option JudgeIdMaxLen can not be less than 1")
+        raise conf.UserError("Option {0} can not be less than 1" . format(arg[0]))
 
 def _set_data_dir(arg):
-    os.chdir(arg)
+    os.chdir(arg[1])
 
-conf.simple_conf_handler("RefreshInterval", _set_refresh_interval, '2')
-conf.simple_conf_handler("JudgeIdMaxLen", _set_id_max_len, '20')
+conf.simple_conf_handler("RefreshInterval", _set_refresh_interval, default = "2")
+conf.simple_conf_handler("JudgeIdMaxLen", _set_id_max_len, default = "20")
 conf.simple_conf_handler("DataDir", _set_data_dir)
+

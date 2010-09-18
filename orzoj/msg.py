@@ -1,6 +1,6 @@
 # $File: msg.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Sep 17 17:38:32 2010 +0800
+# $Date: Sat Sep 18 16:32:42 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -59,6 +59,8 @@ DATA_OK, # c2s
 # start judge process
 # packet format: (START_JUDGE, language:string,
 # source:string, input:string, output:string)
+# if @input is empty string, meaning using stdin
+# so is @output
 START_JUDGE, # s2c 
 # packet format: (START_JUDGE_OK)
 START_JUDGE_OK, # c2s 
