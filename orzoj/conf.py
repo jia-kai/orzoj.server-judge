@@ -1,6 +1,6 @@
 # $File: conf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 18 19:45:32 2010 +0800
+# $Date: Sun Sep 19 11:47:28 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -22,13 +22,20 @@
 
 """parse orzoj configuration file and deal with initializing functions"""
 
-import shlex, sys
+import shlex, sys, platform
+
+REQUIRE_WINDOWS = 1
+REQUIRE_UNIX = 2
+
+is_windows = (platform.system() == "Windows")
+is_unix = (platform.system() == "Unix" or platform.system() == "Linux")
 
 class _Handler:
-    def __init__(self, func, no_dup):
+    def __init__(self, func, no_dup, require_os):
         self.func = func
         self.used = False
         self.no_dup = no_dup
+        self.require_os = require_os
 
 _hd_dict = {}
 _init_func = []
@@ -39,7 +46,7 @@ class UserError(Exception):
         self.msg = msg
 
 
-def register_handler(cmd, func, no_dup = False):
+def register_handler(cmd, func, no_dup = False, require_os = 0):
     """register a command handler
 
     Keyword arguments:
@@ -48,10 +55,12 @@ def register_handler(cmd, func, no_dup = False):
             The argument will be given None if no arguments are given (list = [optname, None])
             if @cmd is not found, the list will only contain option name
 
+    require_os -- the ORing value of REQUIRE_* to indicate this option is only available on particular platforms
+
     exceptions IOError, KeyError, ValueError and Exception are caught by parse_file
     """
     global _hd_dict
-    _hd_dict[cmd.lower()] = _Handler(func, no_dup)
+    _hd_dict[cmd.lower()] = _Handler(func, no_dup, require_os)
 
 def register_init_func(func):
     """register an initialization function, which will be called right after finishing parsing
@@ -95,6 +104,19 @@ def parse_file(filename):
                     raise UserError("duplicated option {0}" .
                             format(slist[0]))
 
+                if h.require_os:
+                    support = False
+
+                    if (h.require_os & REQUIRE_WINDOWS) and is_windows:
+                        support = True
+
+                    if (h.require_os & REQUIRE_UNIX) and is_unix:
+                        support = True
+
+                    if not support:
+                        raise UserError("Option {0} does not support your platform" .
+                                format(slist[0]))
+
                 h.used = True
                 if len(slist) == 1:
                     slist.append(None)
@@ -126,7 +148,7 @@ def parse_file(filename):
 
 
 class simple_conf_handler:
-    def __init__(self, opt, call_back, default = None, required = True, no_dup = False):
+    def __init__(self, opt, call_back, default = None, required = True, no_dup = False, require_os = 0):
         """generate and register a configuration handler that takes exactly 1 argument
         
 
@@ -136,7 +158,7 @@ class simple_conf_handler:
         self._call_back = call_back
         self._default = default
         self._required = required
-        register_handler(opt, self._handler, no_dup)
+        register_handler(opt, self._handler, no_dup, require_os)
 
     def _handler(self, args):
         if len(args) == 1:

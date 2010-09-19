@@ -1,6 +1,6 @@
 # $File: msg.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 18 16:32:42 2010 +0800
+# $Date: Sun Sep 19 11:29:15 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -24,21 +24,26 @@
 
 ERROR = 0xffffffff
 
+PROTOCOL_VERSION = 0xff000001
+
 # s2c: server to client(i.e. orzoj-judge)
 # c2s: client to server
 
-# packet format: (HELLO, id:string, PROTOCOL_VERSION,
+(
+# packet format: (HELLO, id:string, PROTOCOL_VERSION:uint32_t,
 # cnt:uint32_t, for(0<=i<cnt) supported language[i]:string)
-(HELLO, # c2s
+HELLO, # c2s
 
 # packet format: (DUPLICATED_ID)
 DUPLICATED_ID, # s2c 
 # packet format: (ID_TOO_LONG)
 ID_TOO_LONG, # s2c 
+# packet format: (CONNECT_OK)
+CONNECT_OK, # s2c
 
 # query system info ans give answers
 # packet format: (QUERY_INFO, info:string),
-# where info is something like "CPU", "mem", etc.
+# where info is something like "cpuinfo", "meminfo", etc.
 QUERY_INFO, # s2c 
 # packet format: (ANS_QEURY, ans:string)
 ANS_QEURY, # c2s 
@@ -47,6 +52,9 @@ ANS_QEURY, # c2s
 # packet format: (PREPARE_DATA, problem:string,
 # cnt:uint32_t, for (0<=i<cnt) (filename[i]:string, sha-1[i]:string))
 PREPARE_DATA, # s2c 
+# packet format: (DATA_COMPUTING_SHA1) 
+# should be sent every 0.5 seconds during computing the sha1-sums
+DATA_COMPUTING_SHA1,
 # packet format: (NEED_FILE, filename:string)
 NEED_FILE, # c2s 
 # packet format: (DATA_ERROR, reason:string)
@@ -62,6 +70,7 @@ DATA_OK, # c2s
 # if @input is empty string, meaning using stdin
 # so is @output
 START_JUDGE, # s2c 
+
 # packet format: (START_JUDGE_OK)
 START_JUDGE_OK, # c2s 
 # packet format: (START_JUDGE_WAIT)
@@ -82,7 +91,7 @@ OFTP_FDATA_RECVED,
 OFTP_CHECK_OK, 
 OFTP_CHECK_FAIL, 
 OFTP_END, 
-OFTP_SYSTEM_ERROR) = range(24)
+OFTP_SYSTEM_ERROR) = range(26)
 
 COMPILE_MAX_TIME = 30
 #maximal compiling time in seconds

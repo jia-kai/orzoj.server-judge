@@ -1,6 +1,6 @@
 # $File: main.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 18 19:33:41 2010 +0800
+# $Date: Sun Sep 19 11:48:47 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -22,7 +22,7 @@
 
 """orzoj-server"""
 
-import socket, sys, optparse, time, threading, platform, os, signal
+import socket, sys, optparse, time, threading, os, signal
 from orzoj import log, conf, control
 from orzoj.server import work
 
@@ -82,8 +82,7 @@ def run_server():
     global _options, _use_ipv6, _port, _pid_file
     conf.parse_file(_options.conf_file)
 
-    if not _options.no_daemon and \
-            (platform.system() == "Linux" or platform.system() == "Unix"):
+    if not _options.no_daemon and conf.is_unix:
         _daemon()
 
     if _pid_file:

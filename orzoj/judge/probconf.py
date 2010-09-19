@@ -1,6 +1,6 @@
 # $File: probconf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 18 16:47:32 2010 +0800
+# $Date: Sun Sep 19 14:30:53 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,8 +23,7 @@
 """parse problem configuration file (XML)"""
 
 class Error(Exception):
-    def __init__ (self, msg):
-        self.msg = msg
+    pass
 
 class Case_conf:
     def __init__(self):
@@ -35,7 +34,7 @@ class Case_conf:
         self.score = None       # integer
 
 class Prob_conf:
-    def __init__(self, filename):
+    def __init__(self, pcode):
         """may raise Error"""
         self.compiler = None    # dict of list, or None
         self.verify_func = None # function(full score:int, stdinpath:string, stdoutpath:string, 
@@ -45,6 +44,6 @@ class Prob_conf:
 
         self._parse(filename)
 
-    def _parse(filename):
+    def _parse(pcode):
         pass
 

@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 18 19:54:48 2010 +0800
+# $Date: Sun Sep 19 11:57:06 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -34,7 +34,6 @@ _task_queue = Queue.Queue()
 _refresh_interval = None
 _id_max_len = None
 
-_PROTOCOL_VERSION = 0xff000001
 _QUEUE_GET_TIMEOUT = 1
 
 class _internal_error(Exception):
@@ -43,7 +42,7 @@ class _internal_error(Exception):
 class _thread_fetch_task(threading.Thread):
     def run(self):
         global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _PROTOCOL_VERSION, _QUEUE_GET_TIMEOUT
+        global _QUEUE_GET_TIMEOUT
 
         while not control.test_termination_flag():
             while True:
@@ -58,7 +57,7 @@ class thread_work(threading.Thread):
     """wait for tasks and distribute them to judges"""
     def run(self):
         global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _PROTOCOL_VERSION, _QUEUE_GET_TIMEOUT
+        global _QUEUE_GET_TIMEOUT
 
         _thread_fetch_task().start()
         while not control.test_termination_flag():
@@ -85,7 +84,7 @@ class thread_work(threading.Thread):
                 pass
 
 def _get_file_list(path):
-    """return a dict containing regular files and their corresponding sha1 digests in the path.
+    """return a dict containing regular files and their corresponding sha1 digests in the direcory @path.
     return None on error"""
     def _sha1_file(path):
         with open(path, 'rb') as f:
@@ -122,7 +121,7 @@ class thread_new_judge_connection(threading.Thread):
 
     def _clean():
         global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _PROTOCOL_VERSION, _QUEUE_GET_TIMEOUT
+        global _QUEUE_GET_TIMEOUT
 
         if self._cur_task != None:
             _task_queue.put(self._cur_task, True)
@@ -170,7 +169,7 @@ class thread_new_judge_connection(threading.Thread):
                 raise _internal_error
 
         global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _PROTOCOL_VERSION, _QUEUE_GET_TIMEOUT
+        global _QUEUE_GET_TIMEOUT
 
         judge = self._judge
         try:
@@ -199,6 +198,9 @@ class thread_new_judge_connection(threading.Thread):
             if m == msg.DATA_OK:
                 break
 
+            if m == msg.DATA_COMPUTING_SHA1:
+                continue
+
             if m == msg.DATA_ERROR:
                 self._cur_task = None
                 reason = _read_str()
@@ -214,7 +216,7 @@ class thread_new_judge_connection(threading.Thread):
             fpath = os.path.normpath(os.path.join(task.prob, _read_str()))
             speed = filetrans.send(fpath, self._snc)
             log.info("file transfer speed with judge {0!r}: {1} kb/s" .
-                    format(speed))
+                    format(judge.id, speed))
 
         ncase = _read_uint32()
 
@@ -288,7 +290,7 @@ class thread_new_judge_connection(threading.Thread):
                 raise _internal_error
 
         global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _PROTOCOL_VERSION, _QUEUE_GET_TIMEOUT
+        global _QUEUE_GET_TIMEOUT
 
         self._cur_task = None
         self._web_registered = False
@@ -311,7 +313,7 @@ class thread_new_judge_connection(threading.Thread):
                             format(judge.id))
                     raise _internal_error
 
-            if _read_uint32() != _PROTOCOL_VERSION:
+            if _read_uint32() != msg.PROTOCOL_VERSION:
                 log.warning("version check error.")
                 _write_msg(msg.ERROR)
                 raise _internal_error
@@ -320,6 +322,8 @@ class thread_new_judge_connection(threading.Thread):
             while cnt:
                 cnt -= 1
                 judge.lang_supported.add(_read_str())
+
+            _write_msg(msg.CONNECT_OK)
 
             query_ans = {}
             for i in web.get_query_list():

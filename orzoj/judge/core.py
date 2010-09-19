@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 18 20:21:01 2010 +0800
+# $Date: Sun Sep 19 11:50:27 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,7 +23,7 @@
 and executes (by running the executor under limiter) user's
 program and verifies the output"""
 
-import os.path, errno, shutil, time, platform
+import os.path, errno, shutil, time
 
 try:
     import fcntl
@@ -46,7 +46,7 @@ _lock_file_obj = None
 _lock_file_fd = None
 
 _executor_dict = {}
-_lang_dict = {}
+lang_dict = {}
 
 _cmd_vars = {"COMPILE_TIME" : msg.COMPILE_MAX_TIME * 1000}    # variables used in AddLimiter option
 
@@ -187,9 +187,9 @@ class _Lang:
             raise conf.UserError("Option {0} takes four arguments, but {1} is(are) given" .
                     format(args[0], len(args) - 1))
 
-        global _executor_dict, _lang_dict
+        global _executor_dict, lang_dict
 
-        if args[1] in _lang_dict:
+        if args[1] in lang_dict:
             raise conf.UserError("duplicated language: {0!r}" . format(args[1]))
 
         self._name = args[1]
@@ -208,7 +208,7 @@ class _Lang:
                     format(args[4], args[1]))
             self._executor = _executor_dict[args[4]]
 
-        _lang_dict[args[1]] = self
+        lang_dict[args[1]] = self
 
     def judge(self, snc, pcode, pconf, src, input, output):
         """@pcode: problem code
@@ -362,15 +362,8 @@ def _ch_add_lang(args):
 conf.register_handler("AddExecutor", _ch_add_executor)
 conf.register_handler("AddLang", _ch_add_lang)
 
-_is_unix = platform.system() == "Unix" or platform.system() == "Linux"
-
-def _assert_unix(opt):
-    if not _is_unix:
-        raise conf.UserError("Option {0} is only available on Unix-like platforms" . format(opt))
-
 def _set_chroot_dir(arg):
     if len(arg) == 2:
-        _assert_unix(arg[0])
         global _cmd_vars, _dir_temp
         if _dir_temp:
             raise conf.UserError("Option {0} must be set before TempDir" . format(arg[0]))
@@ -390,14 +383,12 @@ def _set_temp_dir(arg):
 
 def _set_lock_file(arg):
     if len(arg) == 2:
-        _assert_unix(arg[0])
         global _lock_file_fd, _lock_file_obj
         _lock_file_obj = open(arg[1], "w")
         _lock_file_fd = _lock_file_obj.fileno()
 
 def _set_user(arg):
     if len(arg) == 2:
-        _assert_unix(arg[0])
         import pwd
         if arg[1][0] == '#'
             p = pwd.getpwuid(int(arg[1][1:]))
@@ -408,7 +399,6 @@ def _set_user(arg):
 
 def _set_group(arg):
     if len(arg) == 2:
-        _assert_unix(arg[0])
         import grp
         if arg[1][0] == '#'
             g = grp.getgrgid(int(arg[1][1:]))
@@ -417,9 +407,9 @@ def _set_group(arg):
         global _cmd_vars
         _cmd_vars["GROUP"] = g.gr_gid
 
-conf.simple_conf_handler("ChrootDir", _set_chroot_dir, required = False, no_dup = True)
+conf.simple_conf_handler("ChrootDir", _set_chroot_dir, required = False, no_dup = True, require_os = conf.REQUIRE_UNIX)
 conf.simple_conf_handler("TempDir", _set_temp_dir, no_dup = True)
-conf.simple_conf_handler("LockFile", _set_lock_file, required = False, no_dup = True)
-conf.simple_conf_handler("User", _set_user, required = False, no_dup = True)
-conf.simple_conf_handler("Group", _set_group, required = False, no_dup = True)
+conf.simple_conf_handler("LockFile", _set_lock_file, required = False, no_dup = True, require_os = conf.REQUIRE_UNIX)
+conf.simple_conf_handler("User", _set_user, required = False, no_dup = True, require_os = conf.REQUIRE_UNIX)
+conf.simple_conf_handler("Group", _set_group, required = False, no_dup = True, require_os = conf.REQUIRE_UNIX)
 

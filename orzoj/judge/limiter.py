@@ -1,6 +1,6 @@
 # $File: limiter.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 18 19:54:12 2010 +0800
+# $Date: Sun Sep 19 11:51:03 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -21,7 +21,7 @@
 #
 """parse limiter configuration and export functions to use limiter"""
 
-import subprocess, socket, tempfile, struct, os, platform, sys, time
+import subprocess, socket, tempfile, struct, os, sys, time
 
 from orzoj import conf, log
 
@@ -40,7 +40,7 @@ _LIMITER_SOCKET = 0
 _LIMITER_FILE = 1
 
 try:
-    if platform.system() == 'Windows':
+    if conf.is_windows:
         NULL = open('nul', 'w')
     else:
         NULL = open('/dev/null', 'w')

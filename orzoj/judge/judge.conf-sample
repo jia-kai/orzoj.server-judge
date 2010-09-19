@@ -48,13 +48,32 @@ PrivateKeyFile /etc/orzoj/judge.key
 #CAFile: SSL CA(certificate authority) certificate file
 CAFile /etc/orzoj/ca.cert
 
-# ServerAddr : orzoj-server address and port
+# ServerAddr: orzoj-server address and port
 # format: ServerAddr <address> <port>
 ServerAddr 127.0.0.1 9351
+
+# SetInfo: set system infomation to be sent to orzoj-server and
+# displayed on orzoj-web
+#
+# format: SetInfo <name> <value0> <value1> ...
+#
+# values will be joined together by adding newlines (\n) between them
+#
+# by default, cpuinfo and meminfo are read from /proc/{cpuinfo,meminfo}
+# if your system does not provide access to these two files, please
+# set cpuinfo and meminfo manually
+#
+# SetInfo cpuinfo "orzoj CPU"
+# SetInfo meminfo "orzoj RAM"
+SetInfo description "another orzoj-judge" "compilers:" " gcc: x.x.x" " g++: x.x.x" \
+	" java: x.x.x"
 
 # DataCache: problem data cache directory
 # format: DataCache <directory path>
 DataCache /home/orzoj/data
+
+# SetUmask: set octal umask value (Unix only)
+SetUmask 077
 
 # AddLimiter: add a resource limiter
 # format: AddLimiter <limiter name> <communication method> <full path to executable> <arg0> <arg1> ...

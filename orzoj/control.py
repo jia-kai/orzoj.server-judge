@@ -1,6 +1,6 @@
 # $File: control.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 15 11:30:17 2010 +0800
+# $Date: Sun Sep 19 10:22:35 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -40,9 +40,7 @@ def set_termination_flag():
         _termination_flag = True
 
 def sig_handler(signum, frame):
-    global _termination_flag, _lock
-    with _lock:
-        _termination_flag = True
+    set_termination_flag()
     log.info("reveived signal {0!r}, terminating..." .
             format(signum))
 
