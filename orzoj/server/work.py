@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 11:57:06 2010 +0800
+# $Date: Sun Sep 19 18:35:08 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -34,54 +34,52 @@ _task_queue = Queue.Queue()
 _refresh_interval = None
 _id_max_len = None
 
-_QUEUE_GET_TIMEOUT = 1
+_QUEUE_GET_TIMEOUT = 0.5
 
 class _internal_error(Exception):
     pass
 
-class _thread_fetch_task(threading.Thread):
-    def run(self):
-        global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _QUEUE_GET_TIMEOUT
+def _thread_fetch_task():
+    global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
+    global _QUEUE_GET_TIMEOUT
 
-        while not control.test_termination_flag():
-            while True:
-                task = web.fetch_task()
-                if task is None:
-                    break
-                _task_queue.put(task, True)
+    while not control.test_termination_flag():
+        while True:
+            task = web.fetch_task()
+            if task is None:
+                break
+            _task_queue.put(task, True)
 
-            time.sleep(_refresh_interval)
+        time.sleep(_refresh_interval)
 
-class thread_work(threading.Thread):
+def thread_work():
     """wait for tasks and distribute them to judges"""
-    def run(self):
-        global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _QUEUE_GET_TIMEOUT
+    global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
+    global _QUEUE_GET_TIMEOUT
 
-        _thread_fetch_task().start()
-        while not control.test_termination_flag():
+    threading.Thread(target = _thread_fetch_task, name = "work._thread_fetch_task").start()
 
-            try:
-                task = _task_queue.get(True, _QUEUE_GET_TIMEOUT)
-                judge = None
+    while not control.test_termination_flag():
+        try:
+            task = _task_queue.get(True, _QUEUE_GET_TIMEOUT)
+            judge = None
 
-                with _lock_judge_online:
-                    for (i, j) in _judge_online.iteritems():
-                        if task.lang in j.lang_supported:
-                            if judge is None or j.queue.qsize() < judge.queue.qsize():
-                                judge = j
+            with _lock_judge_online:
+                for (i, j) in _judge_online.iteritems():
+                    if task.lang in j.lang_supported:
+                        if judge is None or j.queue.qsize() < judge.queue.qsize():
+                            judge = j
 
-                if judge is None:
-                    web.report_no_judge(task)
-                else:
-                    with _lock_judge_online: # the chosen judge may have just deleted itself, so we have to lock
-                        if judge.id in _judge_online:
-                            judge.queue.put(task, True)
-                        else:
-                            _task_queue.put(task, True)
-            except Queue.Empty:
-                pass
+            if judge is None:
+                web.report_no_judge(task)
+            else:
+                with _lock_judge_online: # the chosen judge may have just deleted itself, so we have to lock
+                    if judge.id in _judge_online:
+                        judge.queue.put(task, True)
+                    else:
+                        _task_queue.put(task, True)
+        except Queue.Empty:
+            pass
 
 def _get_file_list(path):
     """return a dict containing regular files and their corresponding sha1 digests in the direcory @path.
@@ -116,10 +114,10 @@ class thread_new_judge_connection(threading.Thread):
     def __init__(self, sock):
         """serve a new connection, which should be orzoj-judge.
         No exceptions are raised, exit silently on error."""
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name = "work.thread_new_judge_connection")
         self._sock = sock
 
-    def _clean():
+    def _clean(self):
         global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
         global _QUEUE_GET_TIMEOUT
 
@@ -128,10 +126,11 @@ class thread_new_judge_connection(threading.Thread):
             self._cur_task = None
 
         judge = self._judge
-        if judge.id != None:
+        if judge.id is not None:
             with _lock_judge_online:
                 if judge.id in _judge_online:
                     del _judge_online[judge.id]
+            log.info("judge {0!r} disconnected" . format(judge.id))
 
         if self._web_registered:
             web.remove_judge(judge)
@@ -140,7 +139,7 @@ class thread_new_judge_connection(threading.Thread):
             while True:
                 task = judge.queue.get_nowait()
                 _task_queue.put(task, True)
-        except Queue.empty:
+        except Queue.Empty:
             return
 
 
@@ -175,7 +174,12 @@ class thread_new_judge_connection(threading.Thread):
         try:
             task = judge.queue.get(True, _QUEUE_GET_TIMEOUT)
         except Queue.Empty:
+            _write_msg(msg.TELL_ONLINE)
             return
+        
+        log.info("judge {0!r} received task for problem {1!r}" .
+                format(judge.id, task.prob))
+
         self._cur_task = task
 
         datalist = _get_file_list(task.prob)
@@ -338,28 +342,36 @@ class thread_new_judge_connection(threading.Thread):
             with _lock_judge_online:
                 _judge_online[judge.id] = judge
 
+            log.info("judge {0!r} connected successfully" . format(judge.id))
+
             while not control.test_termination_flag():
                 self._solve_task()
 
+            self._snc.close()
+            self._sock.close()
+
         except snc.Error:
             log.warning("failed to serve judge because of network error.")
-            _clean()
+            self._clean()
             return
         except _internal_error:
             self._snc.close()
-            _clean()
+            self._sock.close()
+            self._clean()
             return
         except web.WebError:
             log.warning("failed to serve judge because of error while communicating with website.")
             _write_msg(msg.ERROR)
             self._snc.close()
-            _clean()
+            self._sock.close()
+            self._clean()
             return
         except filetrans.OFTPError:
             log.warning("failed to transfer file to judge {0!r}." .
                     format(self._judge.id))
             self._snc.close()
-            _clean()
+            self._sock.close()
+            self._clean()
             return
 
 def _set_refresh_interval(arg):

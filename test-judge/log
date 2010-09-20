@@ -1,0 +1,12 @@
+[2010-09-19 18:34:31,442] [ERROR] from read_all in snc at snc.py:78 :
+socket error: SSLError('The read operation timed out',)
+
+[2010-09-19 18:34:31,443] [ERROR] from connect in work at work.py:234 :
+failed to communicate with orzoj-server because of network error
+
+[2010-09-19 18:34:31,443] [ERROR] from run_judge in main at main.py:95 :
+error occurred, terminating program
+
+[2010-09-19 18:34:31,444] [ERROR] from close in snc at snc.py:137 :
+SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
+

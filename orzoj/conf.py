@@ -1,6 +1,6 @@
 # $File: conf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 11:47:28 2010 +0800
+# $Date: Sun Sep 19 15:42:59 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -165,7 +165,7 @@ class simple_conf_handler:
             if self._default is None:
                 if self._required:
                     raise UserError("Option {0} must be specified in the configuration file." .
-                            format(self.opt))
+                            format(args[0]))
                 else:
                     return
             args.append(self._default)

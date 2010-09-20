@@ -40,3 +40,18 @@ SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
 SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
 [2010-09-13 17:15:59,805] [ERROR] from snc.close at snc.py:136 :
 SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
+[2010-09-19 17:38:07,741] [ERROR] from close in snc at snc.py:137 :
+SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
+
+[2010-09-19 19:38:16,363] [ERROR] from read_all in snc at snc.py:81 :
+socket error: SSLError('The read operation timed out',)
+
+[2010-09-19 19:38:16,369] [ERROR] from close in snc at snc.py:136 :
+SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
+
+[2010-09-20 08:53:21,187] [ERROR] from read_all in snc at snc.py:81 :
+socket error: SSLError('The read operation timed out',)
+
+[2010-09-20 08:53:21,192] [ERROR] from close in snc at snc.py:136 :
+SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
+

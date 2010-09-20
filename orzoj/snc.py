@@ -1,6 +1,6 @@
 # $File: snc.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 18 19:16:57 2010 +0800
+# $Date: Sun Sep 19 19:38:03 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -24,10 +24,10 @@ import ssl, socket, struct
 
 import conf, log
 
-_timeout    = 0
-_cert_file  = ''
-_key_file   = ''
-_ca_file    = ''
+_timeout    = None
+_cert_file  = None
+_key_file   = None
+_ca_file    = None
 
 class Error(Exception):
     pass
@@ -49,57 +49,56 @@ class Snc:
                     server_side = is_server, cert_reqs = ssl.CERT_REQUIRED,
                     ssl_version = ssl.PROTOCOL_TLSv1)
             self._closed = False  # now successfully initialized
-        except ssl.SSLError as e:
-            log.error("SSLError: {0!r}" . format(e))
+        except socket.timeout:
+            log.error("socket timeout")
             raise Error
         except socket.error as e:
             log.error("socket error: {0!r}" . format(e))
             raise Error
-        except socket.timeout:
-            log.error("socket timeout")
+        except ssl.SSLError as e:
+            log.error("SSLError: {0!r}" . format(e))
             raise Error
+
+    def _set_timeout(self, val):
+        global _timeout
+        if val < 0:
+            slef._ssl.settimeout(None)
+        else:
+            self._ssl.settimeout(val)
 
     def read_all(self, count, timeout = 0):
         """read repeatedly until @count bytes are read"""
-        global _timeout
         try:
-            if timeout < 0:
-                self._ssl.settimeout(None)
-            else:
-                self._ssl.settimeout(_timeout + timeout)
+            self._set_timeout(timeout)
             ret = ''
             while len(ret) < count:
                 ret += self._ssl.read(count - len(ret))
             return ret
-        except ssl.SSLError as e:
-            log.error("SSLError: {0!r}" . format(e))
+        except socket.timeout:
+            log.error("socket timeout")
             raise Error
         except socket.error as e:
             log.error("socket error: {0!r}" . format(e))
             raise Error
-        except socket.timeout:
-            log.error("socket timeout")
+        except ssl.SSLError as e:
+            log.error("SSLError: {0!r}" . format(e))
             raise Error
 
     def write_all(self, data, timeout = 0):
         """write repeatedly until all data are writen"""
-        global _timeout
         try:
-            if timeout < 0:
-                self._ssl.settimeout(None)
-            else:
-                self._ssl.settimeout(_timeout + timeout)
+            self._set_timeout(timeout)
             tot = 0
             while tot < len(data):
                 tot += self._ssl.write(data[tot:])
-        except ssl.SSLError as e:
-            log.error("SSLError: {0!r}" . format(e))
+        except socket.timeout:
+            log.error("socket timeout")
             raise Error
         except socket.error as e:
             log.error("socket error: {0!r}" . format(e))
             raise Error
-        except socket.timeout:
-            log.error("socket timeout")
+        except ssl.SSLError as e:
+            log.error("SSLError: {0!r}" . format(e))
             raise Error
 
     def read_int32(self, timeout = 0):

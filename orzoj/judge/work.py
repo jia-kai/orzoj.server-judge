@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 14:45:09 2010 +0800
+# $Date: Sun Sep 19 17:31:59 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -76,8 +76,8 @@ def _get_file_list(path):
                 format(path, e))
         _file_list = None
 
-def connect(sockfd):
-    """connect to orzoj-server via socket @sockfd
+def connect(sock):
+    """connect to orzoj-server via socket @sock
     
     may raise Error"""
 
@@ -105,7 +105,7 @@ def connect(sockfd):
                 log.error("message check error.")
                 raise Error
     try:
-        conn = snc.Snc(sockfd)
+        conn = snc.Snc(sock)
 
         _write_msg(msg.HELLO)
         global _judge_id
@@ -135,7 +135,10 @@ def connect(sockfd):
             raise Error
 
         while not control.test_termination_flag():
-            m = _read_msg(-1)
+            m = _read_msg()
+
+            if m == msg.TELL_ONLINE:
+                continue
 
             if m == msg.ERROR:
                 log.warning("failed to work: orzoj-server says an error happens there`")
@@ -229,13 +232,19 @@ def connect(sockfd):
 
     except snc.Error as e:
         log.error("failed to communicate with orzoj-server because of network error")
+        control.set_termination_flag()
         raise Error
 
     except core.Error:
+        control.set_termination_flag()
         raise Error
 
 def _set_datacache(arg):
     os.chdir(arg[1])
+
+def _set_id(arg):
+    global _judge_id
+    _judge_id = arg[1]
 
 def _ch_set_info(arg):
     if len(arg) == 1:
@@ -246,5 +255,6 @@ def _ch_set_info(arg):
     _info_dict[arg[1]] = "\n".join(arg[2:])
 
 conf.simple_conf_handler("DataCache", _set_datacache)
+conf.simple_conf_handler("JudgeId", _set_id)
 conf.register_handler("SetInfo", _ch_set_info)
 

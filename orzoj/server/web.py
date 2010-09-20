@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 15 09:22:21 2010 +0800
+# $Date: Sun Sep 19 16:13:02 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -46,7 +46,7 @@ def remove_judge(judge):
 def fetch_task():
     """try to fetch a new task. return None if no new task available.
     this function does not raise exceptions"""
-    pass
+    return None
 
 def report_no_judge(task):
     """tell the website that no judge supports the task's language

@@ -4,7 +4,7 @@ import snc, conf
 
 conf.parse_file("test-snc-client.conf")
 
-HOST = '127.0.0.1'
+HOST = '192.168.1.104'
 PORT = 9351
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

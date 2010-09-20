@@ -10,3 +10,27 @@ socket error: error(11, 'Resource temporarily unavailable')
 SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
 [2010-09-14 11:09:35,780] [ERROR] from snc.close at snc.py:136 :
 SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
+[2010-09-19 17:37:34,551] [ERROR] from close in snc at snc.py:137 :
+SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
+
+[2010-09-19 17:38:07,758] [ERROR] from write_all in snc at snc.py:99 :
+socket error: error(104, 'Connection reset by peer')
+
+[2010-09-19 17:38:07,758] [WARNING] from send in filetrans at filetrans.py:118 :
+failed to transfer file because of network error.
+
+[2010-09-19 17:38:07,767] [ERROR] from close in snc at snc.py:139 :
+socket error: error(11, 'Resource temporarily unavailable')
+
+[2010-09-20 10:43:36,376] [ERROR] from read_all in snc at snc.py:81 :
+socket error: SSLError(2, '_ssl.c:1325: The operation did not complete (read)')
+
+[2010-09-20 10:43:36,382] [ERROR] from close in snc at snc.py:136 :
+SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
+
+[2010-09-20 10:44:17,614] [ERROR] from read_all in snc at snc.py:81 :
+socket error: SSLError(2, '_ssl.c:1325: The operation did not complete (read)')
+
+[2010-09-20 10:44:17,618] [ERROR] from close in snc at snc.py:136 :
+SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
+

@@ -1,6 +1,6 @@
 # $File: msg.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 11:29:15 2010 +0800
+# $Date: Sun Sep 19 17:19:40 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -48,6 +48,11 @@ QUERY_INFO, # s2c
 # packet format: (ANS_QEURY, ans:string)
 ANS_QEURY, # c2s 
 
+# packet format: (TELL_ONLINE)
+# TELL_ONLINE should be sent every 0.5 seconds if there is no task
+# it exists because orzoj-judge may hang forever without timeout
+TELL_ONLINE, # s2c
+
 # check problem data
 # packet format: (PREPARE_DATA, problem:string,
 # cnt:uint32_t, for (0<=i<cnt) (filename[i]:string, sha-1[i]:string))
@@ -91,7 +96,7 @@ OFTP_FDATA_RECVED,
 OFTP_CHECK_OK, 
 OFTP_CHECK_FAIL, 
 OFTP_END, 
-OFTP_SYSTEM_ERROR) = range(26)
+OFTP_SYSTEM_ERROR) = range(27)
 
 COMPILE_MAX_TIME = 30
 #maximal compiling time in seconds

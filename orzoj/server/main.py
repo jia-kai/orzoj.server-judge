@@ -1,6 +1,6 @@
 # $File: main.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 11:48:47 2010 +0800
+# $Date: Sun Sep 19 16:48:44 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -22,8 +22,8 @@
 
 """orzoj-server"""
 
-import socket, sys, optparse, time, threading, os, signal
-from orzoj import log, conf, control
+import socket, sys, optparse, time, threading, os
+from orzoj import log, conf, control, daemon
 from orzoj.server import work
 
 SERVER_VERSION = 0x00000101
@@ -34,7 +34,6 @@ SERVER_VERSION = 0x00000101
 _options = None
 _use_ipv6 = False
 _port = None
-_pid_file = None
 
 def get_version_str():
     return "{0}.{1}.{2}" . format(SERVER_VERSION >> 16,
@@ -52,46 +51,15 @@ def _parse_opt():
     global _options
     (_options, args) = parser.parse_args()
 
-def _daemon():
-    try:
-        pid = os.fork()
-    except OSError as e:
-        sys.exit("failed to fork [errno {0}]: {1}" .
-                format(e.errno, e.strerror))
-
-    if pid == 0:  # the first child
-        os.setsid()
-        signal.signal(signal.SIGHUP, signal.SIG_IGN)
-
-        try:
-            pid = os.fork()
-        except OSError as e:
-            sys.exit("failed to fork [errno {0}]: {1}" .
-                    format(e.errno, e.strerror))
-
-        if pid == 0: # the second child
-            os.umask(0)
-        else:
-            os._exit(0)
-
-    else:
-        os._exit(0)
-
 def run_server():
     _parse_opt()
-    global _options, _use_ipv6, _port, _pid_file
+    global _options, _use_ipv6, _port
     conf.parse_file(_options.conf_file)
 
     if not _options.no_daemon and conf.is_unix:
-        _daemon()
+        daemon.daemon_start()
 
-    if _pid_file:
-        try:
-            with open(_pid_file, "w") as f:
-                f.write("{0}\n" . format(os.getpid()))
-        except IOError as e:
-            sys.exit("failed to open pid file [errno {0}] [filename {1!r}]: {2}" .
-                    format(e.errno, e.filename, e.strerror))
+    daemon.pid_start()
 
     try:
         if _use_ipv6:
@@ -102,12 +70,13 @@ def run_server():
         s.listen(5)
     except socket.error as e:
         log.error("socket error: {0!r}" . format(e))
+        daemon.pid_end()
         sys.exit(1)
 
     log.info("orzoj-server started, listening on {0}" .
             format(_port))
 
-    work.thread_work().start()
+    threading.Thread(target = work.thread_work, name = "work.thread_work").start()
 
     while not control.test_termination_flag():
         try:
@@ -122,18 +91,15 @@ def run_server():
 
     s.close()
     while threading.active_count() > 1:
-        time.sleep(0.5)
+        log.debug("waiting for threads, current active count: {0}" .
+                format(threading.active_count()))
+        for i in threading.enumerate():
+            log.debug("active thread: {0!r}" . format(i.name))
+        time.sleep(1)
 
     log.info("all threads ended, program exiting")
 
-    if _pid_file:
-        try:
-            os.remove(_pid_file)
-        except Exception as e:
-            sys.exit("faield to remove pid file: {0!r}" .
-                    format(e))
-
-    sys.exit()
+    daemon.pid_end()
 
 
 def _ch_set_ipv6(arg):
@@ -149,11 +115,6 @@ def _set_port(arg):
     if _port <= 0 or _port > 65535:
         raise conf.UserError("port must be between 0 and 65536")
 
-def _set_pid_file(arg):
-    global _pid_file
-    _pid_file = arg[1]
-
 conf.register_handler("UseIPv6", _ch_set_ipv6)
 conf.simple_conf_handler("Listen", _set_port)
-conf.simple_conf_handler("PidFile", _set_pid_file)
 

@@ -1,6 +1,7 @@
-# $File: control.py
+#!/usr/bin/env python
+# $File: orzoj-judge
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 16:16:36 2010 +0800
+# $Date: Sun Sep 19 15:27:44 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -20,30 +21,7 @@
 # along with orzoj.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""make the program execution controllable by the user"""
+from orzoj.judge.main import run_judge
 
-import threading, signal
-import log
-
-_termination_flag = False
-_lock = threading.Lock()
-
-
-def test_termination_flag():
-    global _termination_flag, _lock
-    with _lock:
-        return _termination_flag
-
-def set_termination_flag():
-    global _termination_flag, _lock
-    with _lock:
-        _termination_flag = True
-
-def sig_handler(signum, frame):
-    set_termination_flag()
-    log.info("reveived signal {0!r}, terminating..." .
-            format(signum))
-
-signal.signal(signal.SIGTERM, sig_handler)
-signal.signal(signal.SIGINT, sig_handler)
+run_judge()
 

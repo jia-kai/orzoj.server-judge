@@ -8,7 +8,7 @@ if len(sys.argv) != 2:
 conf.parse_file("test-snc-server.conf")
 
 HOST = ''
-PORT = 9351
+PORT = 9352
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(1)

@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 11:50:27 2010 +0800
+# $Date: Sun Sep 19 15:37:01 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -27,13 +27,13 @@ import os.path, errno, shutil, time
 
 try:
     import fcntl
-except Exception:
+except:
     pass
 
 class Error(Exception):
     pass
 
-from orzoj import conf, log, structures
+from orzoj import conf, log, structures, msg
 from orzoj.judge import limiter
 
 _dir_temp = None  # relative to ChrootDir
@@ -312,7 +312,7 @@ class _Lang:
                     if case_result.score < case.score:
                         if case_result.score:
                             case_result.exe_status = structures.EXESTS_PARTIALLY_RIGHT
-                        else
+                        else:
                             case_result.exe_status = structures.EXESTS_WRONG_ANSWER
 
                     prob_result.total_score += case_result.score
@@ -390,7 +390,7 @@ def _set_lock_file(arg):
 def _set_user(arg):
     if len(arg) == 2:
         import pwd
-        if arg[1][0] == '#'
+        if arg[1][0] == '#':
             p = pwd.getpwuid(int(arg[1][1:]))
         else:
             p = pwd.getpwnam(arg[1])
@@ -400,7 +400,7 @@ def _set_user(arg):
 def _set_group(arg):
     if len(arg) == 2:
         import grp
-        if arg[1][0] == '#'
+        if arg[1][0] == '#':
             g = grp.getgrgid(int(arg[1][1:]))
         else:
             g = grp.getgrnam(arg[1])

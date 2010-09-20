@@ -12,7 +12,7 @@ s.listen(1)
 conn, addr = s.accept()
 print 'Connected by', addr
 ss = snc.Snc(conn, True)
-print 'Received: {0!r}' . format(ss.read_str(-1))
+print 'Received: {0!r}' . format(ss.read_str(10))
 ss.write_str("message received.")
 ss.close()
 conn.close()
