@@ -102,3 +102,9 @@ error('SSL error [func SSL_read] [errno Resource temporarily unavailable]: error
 failed to read:
 error('SSL error [func SSL_read] [errno: Resource temporarily unavailable]: error:00000002:lib(0):func(0):system lib',)
 
+[2010-09-21 23:16:34,099] [ERROR] from accept in snc at snc.py:74 :
+socket error: TypeError('accept() takes no arguments (1 given)',)
+
+[2010-09-21 23:17:54,073] [ERROR] from socket in snc at snc.py:48 :
+socket error: error(98, 'Address already in use')
+

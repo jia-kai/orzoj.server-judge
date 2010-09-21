@@ -1,7 +1,7 @@
 /*
  * $File: _snc.c
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Tue Sep 21 22:27:45 2010 +0800
+ * $Date: Tue Sep 21 23:40:41 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -70,6 +70,7 @@ static unsigned int ssl_locks_count = 0;
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <errno.h>
+#include <sys/select.h>
 typedef int Socket_t;
 
 #define CLOSE_SOCKET close
@@ -118,7 +119,7 @@ typedef struct {
 } Snc_obj_snc;
 
 
-static PyObject *snc_error_obj;
+static PyObject *snc_error_obj, *snc_error_timeout_obj;
 
 
 // if @host is NULL, it will be regarded as server and socket is automatically binded,
@@ -136,8 +137,14 @@ static PyObject* socket_new_ex(PyObject *self, PyObject *args);
 // return a tuple (conn, addr), where conn is an Snc_obj_socket instance and addr is
 // a string indicating the peer's address
 // should be called only in server mode
+// args: (timeout:float) (@timeout <= 0 means blocking)
+// may raise error_timeout
 // object method
-static PyObject* socket_accept(Snc_obj_socket *self, void*);
+static PyObject* socket_accept(Snc_obj_socket *self, PyObject *args);
+
+// return 1 if new events happen,
+// 0 otherwise (snc_error_timeout_obj is set)
+static int socket_wait(Socket_t sockfd, double timeout);
 
 static PyObject* socket_close(Snc_obj_socket *self, void*);
 static void socket_close_do(Snc_obj_socket *self);
@@ -189,7 +196,7 @@ static PyMethodDef
 	},
 	methods_socket[] = 
 	{
-		{"accept", (PyCFunction)socket_accept, METH_NOARGS, NULL},
+		{"accept", (PyCFunction)socket_accept, METH_VARARGS, NULL},
 		{"close", (PyCFunction)socket_close, METH_NOARGS, NULL},
 		{NULL, NULL, 0, NULL}
 	},
@@ -380,7 +387,7 @@ PyObject* socket_new_ex(PyObject *self, PyObject *args)
 	return (PyObject*) socket_new(host, port, use_ipv6);
 }
 
-PyObject* socket_accept(Snc_obj_socket *self, void *___)
+PyObject* socket_accept(Snc_obj_socket *self, PyObject *args)
 {
 	Socket_t newfd;
 	struct sockaddr addr;
@@ -388,9 +395,17 @@ PyObject* socket_accept(Snc_obj_socket *self, void *___)
 	Snc_obj_socket *conn = NULL;
 	char hostbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
 	int ret;
+	double timeout;
 	PyObject *py_addr = NULL, *res = NULL;
 
+	if (!PyArg_ParseTuple(args, "d:accept", &timeout))
+		return NULL;
+
 	memset(&addr, 0, addrlen);
+
+	if (timeout > 0)
+		if (!socket_wait(self->sockfd, timeout))
+			return NULL;
 
 	Py_BEGIN_ALLOW_THREADS
 	newfd = accept(self->sockfd, &addr, &addrlen);
@@ -432,6 +447,38 @@ PyObject* socket_accept(Snc_obj_socket *self, void *___)
 	Py_XDECREF(conn);
 	Py_XDECREF(py_addr);
 	return res;
+}
+
+int socket_wait(Socket_t sockfd, double timeout)
+{
+	fd_set fds;
+	int ret;
+	struct timeval tv;
+
+	tv.tv_sec = floor(timeout);
+	tv.tv_usec = (timeout - floor(timeout)) * 1e6;
+	FD_ZERO(&fds);
+	FD_SET(sockfd, &fds);
+
+	ret = select(sockfd + 1, &fds, NULL, NULL, &tv);
+
+	if (!ret)
+	{
+		PyErr_SetString(snc_error_timeout_obj, "timed out");
+		return 0;
+	}
+
+#ifdef PLATFORM_WINDOWS
+	if (ret == SOCKET_ERROR)
+#else
+	if (ret < 0)
+#endif
+	{
+		socket_set_error();
+		return 0;
+	}
+
+	return 1;
 }
 
 void socket_close_do(Snc_obj_socket *self)
@@ -915,8 +962,17 @@ init_snc(void)
 	if (!snc_error_obj)
 		return;
 
+	snc_error_timeout_obj = PyErr_NewException("_snc.error_timeout",
+			NULL, NULL);
+	if (!snc_error_timeout_obj)
+		return;
+
 	Py_INCREF(snc_error_obj);
 	if (PyModule_AddObject(m, "error", snc_error_obj) < 0)
+		return;
+
+	Py_INCREF(snc_error_timeout_obj);
+	if (PyModule_AddObject(m, "error_timeout", snc_error_timeout_obj) < 0)
 		return;
 }
 

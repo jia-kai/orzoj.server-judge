@@ -1,6 +1,6 @@
 # $File: snc.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Sep 21 18:37:54 2010 +0800
+# $Date: Tue Sep 21 23:16:30 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -35,13 +35,16 @@ _ca_file    = None
 class Error(Exception):
     pass
 
+class ErrorTimeout(Error):
+    pass
+
 _use_ipv6 = 0
 
 def socket(host, port):
     """set @host to None if in server mode (accept() usable)"""
     try:
         return _socket_real(_snc.socket(host, port, _use_ipv6), host is None)
-    except _snc.error as e:
+    except Exception as e:
         log.error("socket error: {0!r}" . format(e))
         raise Error
 
@@ -53,15 +56,20 @@ class _socket_real:
     def __del__(self):
         self.close()
 
-    def accept(self):
+    def accept(self, timeout = 0):
         """return a tuple (conn, addr),
         where conn is a socket instance and addr is a string represeting the peer's address
-        only available in server mode"""
+        only available in server mode
+        
+        if timeout <= 0, it will block as long as necessary;\
+        otherwise it blocks at most @timeout seconds, and then raise ErrorTimeout"""
         if not self._is_server:
             return
         try:
-            ret = self._socket.accept()
+            ret = self._socket.accept(timeout)
             return (_socket_real(ret[0], False), ret[1])
+        except _snc.error_timeout:
+            raise ErrorTimeout
         except Exception as e:
             log.error("socket error: {0!r}" . format(e))
             raise Error
