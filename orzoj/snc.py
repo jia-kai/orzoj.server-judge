@@ -1,6 +1,6 @@
 # $File: snc.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 19:38:03 2010 +0800
+# $Date: Tue Sep 21 18:37:54 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -20,133 +20,139 @@
 # along with orzoj.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import ssl, socket, struct
+"""a wrapper for _snc module"""
 
-import conf, log
+from orzoj import _snc, log, conf
+
+import struct
 
 _timeout    = None
 _cert_file  = None
 _key_file   = None
 _ca_file    = None
 
+
 class Error(Exception):
     pass
 
-class Snc:
-    """secure network connection, a wrapper for python ssl module
+_use_ipv6 = 0
 
-    Error may be raised by any method
-    Key method arguments:
-            timeout -- the timeout set on reading and writing, expressing in seconds,
-                       besides default timeout. Setting it to a negative value disables timeouts.
-    """
-    def __init__(self, sock, is_server = False):
-        global _cert_file, _key_file, _ca_file
-        try:
-            self._closed = True
-            self._ssl = ssl.wrap_socket(sock, keyfile = _key_file,
-                    certfile = _cert_file, ca_certs = _ca_file,
-                    server_side = is_server, cert_reqs = ssl.CERT_REQUIRED,
-                    ssl_version = ssl.PROTOCOL_TLSv1)
-            self._closed = False  # now successfully initialized
-        except socket.timeout:
-            log.error("socket timeout")
-            raise Error
-        except socket.error as e:
-            log.error("socket error: {0!r}" . format(e))
-            raise Error
-        except ssl.SSLError as e:
-            log.error("SSLError: {0!r}" . format(e))
-            raise Error
+def socket(host, port):
+    """set @host to None if in server mode (accept() usable)"""
+    try:
+        return _socket_real(_snc.socket(host, port, _use_ipv6), host is None)
+    except _snc.error as e:
+        log.error("socket error: {0!r}" . format(e))
+        raise Error
 
-    def _set_timeout(self, val):
-        global _timeout
-        if val < 0:
-            slef._ssl.settimeout(None)
-        else:
-            self._ssl.settimeout(val)
-
-    def read_all(self, count, timeout = 0):
-        """read repeatedly until @count bytes are read"""
-        try:
-            self._set_timeout(timeout)
-            ret = ''
-            while len(ret) < count:
-                ret += self._ssl.read(count - len(ret))
-            return ret
-        except socket.timeout:
-            log.error("socket timeout")
-            raise Error
-        except socket.error as e:
-            log.error("socket error: {0!r}" . format(e))
-            raise Error
-        except ssl.SSLError as e:
-            log.error("SSLError: {0!r}" . format(e))
-            raise Error
-
-    def write_all(self, data, timeout = 0):
-        """write repeatedly until all data are writen"""
-        try:
-            self._set_timeout(timeout)
-            tot = 0
-            while tot < len(data):
-                tot += self._ssl.write(data[tot:])
-        except socket.timeout:
-            log.error("socket timeout")
-            raise Error
-        except socket.error as e:
-            log.error("socket error: {0!r}" . format(e))
-            raise Error
-        except ssl.SSLError as e:
-            log.error("SSLError: {0!r}" . format(e))
-            raise Error
-
-    def read_int32(self, timeout = 0):
-        """read a signed 32-bit integer and return it"""
-        return struct.unpack("!i", self.read_all(4, timeout))[0]
-
-    def write_int32(self, val, timeout = 0):
-        """write a signed 32-bit integer"""
-        self.write_all(struct.pack("!i", val), timeout)
-
-    def read_uint32(self, timeout = 0):
-        """read an unsigned 32-bit integer and return it"""
-        return struct.unpack("!I", self.read_all(4, timeout))[0]
-
-    def write_uint32(self, val, timeout = 0):
-        """write an unsigned 32-bit integer"""
-        self.write_all(struct.pack("!I", val), timeout)
-
-    def read_str(self, timeout = 0):
-        """read a string and return it"""
-        length = self.read_uint32(timeout)
-        return self.read_all(length, timeout)
-
-    def write_str(self, data, timeout = 0):
-        """write a string"""
-        self.write_uint32(len(data), timeout)
-        self.write_all(data, timeout)
-
-    def close(self):
-        try:
-            if not self._closed:
-                self._ssl.unwrap()
-                self._closed = True
-        except ssl.SSLError as e:
-            log.error("SSLError: {0!r}" . format(e))
-        except socket.error as e:
-            log.error("socket error: {0!r}" . format(e))
-        except socket.timeout:
-            log.error("socket timeout")
+class _socket_real:
+    def __init__(self, _socket, _is_server):
+        self._socket = _socket
+        self._is_server = _is_server
 
     def __del__(self):
         self.close()
 
+    def accept(self):
+        """return a tuple (conn, addr),
+        where conn is a socket instance and addr is a string represeting the peer's address
+        only available in server mode"""
+        if not self._is_server:
+            return
+        try:
+            ret = self._socket.accept()
+            return (_socket_real(ret[0], False), ret[1])
+        except Exception as e:
+            log.error("socket error: {0!r}" . format(e))
+            raise Error
+
+    def close(self):
+        if self._socket:
+            self._socket.close()
+            self._socket = None
 
 
-def _init():
-    if struct.calcsize("i") != 4 or struct.calcsize("I") != 4:
-        sys.exit("standard size of integer or unsigned integer is not 4-byte!")
+class snc:
+    def __init__(self, sock, is_server = 0):
+        self._snc = None
+        try:
+            if is_server:
+                is_server = 1
+            self._snc = _snc.snc(sock._socket, is_server, _timeout,
+                    _cert_file, _key_file, _ca_file)
+        except Exception as e:
+            log.error("failed to establish SSL connection:\n{0!r}" . format(e))
+            raise Error
+
+    def __del__(self):
+        self.close()
+
+    def read(self, len, timeout = 0):
+        """read exactly @len bytes
+        if @timeout is negative, it will block until data available;
+        else timeout is @timeout plus @_timeout """
+        if timeout < 0:
+            timeout = 0
+        else:
+            timeout += _timeout
+
+        try:
+            return self._snc.read(len, timeout)
+        except Exception as e:
+            log.error("failed to read:\n{0!r}" . format(e))
+            raise Error
+
+    def write(self, data, timeout = 0):
+        """write all of @data"""
+        if timeout < 0:
+            timeout = 0
+        else:
+            timeout += _timeout
+
+        try:
+            return self._snc.write(data, timeout)
+        except Exception as e:
+            log.error("failed to write:\n{0!r}" . format(e))
+            raise Error
+
+    def read_int32(self, timeout = 0):
+        """read a signed 32-bit integer and return it"""
+        return struct.unpack("!i", self.read(4, timeout))[0]
+
+    def write_int32(self, val, timeout = 0):
+        """write a signed 32-bit integer"""
+        self.write(struct.pack("!i", val), timeout)
+
+    def read_uint32(self, timeout = 0):
+        """read an unsigned 32-bit integer and return it"""
+        return struct.unpack("!I", self.read(4, timeout))[0]
+
+    def write_uint32(self, val, timeout = 0):
+        """write an unsigned 32-bit integer"""
+        self.write(struct.pack("!I", val), timeout)
+
+    def read_str(self, timeout = 0):
+        """read a string and return it"""
+        len = self.read_uint32(timeout)
+        return self.read(len, timeout)
+
+    def write_str(self, data, timeout = 0):
+        """write a string"""
+        self.write_uint32(len(data), timeout)
+        self.write(data, timeout)
+
+    def close(self):
+        if self._snc:
+            self._snc.shutdown()
+            self._snc = None
+
+
+def _ch_set_ipv6(arg):
+    if len(arg) > 2 or (len(arg) == 2 and arg[1]):
+        raise conf.UserError("Option UseIPv6 takes no argument")
+    if len(arg) == 2:
+        global _use_ipv6
+        _use_ipv6 = 1
 
 def _set_timeout(arg):
     global _timeout
@@ -167,8 +173,16 @@ def _set_ca_file(arg):
     global _ca_file
     _ca_file = arg[1]
 
+conf.register_handler("UseIPv6", _ch_set_ipv6)
 conf.simple_conf_handler("NetworkTimeout", _set_timeout, default = "2")
 conf.simple_conf_handler("CertificateFile", _set_cert_file)
 conf.simple_conf_handler("PrivateKeyFile", _set_key_file)
 conf.simple_conf_handler("CAFile", _set_ca_file)
+
+
+def _init():
+    if struct.calcsize("i") != 4 or struct.calcsize("I") != 4:
+        sys.exit("standard size of integer or unsigned integer is not 4-byte!")
+
 conf.register_init_func(_init)
+

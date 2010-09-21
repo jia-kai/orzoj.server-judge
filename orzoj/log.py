@@ -1,6 +1,6 @@
 # $File: log.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 18 19:49:32 2010 +0800
+# $Date: Tue Sep 21 16:41:31 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,7 +23,7 @@
 """orzoj logging system"""
 
 import logging, logging.handlers, sys
-import conf
+from orzoj import conf
 
 _logger = logging.getLogger()
 

@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 15:37:01 2010 +0800
+# $Date: Tue Sep 21 17:15:03 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -336,10 +336,10 @@ class _Lang:
             if locked:
                 fcntl.flock(_lock_file_fd, fcntl.LOCK_UN)
             raise
-        except SncError:
+        except snc.Error:
             if locked:
                 fcntl.flock(_lock_file_fd, fcntl.LOCK_UN)
-            raise
+            raise Error
         except Exception as e:
             if locked:
                 fcntl.flock(_lock_file_fd, fcntl.LOCK_UN)

@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 17:31:59 2010 +0800
+# $Date: Tue Sep 21 17:15:23 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -105,7 +105,7 @@ def connect(sock):
                 log.error("message check error.")
                 raise Error
     try:
-        conn = snc.Snc(sock)
+        conn = snc.snc(sock)
 
         _write_msg(msg.HELLO)
         global _judge_id

@@ -34,3 +34,92 @@ socket error: SSLError(2, '_ssl.c:1325: The operation did not complete (read)')
 [2010-09-20 10:44:17,618] [ERROR] from close in snc at snc.py:136 :
 SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
 
+[2010-09-21 17:27:34,761] [ERROR] from __init__ in snc at snc.py:47 :
+socket error: error('failed to connect',)
+
+[2010-09-21 17:28:47,290] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:34:37,684] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:35:38,341] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:35:50,285] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:36:09,389] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:36:22,438] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:36:39,630] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:36:50,230] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:40:10,514] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:40:38,804] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:40:53,756] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:41:27,043] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 17:42:44,830] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 18:16:55,004] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 18:20:35,967] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+TypeError('snc() argument 1 must be snc.socket, not instance',)
+
+[2010-09-21 18:28:12,528] [ERROR] from __init__ in snc at snc.py:51 :
+socket error: error('failed to connect',)
+
+[2010-09-21 18:29:25,649] [ERROR] from __init__ in snc at snc.py:52 :
+socket error: error('failed to connect',)
+
+[2010-09-21 18:29:44,318] [ERROR] from write in snc at snc.py:116 :
+failed to write:
+TypeError('an integer is required',)
+
+[2010-09-21 18:30:46,591] [ERROR] from write in snc at snc.py:116 :
+failed to write:
+TypeError('write() argument 1 must be string or buffer, not builtin_function_or_method',)
+
+[2010-09-21 18:31:27,199] [ERROR] from write in snc at snc.py:116 :
+failed to write:
+error('SSL error [func SSL_write] [errno Resource temporarily unavailable]: error:00000003:lib(0):func(0):BN lib',)
+
+[2010-09-21 18:33:12,855] [ERROR] from write in snc at snc.py:116 :
+failed to write:
+error('SSL error [func SSL_write] [errno Resource temporarily unavailable]: error:00000003:lib(0):func(0):BN lib',)
+
+[2010-09-21 18:38:56,837] [ERROR] from write in snc at snc.py:115 :
+failed to write:
+error('SSL error [func SSL_write] [errno Broken pipe]: error:00000005:lib(0):func(0):DH lib',)
+

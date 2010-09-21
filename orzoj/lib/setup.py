@@ -1,6 +1,6 @@
-# $File: control.py
+# $File: setup.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Sep 21 16:41:13 2010 +0800
+# $Date: Tue Sep 21 16:38:03 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -20,30 +20,15 @@
 # along with orzoj.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""make the program execution controllable by the user"""
+from distutils.core import setup, Extension
+import commands
 
-import threading, signal
-from orzoj import log
+cflags = ["-Wall"]
+cflags.extend(commands.getoutput("pkg-config --cflags openssl").split())
 
-_termination_flag = False
-_lock = threading.Lock()
+module = Extension("orzoj._snc", sources = ["_snc.c"], 
+        extra_compile_args = cflags,
+        extra_link_args = commands.getoutput("pkg-config --libs openssl").split())
 
-
-def test_termination_flag():
-    global _termination_flag, _lock
-    with _lock:
-        return _termination_flag
-
-def set_termination_flag():
-    global _termination_flag, _lock
-    with _lock:
-        _termination_flag = True
-
-def sig_handler(signum, frame):
-    set_termination_flag()
-    log.info("reveived signal {0!r}, terminating..." .
-            format(signum))
-
-signal.signal(signal.SIGTERM, sig_handler)
-signal.signal(signal.SIGINT, sig_handler)
+setup(name = "orzoj", ext_modules = [module])
 

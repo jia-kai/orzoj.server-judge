@@ -1,6 +1,6 @@
 # $File: main.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 16:48:44 2010 +0800
+# $Date: Tue Sep 21 16:50:27 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -32,7 +32,6 @@ SERVER_VERSION = 0x00000101
 # otherwise it's a stable release
 
 _options = None
-_use_ipv6 = False
 _port = None
 
 def get_version_str():
@@ -102,19 +101,11 @@ def run_server():
     daemon.pid_end()
 
 
-def _ch_set_ipv6(arg):
-    if len(arg) > 2 or (len(arg) == 2 and arg[1]):
-        raise conf.UserError("Option UseIPv6 takes no argument")
-    if len(arg) == 2:
-        global _use_ipv6
-        _use_ipv6 = True
-
 def _set_port(arg):
     global _port
     _port = int(arg[1])
     if _port <= 0 or _port > 65535:
         raise conf.UserError("port must be between 0 and 65536")
 
-conf.register_handler("UseIPv6", _ch_set_ipv6)
 conf.simple_conf_handler("Listen", _set_port)
 

@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 18:35:08 2010 +0800
+# $Date: Tue Sep 21 17:14:19 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -302,7 +302,7 @@ class thread_new_judge_connection(threading.Thread):
         judge = structures.judge()
         self._judge = judge
         try:
-            self._snc = snc.Snc(self._sock, True)
+            self._snc = snc.snc(self._sock, True)
             _check_msg(msg.HELLO)
             judge.id = _read_str()
 

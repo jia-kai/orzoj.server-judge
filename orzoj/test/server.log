@@ -55,3 +55,46 @@ socket error: SSLError('The read operation timed out',)
 [2010-09-20 08:53:21,192] [ERROR] from close in snc at snc.py:136 :
 SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
 
+[2010-09-21 17:28:08,407] [ERROR] from __init__ in snc at snc.py:47 :
+socket error: error(98, 'Address already in use')
+
+[2010-09-21 17:41:27,048] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+error('SSL error [func SSL_accept] [errno Success]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-09-21 17:42:44,835] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+error('SSL error [func SSL_accept] [errno Success]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-09-21 18:16:55,009] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+error('SSL error [func SSL_accept] [errno Success]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-09-21 18:20:35,972] [ERROR] from __init__ in snc at snc.py:74 :
+failed to establish SSL connection:
+error('SSL error [func SSL_accept] [errno Success]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-09-21 18:29:44,322] [ERROR] from read in snc at snc.py:103 :
+failed to read:
+error('SSL error [func SSL_read] [errno Success]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-09-21 18:30:46,595] [ERROR] from read in snc at snc.py:103 :
+failed to read:
+error('SSL error [func SSL_read] [errno Success]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-09-21 18:31:27,203] [ERROR] from write in snc at snc.py:116 :
+failed to write:
+error('SSL error [func SSL_write] [errno Connection reset by peer]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-09-21 18:33:12,859] [ERROR] from write in snc at snc.py:116 :
+failed to write:
+error('SSL error [func SSL_write] [errno Connection reset by peer]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-09-21 18:38:16,617] [ERROR] from read in snc at snc.py:102 :
+failed to read:
+error('SSL error [func SSL_read] [errno Success]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-09-21 18:38:51,414] [ERROR] from read in snc at snc.py:102 :
+failed to read:
+error('SSL error [func SSL_read] [errno Resource temporarily unavailable]: error:00000002:lib(0):func(0):system lib',)
+

@@ -1,6 +1,6 @@
 # $File: filetrans.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Sep 14 11:09:25 2010 +0800
+# $Date: Tue Sep 21 18:53:06 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,7 +23,8 @@
 """implementation of OFTP (orzoj file transfer protocol)"""
 
 import datetime, hashlib, os.path
-import log, msg, snc
+
+from orzoj import log, msg, snc
 
 _PACKET_SIZE = 1024 * 16
 _OFTP_VERSION = 0x0f000001
@@ -98,11 +99,11 @@ def send(fpath, conn):
                     psize -= s - fsize
                 buf = fptr.read(psize)
                 sha_ctx.update(buf)
-                conn.write_all(buf)
+                conn.write(buf)
             _write_msg(msg.OFTP_END)
             _check_msg(msg.OFTP_END)
 
-            if conn.read_all(sha_ctx.digest_size) != sha_ctx.digest():
+            if conn.read(sha_ctx.digest_size) != sha_ctx.digest():
                 _write_msg(msg.OFTP_CHECK_FAIL)
             else:
                 _write_msg(msg.OFTP_CHECK_OK)
@@ -152,14 +153,14 @@ def recv(fpath, conn):
                 s += psize
                 if s > fsize:
                     psize -= s - fsize
-                buf = conn.read_all(psize)
+                buf = conn.read(psize)
                 sha_ctx.update(buf)
                 fptr.write(buf)
 
             _check_msg(msg.OFTP_END)
             _write_msg(msg.OFTP_END)
 
-            conn.write_all(sha_ctx.digest())
+            conn.write(sha_ctx.digest())
             m = _read_msg()
             if m == msg.OFTP_CHECK_OK:
                 return fsize / 1024.0 / _td2seconds(datetime.datetime.now() - time_start)

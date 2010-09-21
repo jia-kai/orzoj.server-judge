@@ -1,6 +1,6 @@
 # $File: limiter.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 11:51:03 2010 +0800
+# $Date: Tue Sep 21 16:46:26 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -21,9 +21,12 @@
 #
 """parse limiter configuration and export functions to use limiter"""
 
-import subprocess, socket, tempfile, struct, os, sys, time
+import subprocess, tempfile, struct, os, sys, time
 
 from orzoj import conf, log
+
+if conf.is_unix:
+    import socket
 
 limiter_dict = {}
 
@@ -55,6 +58,8 @@ class _Limiter:
         self._name = args[1]
 
         if args[2] == 'socket':
+            if not conf.is_unix:
+                raise conf.UserError("{0}: socket method is only avaliable on Unix systems" . format(args[0]))
             self._type = _LIMITER_SOCKET
         elif args[2] == 'file':
             self._type = _LIMITER_FILE
