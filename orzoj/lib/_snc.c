@@ -1,7 +1,7 @@
 /*
  * $File: _snc.c
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Tue Sep 21 18:39:26 2010 +0800
+ * $Date: Tue Sep 21 22:27:45 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -63,13 +63,6 @@ static unsigned int ssl_locks_count = 0;
 #	define PLATFORM_WINDOWS 1
 #endif
 
-#include <string.h>
-#include <math.h>
-#include <stdlib.h>
-
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-
 #ifdef PLATFORM_UNIX
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -91,8 +84,8 @@ typedef int Socket_t;
 #pragma comment(lib, "libeay32.lib")
 #pragma comment(lib, "ssleay32.lib")
 
-#include <windows.h>
 #include <winsock2.h>
+#include <windows.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 
@@ -102,6 +95,14 @@ typedef SOCKET Socket_t;
 #define SOCKFD_ERROR(_s_) (_s_ == INVALID_SOCKET)
 
 #endif // PLATFORM_WINDOWS
+
+
+#include <string.h>
+#include <math.h>
+#include <stdlib.h>
+
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 typedef struct {
 	PyObject_HEAD
@@ -228,19 +229,22 @@ static void set_type_attr(void)
 
 Snc_obj_socket* socket_new(const char *host, int port, int use_ipv6)
 {
+	Socket_t sockfd = 0;
+	int getaddrinfo_ret = 0, ok, ret;
+	struct addrinfo hints, *result, *ptr;
+	char port_str[20];
+	struct sockaddr_in6 srv_addr6;
+	struct sockaddr_in srv_addr;
 	Snc_obj_socket *self = PyObject_New(Snc_obj_socket, &type_socket);
 	if (!self)
 		return NULL;
 	self->sockfd = 0;
-	Socket_t sockfd = 0;
 
-	int getaddrinfo_ret = 0, ok, ret;
-	struct addrinfo hints, *result, *ptr;
-	char port_str[20];
 	if (!host)
 	{
 		if (use_ipv6)
 		{
+#define srv_addr srv_addr6
 			Py_BEGIN_ALLOW_THREADS
 			sockfd = socket(AF_INET6, SOCK_STREAM, 0);
 			Py_END_ALLOW_THREADS
@@ -249,7 +253,6 @@ Snc_obj_socket* socket_new(const char *host, int port, int use_ipv6)
 				goto FAIL;
 
 			Py_BEGIN_ALLOW_THREADS
-			struct sockaddr_in6 srv_addr;
 			memset(&srv_addr, 0, sizeof(srv_addr));
 			srv_addr.sin6_family = AF_INET6;
 			srv_addr.sin6_addr = in6addr_any;
@@ -266,6 +269,7 @@ Snc_obj_socket* socket_new(const char *host, int port, int use_ipv6)
 
 			if (ret)
 				goto FAIL;
+#undef srv_addr
 		} else
 		{
 			Py_BEGIN_ALLOW_THREADS
@@ -276,7 +280,6 @@ Snc_obj_socket* socket_new(const char *host, int port, int use_ipv6)
 				goto FAIL;
 
 			Py_BEGIN_ALLOW_THREADS
-			struct sockaddr_in srv_addr;
 			memset(&srv_addr, 0, sizeof(srv_addr));
 			srv_addr.sin_family = AF_INET;
 			srv_addr.sin_addr.s_addr = INADDR_ANY;
@@ -382,6 +385,11 @@ PyObject* socket_accept(Snc_obj_socket *self, void *___)
 	Socket_t newfd;
 	struct sockaddr addr;
 	socklen_t addrlen = sizeof(addr);
+	Snc_obj_socket *conn = NULL;
+	char hostbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
+	int ret;
+	PyObject *py_addr = NULL, *res = NULL;
+
 	memset(&addr, 0, addrlen);
 
 	Py_BEGIN_ALLOW_THREADS
@@ -394,7 +402,7 @@ PyObject* socket_accept(Snc_obj_socket *self, void *___)
 		return NULL;
 	}
 
-	Snc_obj_socket *conn = PyObject_New(Snc_obj_socket, &type_socket);
+	conn = PyObject_New(Snc_obj_socket, &type_socket);
 	if (!conn)
 	{
 		Py_BEGIN_ALLOW_THREADS
@@ -406,8 +414,6 @@ PyObject* socket_accept(Snc_obj_socket *self, void *___)
 
 	conn->sockfd = newfd;
 
-	char hostbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
-	int ret;
 	Py_BEGIN_ALLOW_THREADS
 	ret = getnameinfo(&addr, addrlen, hostbuf, NI_MAXHOST,
 			servbuf, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
@@ -419,8 +425,7 @@ PyObject* socket_accept(Snc_obj_socket *self, void *___)
 		strcpy(servbuf, "unknown");
 	}
 
-	PyObject *py_addr = PyString_FromFormat("%s:%s", hostbuf, servbuf),
-			 *res = NULL;
+	py_addr = PyString_FromFormat("%s:%s", hostbuf, servbuf);
 	if (py_addr)
 		res = PyTuple_Pack(2, conn, py_addr);
 
@@ -495,10 +500,13 @@ int set_timeout(Socket_t sockfd, double val)
 Snc_obj_snc* snc_new(Snc_obj_socket *sock, int is_server, double timeout_default,
 		const char *fname_cert, const char *fname_priv_key, const char *fname_ca)
 {
+	Snc_obj_snc *self = NULL;
+	int ret;
+
 	if (!set_timeout(sock->sockfd, timeout_default))
 		return NULL;
 
-	Snc_obj_snc *self = PyObject_New(Snc_obj_snc, &type_snc);
+	self = PyObject_New(Snc_obj_snc, &type_snc);
 	if (!self)
 		return NULL;
 
@@ -567,7 +575,6 @@ Snc_obj_snc* snc_new(Snc_obj_socket *sock, int is_server, double timeout_default
 		goto FAIL;
 	}
 
-	int ret;
 	SNC_BEGIN_ALLOW_THREADS
 	if  (is_server)
 		ret = SSL_accept(self->ssl);
@@ -614,24 +621,24 @@ PyObject* snc_new_ex(PyObject *self, PyObject *args)
 
 PyObject* snc_read(Snc_obj_snc *self, PyObject *args)
 {
+	int len, tot = 0, ret;
+	double timeout;
+	PyObject *buf;
 	if (self->socket == NULL)
 	{
 		PyErr_SetString(snc_error_obj, "attempt to read from a closed socket");
 		return NULL;
 	}
-	int len;
-	double timeout;
 	if (!PyArg_ParseTuple(args, "id:read", &len, &timeout))
 		return NULL;
 
 	if (!set_timeout(self->socket->sockfd, timeout))
 		return NULL;
 
-	PyObject *buf = PyString_FromStringAndSize(NULL, len);
+	buf = PyString_FromStringAndSize(NULL, len);
 	if (!buf)
 		return NULL;
 
-	int tot = 0, ret;
 	while (tot < len)
 	{
 		SNC_BEGIN_ALLOW_THREADS
@@ -653,21 +660,22 @@ PyObject* snc_read(Snc_obj_snc *self, PyObject *args)
 
 PyObject* snc_write(Snc_obj_snc *self, PyObject *args)
 {
+	Py_buffer buf;
+	double timeout;
+	int tot = 0, ret;
+
 	if (self->socket == NULL)
 	{
 		PyErr_SetString(snc_error_obj, "attempt to write to a closed socket");
 		return NULL;
 	}
-	Py_buffer buf;
-	double timeout;
 	if (!PyArg_ParseTuple(args, "s*d:write", &buf, &timeout))
 		return NULL;
 
-	int tot = 0, ret;
 	while (tot < buf.len)
 	{
 		SNC_BEGIN_ALLOW_THREADS
-		ret = SSL_write(self->ssl, buf.buf + tot, buf.len - tot);
+		ret = SSL_write(self->ssl, ((char*)buf.buf) + tot, buf.len - tot);
 		SNC_END_ALLOW_THREADS
 
 		if (ret <= 0)
@@ -688,13 +696,14 @@ PyObject* snc_write(Snc_obj_snc *self, PyObject *args)
 
 void snc_shutdown_do(Snc_obj_snc *self)
 {
+	int ret;
 	if (self->ssl)
 	{
 		if (self->socket)
 		{
 			set_timeout(self->socket->sockfd, self->timeout_default);
 			SNC_BEGIN_ALLOW_THREADS
-			int ret = SSL_shutdown(self->ssl);
+			ret = SSL_shutdown(self->ssl);
 			if (ret == 0) // according to the manual page, should call SSL_shutdown again
 				ret = SSL_shutdown(self->ssl);
 			// ignore errors here
@@ -827,6 +836,7 @@ static void free_ssl_locks_mem(void)
 
 static int setup_ssl_threads(void)
 {
+	unsigned int i, j;
     if (ssl_locks == NULL)
 	{
         ssl_locks_count = CRYPTO_num_locks();
@@ -835,17 +845,14 @@ static int setup_ssl_threads(void)
         if (ssl_locks == NULL)
             return 0;
         memset(ssl_locks, 0, sizeof(PyThread_type_lock) * ssl_locks_count);
-		unsigned int i;
 		for (i = 0; i < ssl_locks_count; i ++)
 		{
             ssl_locks[i] = PyThread_allocate_lock();
             if (ssl_locks[i] == NULL)
 			{
-                unsigned int j;
                 for (j = 0; j < i; j++)
                     PyThread_free_lock(ssl_locks[j]);
                 free(ssl_locks);
-				PyErr_SetString(snc_error_obj, "failed to initialize SSL locks");
                 return 0;
             }
         }
@@ -863,7 +870,7 @@ int ssl_init()
 	SSL_load_error_strings();
 	SSL_library_init();
 #ifdef WITH_THREAD
-    /* note that this will start threading if not already started */
+    // note that this will start threading if not already started
     if (!setup_ssl_threads())
         return 0;
 #endif
@@ -881,9 +888,11 @@ int ssl_init()
 PyMODINIT_FUNC
 init_snc(void)
 {
+	PyObject *m = NULL;
+	static int os_init_done = 0;
+
 	set_type_attr();
 
-	static int os_init_done = 0;
 	if (!os_init_done)
 	{
 		if (!os_init())
@@ -895,7 +904,7 @@ init_snc(void)
 			PyType_Ready(&type_snc) < 0)
 		return;
 
-	PyObject *m = Py_InitModule3("_snc", methods_module, NULL);
+	m = Py_InitModule3("_snc", methods_module, NULL);
 	if (!m)
 		return;
 

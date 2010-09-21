@@ -98,3 +98,7 @@ error('SSL error [func SSL_read] [errno Success]: error:00000005:lib(0):func(0):
 failed to read:
 error('SSL error [func SSL_read] [errno Resource temporarily unavailable]: error:00000002:lib(0):func(0):system lib',)
 
+[2010-09-21 22:15:29,119] [ERROR] from read in snc at snc.py:102 :
+failed to read:
+error('SSL error [func SSL_read] [errno: Resource temporarily unavailable]: error:00000002:lib(0):func(0):system lib',)
+
