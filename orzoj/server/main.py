@@ -1,6 +1,6 @@
 # $File: main.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Sep 21 16:50:27 2010 +0800
+# $Date: Wed Sep 22 10:08:31 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -22,8 +22,8 @@
 
 """orzoj-server"""
 
-import socket, sys, optparse, time, threading, os
-from orzoj import log, conf, control, daemon
+import sys, optparse, time, threading, os
+from orzoj import log, conf, control, daemon, snc
 from orzoj.server import work
 
 SERVER_VERSION = 0x00000101
@@ -61,16 +61,9 @@ def run_server():
     daemon.pid_start()
 
     try:
-        if _use_ipv6:
-            s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        else:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(('', _port))
-        s.listen(5)
-    except socket.error as e:
-        log.error("socket error: {0!r}" . format(e))
+        s = snc.socket(None, _port)
+    except snc.Error:
         daemon.pid_end()
-        sys.exit(1)
 
     log.info("orzoj-server started, listening on {0}" .
             format(_port))
@@ -79,9 +72,10 @@ def run_server():
 
     while not control.test_termination_flag():
         try:
-            (conn, addr) = s.accept()
-        except socket.error as e:
-            log.error("socket error: {0!r}" . format(e))
+            (conn, addr) = s.accept(1)
+        except snc.ErrorTimeout:
+            continue
+        except snc.Error as e:
             control.set_termination_flag()
             break
 
@@ -95,8 +89,6 @@ def run_server():
         for i in threading.enumerate():
             log.debug("active thread: {0!r}" . format(i.name))
         time.sleep(1)
-
-    log.info("all threads ended, program exiting")
 
     daemon.pid_end()
 

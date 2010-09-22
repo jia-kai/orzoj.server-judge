@@ -8,7 +8,7 @@ if len(sys.argv) != 2:
 conf.parse_file("test-snc-client.conf")
 
 HOST = '127.0.0.1'
-PORT = 9352
+PORT = 9351
 
 s = snc.socket(HOST, PORT)
 

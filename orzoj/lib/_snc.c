@@ -1,7 +1,7 @@
 /*
  * $File: _snc.c
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Tue Sep 21 23:40:41 2010 +0800
+ * $Date: Wed Sep 22 10:02:16 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -460,7 +460,9 @@ int socket_wait(Socket_t sockfd, double timeout)
 	FD_ZERO(&fds);
 	FD_SET(sockfd, &fds);
 
+	Py_BEGIN_ALLOW_THREADS
 	ret = select(sockfd + 1, &fds, NULL, NULL, &tv);
+	Py_END_ALLOW_THREADS
 
 	if (!ret)
 	{

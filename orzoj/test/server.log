@@ -108,3 +108,6 @@ socket error: TypeError('accept() takes no arguments (1 given)',)
 [2010-09-21 23:17:54,073] [ERROR] from socket in snc at snc.py:48 :
 socket error: error(98, 'Address already in use')
 
+[2010-09-22 10:03:28,593] [WARNING] from _check_msg in filetrans at filetrans.py:134 :
+message check error.
+

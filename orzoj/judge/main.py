@@ -1,6 +1,6 @@
 # $File: main.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 16:00:34 2010 +0800
+# $Date: Wed Sep 22 10:05:52 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -22,9 +22,9 @@
 
 """orzoj-judge"""
 
-import socket, sys, optparse, os
+import sys, optparse, os
 
-from orzoj import log, conf, control, daemon
+from orzoj import log, conf, control, daemon, snc
 from orzoj.judge import work
 
 JUDGE_VERSION = 0x00000101
@@ -65,28 +65,9 @@ def run_judge():
 
     daemon.pid_start()
 
-    s = None
-    for res in socket.getaddrinfo(_server_addr, _server_port, socket.AF_UNSPEC, socket.SOCK_STREAM):
-        (af, socktype, proto, canonname, sa) = res
-        try:
-            s = socket.socket(af, socktype, proto)
-        except socket.error as e:
-            log.warning("socket error: {0!r}" . format(e))
-            s = None
-            continue
-        try:
-            s.connect(sa)
-        except socket.error as e:
-            log.warning("socket error: {0!r}" . format(e))
-            s.close()
-            s = None
-            continue
-
-        break # successfully connected
-
-    if s is None:
-        log.error("faied to connect to orzoj-server at {0!r}:{1!r}" .
-                format(_server_addr, _server_port))
+    try:
+        s = snc.socket(_server_addr, _server_port)
+    except snc.Error:
         daemon.pid_end()
     
     try:

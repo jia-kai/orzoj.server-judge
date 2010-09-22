@@ -10,3 +10,36 @@ error occurred, terminating program
 [2010-09-19 18:34:31,444] [ERROR] from close in snc at snc.py:137 :
 SSLError: SSLError(2, '_ssl.c:1357: The operation did not complete (read)')
 
+[2010-09-22 10:10:11,663] [ERROR] from read in snc at snc.py:110 :
+failed to read:
+error('SSL error [func SSL_read] [errno: Success]: error:00000006:lib(0):func(0):EVP lib',)
+
+[2010-09-22 10:10:11,664] [ERROR] from connect in work at work.py:234 :
+failed to communicate with orzoj-server because of network error
+
+[2010-09-22 10:10:11,664] [ERROR] from run_judge in main at main.py:76 :
+error occurred, terminating program
+
+[2010-09-22 10:11:53,023] [ERROR] from read in snc at snc.py:110 :
+failed to read:
+error('SSL error [func SSL_read] [errno: Success]: error:00000006:lib(0):func(0):EVP lib',)
+
+[2010-09-22 10:11:53,023] [ERROR] from connect in work at work.py:234 :
+failed to communicate with orzoj-server because of network error
+
+[2010-09-22 10:11:53,023] [ERROR] from run_judge in main at main.py:76 :
+error occurred, terminating program
+
+[2010-09-22 10:13:05,447] [INFO] from sig_handler in control at control.py:45 :
+reveived signal 2, terminating...
+
+[2010-09-22 10:13:05,447] [ERROR] from read in snc at snc.py:110 :
+failed to read:
+error('SSL error [func SSL_read] [errno: Interrupted system call]: error:00000002:lib(0):func(0):system lib',)
+
+[2010-09-22 10:13:05,447] [ERROR] from connect in work at work.py:234 :
+failed to communicate with orzoj-server because of network error
+
+[2010-09-22 10:13:05,447] [ERROR] from run_judge in main at main.py:76 :
+error occurred, terminating program
+

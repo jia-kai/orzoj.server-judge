@@ -265,3 +265,127 @@ active thread: 'MainThread'
 [2010-09-19 18:35:16,036] [DEBUG] from run_server in main at main.py:97 :
 active thread: 'Dummy-1'
 
+[2010-09-22 10:09:23,543] [INFO] from run_server in main at main.py:69 :
+orzoj-server started, listening on 9351
+
+[2010-09-22 10:09:25,863] [INFO] from sig_handler in control at control.py:45 :
+reveived signal 2, terminating...
+
+[2010-09-22 10:09:25,864] [ERROR] from accept in snc at snc.py:74 :
+socket error: error(4, 'Interrupted system call')
+
+[2010-09-22 10:09:25,864] [DEBUG] from run_server in main at main.py:88 :
+waiting for threads, current active count: 3
+
+[2010-09-22 10:09:25,864] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'MainThread'
+
+[2010-09-22 10:09:25,865] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'work.thread_work'
+
+[2010-09-22 10:09:25,865] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'work._thread_fetch_task'
+
+[2010-09-22 10:09:38,134] [INFO] from run_server in main at main.py:69 :
+orzoj-server started, listening on 9351
+
+[2010-09-22 10:09:49,440] [INFO] from run_server in main at main.py:82 :
+connected by '127.0.0.1:54054'
+
+[2010-09-22 10:09:49,650] [INFO] from run in work at work.py:345 :
+judge 'orzoj-judge-default' connected successfully
+
+[2010-09-22 10:10:11,253] [INFO] from sig_handler in control at control.py:45 :
+reveived signal 2, terminating...
+
+[2010-09-22 10:10:11,254] [ERROR] from accept in snc at snc.py:74 :
+socket error: error(4, 'Interrupted system call')
+
+[2010-09-22 10:10:11,254] [DEBUG] from run_server in main at main.py:88 :
+waiting for threads, current active count: 4
+
+[2010-09-22 10:10:11,254] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'MainThread'
+
+[2010-09-22 10:10:11,254] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'work.thread_work'
+
+[2010-09-22 10:10:11,255] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'work.thread_new_judge_connection'
+
+[2010-09-22 10:10:11,255] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'work._thread_fetch_task'
+
+[2010-09-22 10:11:46,177] [INFO] from run_server in main at main.py:69 :
+orzoj-server started, listening on 9351
+
+[2010-09-22 10:11:48,808] [INFO] from run_server in main at main.py:82 :
+connected by '127.0.0.1:54055'
+
+[2010-09-22 10:11:49,020] [INFO] from run in work at work.py:345 :
+judge 'orzoj-judge-default' connected successfully
+
+[2010-09-22 10:11:52,841] [INFO] from sig_handler in control at control.py:45 :
+reveived signal 2, terminating...
+
+[2010-09-22 10:11:52,842] [ERROR] from accept in snc at snc.py:74 :
+socket error: error(4, 'Interrupted system call')
+
+[2010-09-22 10:11:52,842] [DEBUG] from run_server in main at main.py:88 :
+waiting for threads, current active count: 4
+
+[2010-09-22 10:11:52,842] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'MainThread'
+
+[2010-09-22 10:11:52,843] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'work.thread_work'
+
+[2010-09-22 10:11:52,843] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'work.thread_new_judge_connection'
+
+[2010-09-22 10:11:52,843] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'work._thread_fetch_task'
+
+[2010-09-22 10:12:23,189] [ERROR] from socket in snc at snc.py:48 :
+socket error: error(98, 'Address already in use')
+
+[2010-09-22 10:12:33,343] [ERROR] from socket in snc at snc.py:48 :
+socket error: error(98, 'Address already in use')
+
+[2010-09-22 10:12:51,249] [INFO] from run_server in main at main.py:69 :
+orzoj-server started, listening on 9351
+
+[2010-09-22 10:12:54,535] [INFO] from run_server in main at main.py:82 :
+connected by '127.0.0.1:48285'
+
+[2010-09-22 10:12:54,746] [INFO] from run in work at work.py:345 :
+judge 'orzoj-judge-default' connected successfully
+
+[2010-09-22 10:13:06,754] [ERROR] from write in snc at snc.py:123 :
+failed to write:
+error('SSL error [func SSL_write] [errno: Broken pipe]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-09-22 10:13:06,755] [WARNING] from run in work at work.py:354 :
+failed to serve judge because of network error.
+
+[2010-09-22 10:13:06,755] [INFO] from _clean in work at work.py:133 :
+judge 'orzoj-judge-default' disconnected
+
+[2010-09-22 10:13:33,195] [INFO] from sig_handler in control at control.py:45 :
+reveived signal 2, terminating...
+
+[2010-09-22 10:13:33,196] [ERROR] from accept in snc at snc.py:74 :
+socket error: error(4, 'Interrupted system call')
+
+[2010-09-22 10:13:33,196] [DEBUG] from run_server in main at main.py:88 :
+waiting for threads, current active count: 3
+
+[2010-09-22 10:13:33,196] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'MainThread'
+
+[2010-09-22 10:13:33,196] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'work.thread_work'
+
+[2010-09-22 10:13:33,197] [DEBUG] from run_server in main at main.py:90 :
+active thread: 'work._thread_fetch_task'
+

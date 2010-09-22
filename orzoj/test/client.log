@@ -123,3 +123,10 @@ error('SSL error [func SSL_write] [errno Resource temporarily unavailable]: erro
 failed to write:
 error('SSL error [func SSL_write] [errno Broken pipe]: error:00000005:lib(0):func(0):DH lib',)
 
+[2010-09-22 10:03:01,953] [ERROR] from socket in snc at snc.py:48 :
+socket error: error('failed to connect',)
+
+[2010-09-22 10:03:28,608] [ERROR] from read in snc at snc.py:110 :
+failed to read:
+error('SSL error [func SSL_read] [errno: Success]: error:00000006:lib(0):func(0):EVP lib',)
+

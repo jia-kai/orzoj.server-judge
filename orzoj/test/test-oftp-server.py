@@ -7,7 +7,7 @@ if len(sys.argv) != 2:
 
 conf.parse_file("test-snc-server.conf")
 
-PORT = 9352
+PORT = 9351
 s = snc.socket(None, PORT)
 (conn, addr) = s.accept()
 print 'Connected by', addr
