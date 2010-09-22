@@ -1,6 +1,6 @@
 # $File: structures.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 18 17:18:13 2010 +0800
+# $Date: Wed Sep 22 15:31:42 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -28,7 +28,6 @@ class judge:
     def __init__(self):
         self.id = None  # should be assigned a string 
         self.lang_supported = set([])
-        self.queue = Queue.Queue() # task queue
 
 class task:
     def __init__(self):

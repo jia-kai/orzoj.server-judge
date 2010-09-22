@@ -1,29 +1,31 @@
 <orzoj-prob-conf version="1.0">
 
 	<compiler>
-		<name>name of the compiler (specified in orzoj-judge config)</name>
-		<opt>additional option (like -O2 for gcc) ($DATA is the problem data directory)</opt>
+		<name>name of the language (specified in orzoj-judge config)</name>
+		<opt>additional option (like -O2 for gcc)</opt>
 	</compiler>
 	<!-- for additional compiler options -->
 
 	<verifier standard="1"></verifier>
-	<!-- standard verifier ignore trailing spaces of each line-->
+	<!-- standard verifier ignore trailing space (at most one space) of each line-->
 
 	<verifier>
-		<Linux>executable name</Linux>
-		<Unix>executable name</Unix>
-		<Windows>executable name</Windows>
-		<!-- operation system should match the retun value of platform.system()
-			 custom verifier takes four arguments:
+		<source lang="language" time="0" mem="0" [opt="..."]>compile and/or execute the verifier from source </source>
+		<!-- there can be multiple sources of difference languages and the first whose language
+			 is supported is used
+			time: the maximal CPU time in milliseconds
+			mem:  memory limit in kb
+			opt: extra compiler flags
+			(0 means unlimited)-->
+		<!-- custom verifier takes four arguments from command line:
 				the fullscore
 				the standard input file path
 				the standard output file path
 				the contestant's output file path
-			  and write the final score to standard output on first line, extra info to remaining lines
+			  and write the final score to standard output,
+			  followed by a space, and then extra info to remaining lines
 			  (all scores are integer)
 			 -->
-		<source lang="language">compile and/or execute the verifier from source.
-			lang must exist in the configuration file of the judge</source>
 	</verifier>
 
 	<extra>extra input file to be copied from data directory</extra>

@@ -45,8 +45,11 @@ CertificateFile /etc/orzoj/host.cert
 # PrivateKeyFile: SSL private key file
 PrivateKeyFile /etc/orzoj/host.key
 
-#CAFile: SSL CA(certificate authority) certificate file
+# CAFile: SSL CA(certificate authority) certificate file
 CAFile /etc/orzoj/ca.cert
+
+# MaxQueueSize: maximal queue size for waiting tasks
+MaxQueueSize  1024
 
 # Listen: allows you to bind orzoj-server to specific port
 # orzoj-judge should connect to this port

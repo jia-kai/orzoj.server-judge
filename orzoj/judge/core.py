@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Sep 21 17:15:03 2010 +0800
+# $Date: Wed Sep 22 21:12:02 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,7 +23,7 @@
 and executes (by running the executor under limiter) user's
 program and verifies the output"""
 
-import os.path, errno, shutil, time
+import os.path, errno, shutil, time, umask, shlex
 
 try:
     import fcntl
@@ -35,6 +35,8 @@ class Error(Exception):
 
 from orzoj import conf, log, structures, msg
 from orzoj.judge import limiter
+
+_DEFAULT_PROG_NAME = "prog"  # file name of program being judged (without extention)
 
 _dir_temp = None  # relative to ChrootDir
 _dir_temp_abs = None
@@ -49,6 +51,9 @@ _executor_dict = {}
 lang_dict = {}
 
 _cmd_vars = {"COMPILE_TIME" : msg.COMPILE_MAX_TIME * 1000}    # variables used in AddLimiter option
+
+def _join_path(p1, p2):
+    return os.path.normpath(os.path.join(p1, p2))
 
 def _eval(s, prog):
     """evaluate argument passed to AddExecutor"""
@@ -67,7 +72,7 @@ def _clean_temp():
     global _dir_temp_abs
     try:
         for i in os.listdir(_dir_temp_abs):
-            p = os.path.join(_dir_temp_abs, i)
+            p = _join_path(_dir_temp_abs, i)
             if os.path.isdir(p) and not os.path.islink(p):
                 shutil.rmtree(p)
             else:
@@ -101,6 +106,8 @@ class _Executor:
         where success is a boolean value indicating whether it's compiled successfully,
         while info is the executor output or a string indicating some system error (human readable)
         if successfully compiled, info is None
+
+        @extra_args can be a list of string
             
         no exceptions are raised"""
 
@@ -135,10 +142,13 @@ class _Executor:
             return (False, "failed to compile: caught exception: {0!r}" .
                     format(e))
 
-    def run(self, prog, stdin = None, stdout = None):
+    def run(self, prog, stdin = None, stdout = None, retrieve_stdout = False, extra_args = None):
         """execute user's program @prog, stdin and stdout can be redirected to file
         allowed @stdin and @stdout values are the same as that of subprocess.Popen
         return an instance of structures.case_result
+
+        if retrieve_stdout is True, return a tuple(res:structures.case_result, stdout:str),
+        and @stdin and @stdout are ignored
         
         no exceptions are raised"""
 
@@ -151,6 +161,8 @@ class _Executor:
             res.time = 0
             res.memory = 0
             res.extra_info = msg
+            if retrieve_stdout:
+                res = (res, None)
 
         try:
             try:
@@ -159,16 +171,24 @@ class _Executor:
                 mkerror("failed to execute: executor configuration error")
                 return res
 
+            if extra_args:
+                args.extend(extra_args)
+
             l = self._limiter
             _cmd_vars["TARGET"] = args
 
-            l.run(_cmd_vars, stdin = stdin, stdout = stdout)
+            if retrieve_stdout:
+                l.run(_cmd_vars, stdout = limiter.SAVE_OUTPUT)
+            else:
+                l.run(_cmd_vars, stdin = stdin, stdout = stdout)
 
             res.exe_status = l.exe_status
             res.time = l.exe_time
             res.memory = l.exe_mem
             res.extra_info = l.exe_extra_info
 
+            if retrieve_stdout:
+                return (res, l.stdout)
             return res
         
         except limiter.SysError as e:
@@ -183,8 +203,8 @@ class _Executor:
 
 class _Lang:
     def __init__(self, args):
-        if len(args) != 5:
-            raise conf.UserError("Option {0} takes four arguments, but {1} is(are) given" .
+        if len(args) != 6:
+            raise conf.UserError("Option {0} takes five arguments, but {1} is(are) given" .
                     format(args[0], len(args) - 1))
 
         global _executor_dict, lang_dict
@@ -193,20 +213,21 @@ class _Lang:
             raise conf.UserError("duplicated language: {0!r}" . format(args[1]))
 
         self._name = args[1]
-        self._ext = args[2]
+        self._src_ext = "." + args[2]
+        self._exe_ext = "." + args[3]
 
-        if args[3] == "None":
+        if args[4] == "None":
             self._compiler = None
         else:
-            if args[3] not in _executor_dict:
+            if args[4] not in _executor_dict:
                 raise conf.UserError("unknown compiler executor {0!r} for language {1!r}" .
-                        format(args[3], args[1]))
-            self._compiler = _executor_dict[args[3]]
+                        format(args[4], args[1]))
+            self._compiler = _executor_dict[args[4]]
 
-        if args[4] not in _executor_dict:
+        if args[5] not in _executor_dict:
             raise conf.UserError("unknown program executor {0!r} for language {1!r}" .
-                    format(args[4], args[1]))
-            self._executor = _executor_dict[args[4]]
+                    format(args[5], args[1]))
+            self._executor = _executor_dict[args[5]]
 
         lang_dict[args[1]] = self
 
@@ -257,17 +278,16 @@ class _Lang:
             global _prog_path_abs, _cmd_vars
 
             if self._compiler:
-                srcpath = _prog_path_abs + self._ext
-                with open(srcpath, "w") as f:
+                with open(_prog_path_abs + self._src_ext, "w") as f:
                     f.write(src)
 
                 _cmd_vars["MEMORY"] = 0
                 _cmd_vars["DATADIR"] = os.path.abspath(pcode)
 
-                if self._name in pconf.compiler:
-                    (ok, info) = self._compiler.run_as_compiler(srcpath, pconf.compiler[self._name])
+                if pconf.compiler and self._name in pconf.compiler:
+                    (ok, info) = self._compiler.run_as_compiler(_prog_path_abs, pconf.compiler[self._name])
                 else:
-                    (ok, info) = self._compiler.run_as_compiler(srcpath)
+                    (ok, info) = self._compiler.run_as_compiler(_prog_path_abs)
 
                 if not ok:
                     _write_msg(msg.COMPILE_FAIL)
@@ -280,35 +300,45 @@ class _Lang:
 
             if pconf.extra_input:
                 for i in pconf.extra_input:
-                    shutil.copy(os.path.join(pcode, i), _dir_temp_abs)
+                    shutil.copy(_join_path(pcode, i), _dir_temp_abs)
 
             global _prog_path
+            prog_path = _prog_path + self._exe_ext
             prob_result = structures.prob_result()
             for case in pconf.case:
 
-                prog_fin_path = os.path.join(pcode, case.stdin)
-                if not input:
-                    prog_fin = open(prog_fin_path)
+                stdin_path = _join_path(pcode, case.stdin)
+                if not input: # use stdin
+                    prog_fin = open(stdin_path)
                 else:
-                    shutil.copy(prog_fin_path, os.path.join(_dir_temp_abs, pconf.input))
+                    tpath = _join_path(_dir_temp_abs, pconf.input)
+                    shutil.copy(stdin_path, tpath)
                     prog_fin = None
 
-                if not output:
-                    prog_fout_path = os.path.join(_dir_temp_abs, "output.{0}" .
+                if not output: # use stdout
+                    prog_fout_path = _join_path(_dir_temp_abs, "output.{0}" .
                             format(time.time()))
                     prog_fout = open(prog_fout_path, "w")
                 else:
-                    prog_fout_path = os.path.join(_dir_temp_abs, output)
+                    prog_fout_path = _join_path(_dir_temp_abs, output)
                     prog_fout = None
 
                 _cmd_vars["TIME"] = case.time
                 _cmd_vars["MEMORY"] = case.mem
 
-                case_result = self._executor.run(_prog_path, stdin = prog_fin, stdout = prog_fout)
+                umask_prev = os.umask(0)
+                case_result = self._executor.run(prog_path, stdin = prog_fin, stdout = prog_fout)
+                os.umask(umask_prev)
+
+                if prog_fin:
+                    prog_fin.close()
+                if prog_fout:
+                    prog_fout.close()
 
                 if case_result.exe_status == structures.EXESTS_RIGHT:
-                    (case_result.score, case_result.extra_info) = case.verify_func(case.score, prog_fin_path, 
-                            os.path.join(pcode, case.stdout), prog_fout_path)
+
+                    (case_result.score, case_result.extra_info) = case.verify_func(case.score, stdin_path, 
+                            _join_path(pcode, case.stdout), prog_fout_path)
                     if case_result.score < case.score:
                         if case_result.score:
                             case_result.exe_status = structures.EXESTS_PARTIALLY_RIGHT
@@ -348,6 +378,86 @@ class _Lang:
             _write_msg(msg.ERROR)
             raise Error
 
+    def verifier_compile(self, pcode, fsrc, src, extra_args = None):
+        """return a tuple(success, info, exe_path), for success and info, refer to _Executor::run_as_compiler
+        @fsrc is the expected file path (no extention)
+        @src is the source (string)
+
+        @extra_args can be a string and will be splited
+
+        may raise Error if failed to write source file"""
+        if not self._compiler:
+            try:
+                fsrc = fsrc + self._exe_ext
+                with open(fsrc, "w") as f:
+                    f.write(src)
+                return (True, None, fsrc)
+            except Exception as e:
+                log.error("failed to write source to {0!r}: {1!f}" .
+                        format(fsrc, e))
+                raise Error
+
+        srcpath = fsrc + self._src_ext
+        try:
+            with open(srcpath, "w") as f:
+                f.write(src)
+        except Exception as e:
+            log.error("failed to write source to {0!r}: {1!f}" .
+                    format(srcpath, e))
+            raise Error
+
+        _cmd_vars["MEMORY"] = 0
+        _cmd_vars["DATADIR"] = os.path.abspath(pcode)
+
+        if extra_args:
+            extra_args = shlex.split(extra_args)
+        ret = self._compiler.run_as_compiler(fsrc, extra_args)
+
+        ret = (ret[0], ret[1], fsrc + self._exe_ext)
+
+        try:
+            os.remove(srcpath)
+            return ret
+        except Exception as e:
+            log.error("failed to remove file {0!r}: {1!f}" .
+                    format(srcpath, e))
+            raise Error
+
+
+    def verifier_execute(self, pcode, exe, time, mem, args):
+        """return a tuple (res:structures.case_result, verifier_output:str)
+        
+        no exceptions are raised"""
+        global _cmd_vars
+        user = None
+        try:
+            user = _cmd_vars["USER"]
+            _cmd_vars["USER"] = os.geteuid()
+        except KeyError:
+            pass
+
+        group = None
+        try:
+            group = _cmd_vars["GROUP"]
+            _cmd_vars["GROUP"] = os.getegid()
+        except KeyError:
+            pass
+
+        _cmd_vars["TIME"] = time
+        _cmd_vars["MEMORY"] = mem
+
+        _cmd_vars["DATADIR"] = os.path.abspath(pcode)
+
+        ret = self._executor.run(exe, retrieve_stdout = True, extra_args = args)
+
+        if user is not None:
+            _cmd_vars["USER"] = user
+        if group is not None:
+            _cmd_vars["GROUP"] = group
+
+        return ret
+
+
 
 def _ch_add_executor(args):
     if len(args) == 1:
@@ -370,13 +480,16 @@ def _set_chroot_dir(arg):
         _cmd_vars["CHROOT_DIR"] = arg[1]
 
 def _set_temp_dir(arg):
-    global _cmd_vars, _dir_temp, _dir_temp_abs
+    global _cmd_vars, _dir_temp, _dir_temp_abs, _prog_path, _prog_path_abs
     if "CHROOT_DIR" in _cmd_vars:
         _dir_temp = arg[1]
-        _dir_temp_abs = os.path.join(_cmd_vars["CHROOT_DIR"], _dir_temp)
+        _dir_temp_abs = _join_path(_cmd_vars["CHROOT_DIR"], _dir_temp)
     else:
         _dir_temp = os.path.abspath(arg[1])
         _dir_temp_abs = _dir_temp
+
+    _prog_path = _join_path(_dir_temp, _DEFAULT_PROG_NAME)
+    _prog_path_abs = _join_path(_dir_temp_abs, _DEFAULT_PROG_NAME)
 
     _cmd_vars["WORKDIR"] = _dir_temp
     _cmd_vars["WORKDIR_ABS"] = _dir_temp_abs

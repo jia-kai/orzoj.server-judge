@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import conf
+from orzoj import conf
 print "testing conf module..."
 def f0(args):
     print 'f0 called with: ', args

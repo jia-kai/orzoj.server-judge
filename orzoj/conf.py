@@ -1,6 +1,6 @@
 # $File: conf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 15:42:59 2010 +0800
+# $Date: Wed Sep 22 20:58:15 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -129,6 +129,9 @@ def parse_file(filename):
         for i in _init_func:
             i()
 
+        del _hd_dict
+        del _init_func
+
     except IOError as e:
         sys.exit("failed to open file "
                 "[errno {0}] [filename {1!r}]: {2}" .
@@ -147,32 +150,29 @@ def parse_file(filename):
                 format(linenu, e))
 
 
-class simple_conf_handler:
-    def __init__(self, opt, call_back, default = None, required = True, no_dup = False, require_os = 0):
-        """generate and register a configuration handler that takes exactly 1 argument
-        
+def simple_conf_handler(opt, call_back, default = None, required = True, no_dup = False, require_os = 0):
+    """generate and register a configuration handler that takes exactly 1 argument
+    
 
-        Keyword arguments:
-        call_back -- a function taking a list containing option name the argument as argument
-        """
-        self._call_back = call_back
-        self._default = default
-        self._required = required
-        register_handler(opt, self._handler, no_dup, require_os)
-
-    def _handler(self, args):
+    Keyword arguments:
+    call_back -- a function taking a list containing option name the argument as argument
+    """
+    def handler(args):
         if len(args) == 1:
-            if self._default is None:
-                if self._required:
+            if default is None:
+                if required:
                     raise UserError("Option {0} must be specified in the configuration file." .
                             format(args[0]))
                 else:
                     return
-            args.append(self._default)
-            self._call_back(args)
+            args.append(default)
+            call_back(args)
         else:
             if len(args) != 2:
                 raise UserError("Option {0} takes 1 argument, but {1} is(are) given." .
                         format(args[0], len(args) - 1))
-            self._call_back(args)
+            call_back(args)
+
+    register_handler(opt, handler, no_dup, require_os)
+
 

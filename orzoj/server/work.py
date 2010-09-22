@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Sep 21 17:14:19 2010 +0800
+# $Date: Wed Sep 22 16:06:07 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -30,38 +30,44 @@ _judge_online = {}
 _lock_judge_online = threading.Lock()
 
 _task_queue = Queue.Queue()
+_max_queue_size = None
 
 _refresh_interval = None
 _id_max_len = None
 
-_QUEUE_GET_TIMEOUT = 0.5
+_QUEUE_TIMEOUT = 0.5
 
 class _internal_error(Exception):
     pass
 
 def _thread_fetch_task():
     global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-    global _QUEUE_GET_TIMEOUT
+    global _QUEUE_TIMEOUT
 
     while not control.test_termination_flag():
-        while True:
+        while not control.test_termination_flag():
             task = web.fetch_task()
             if task is None:
                 break
-            _task_queue.put(task, True)
+
+            while not control.test_termination_flag():
+                try:
+                    _task_queue.put(task, True, _QUEUE_TIMEOUT)
+                except Queue.Full:
+                    continue
 
         time.sleep(_refresh_interval)
 
 def thread_work():
     """wait for tasks and distribute them to judges"""
     global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-    global _QUEUE_GET_TIMEOUT
+    global _QUEUE_TIMEOUT
 
     threading.Thread(target = _thread_fetch_task, name = "work._thread_fetch_task").start()
 
     while not control.test_termination_flag():
         try:
-            task = _task_queue.get(True, _QUEUE_GET_TIMEOUT)
+            task = _task_queue.get(True, _QUEUE_TIMEOUT)
             judge = None
 
             with _lock_judge_online:
@@ -73,11 +79,17 @@ def thread_work():
             if judge is None:
                 web.report_no_judge(task)
             else:
-                with _lock_judge_online: # the chosen judge may have just deleted itself, so we have to lock
-                    if judge.id in _judge_online:
-                        judge.queue.put(task, True)
-                    else:
-                        _task_queue.put(task, True)
+                while not control.test_termination_flag():
+                    try:
+                        with _lock_judge_online: # the chosen judge may have just deleted itself, so we have to lock
+                            if judge.id in _judge_online:
+                                judge.queue.put(task, True, _QUEUE_TIMEOUT)
+                            else:
+                                _task_queue.put(task, True, _QUEUE_TIMEOUT)
+                    except Queue.Full:
+                        continue
+                    break
+
         except Queue.Empty:
             pass
 
@@ -119,7 +131,7 @@ class thread_new_judge_connection(threading.Thread):
 
     def _clean(self):
         global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _QUEUE_GET_TIMEOUT
+        global _QUEUE_TIMEOUT
 
         if self._cur_task != None:
             _task_queue.put(self._cur_task, True)
@@ -136,9 +148,13 @@ class thread_new_judge_connection(threading.Thread):
             web.remove_judge(judge)
 
         try:
-            while True:
+            while not control.test_termination_flag():
                 task = judge.queue.get_nowait()
-                _task_queue.put(task, True)
+                while not control.test_termination_flag():
+                    try:
+                        _task_queue.put(task, True, _QUEUE_TIMEOUT)
+                    except Queue.Full:
+                        continue
         except Queue.Empty:
             return
 
@@ -168,11 +184,11 @@ class thread_new_judge_connection(threading.Thread):
                 raise _internal_error
 
         global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _QUEUE_GET_TIMEOUT
+        global _QUEUE_TIMEOUT
 
         judge = self._judge
         try:
-            task = judge.queue.get(True, _QUEUE_GET_TIMEOUT)
+            task = judge.queue.get(True, _QUEUE_TIMEOUT)
         except Queue.Empty:
             _write_msg(msg.TELL_ONLINE)
             return
@@ -294,7 +310,7 @@ class thread_new_judge_connection(threading.Thread):
                 raise _internal_error
 
         global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _QUEUE_GET_TIMEOUT
+        global _QUEUE_TIMEOUT
 
         self._cur_task = None
         self._web_registered = False
@@ -338,6 +354,9 @@ class thread_new_judge_connection(threading.Thread):
 
             web.register_new_judge(judge, query_ans)
             self._web_registered = True
+
+            global _max_queue_size
+            judge.queue = Queue.Queue(_max_queue_size)
 
             with _lock_judge_online:
                 _judge_online[judge.id] = judge
@@ -389,7 +408,18 @@ def _set_id_max_len(arg):
 def _set_data_dir(arg):
     os.chdir(arg[1])
 
+def _set_max_queue_size(arg):
+    global _max_queue_size
+    _max_queue_size = int(arg[1])
+
+def _init_queue():
+    global _task_queue, _max_queue_size
+    _task_queue = Queue.Queue(_max_queue_size)
+
 conf.simple_conf_handler("RefreshInterval", _set_refresh_interval, default = "2")
 conf.simple_conf_handler("JudgeIdMaxLen", _set_id_max_len, default = "20")
 conf.simple_conf_handler("DataDir", _set_data_dir)
+conf.simple_conf_handler("MaxQueueSize", _set_max_queue_size, default = "1024")
+
+conf.register_init_func(_init_queue)
 
