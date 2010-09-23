@@ -73,3 +73,8 @@ RefreshInterval 1
 # uncomment the following line to enable this option
 # UseIpv6
 
+
+# Password: static password used to communicate with website (must be the same as
+# the password set in config.php on the website)
+Password  ????????
+

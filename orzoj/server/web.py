@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 23 16:01:06 2010 +0800
+# $Date: Thu Sep 23 17:03:06 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -43,6 +43,9 @@ version 1:
 
 from urllib2 import urlopen
 from urllib import urlencode
+
+_static_passwd = None
+_dynamic_passwd = None
 
 class WebError(Exception):
     pass
@@ -100,3 +103,10 @@ def report_case_result(task, result):
 
 def report_prob_result(task, result):
     pass
+
+def login():
+    """
+    1. get _dynamic_passwd from msg.php?action=login1
+    2. read from msg.php?action=login2&checksum=sha1sum(sha1sum(_dynamic_passwd + sha1sum(_static_passwd))),
+    and verify that it should be sha1sum(sha1sum(_dynamic_passwd) + sha1sum(_static_passwd))"""
+
