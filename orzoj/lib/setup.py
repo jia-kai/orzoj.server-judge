@@ -1,6 +1,6 @@
 # $File: setup.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Sep 21 16:38:03 2010 +0800
+# $Date: Thu Sep 23 10:35:49 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -21,14 +21,20 @@
 #
 
 from distutils.core import setup, Extension
-import commands
+import commands, platform
 
-cflags = ["-Wall"]
-cflags.extend(commands.getoutput("pkg-config --cflags openssl").split())
+cflags = None
+libs = None
+
+if platform.system() == "Linux":
+    cflags = ["-Wall"]
+    cflags.extend(commands.getoutput("pkg-config --cflags openssl").split())
+    libs = commands.getoutput("pkg-config --libs openssl").split()
+
 
 module = Extension("orzoj._snc", sources = ["_snc.c"], 
         extra_compile_args = cflags,
-        extra_link_args = commands.getoutput("pkg-config --libs openssl").split())
+        extra_link_args = libs)
 
 setup(name = "orzoj", ext_modules = [module])
 

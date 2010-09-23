@@ -1,7 +1,7 @@
 /*
  * $File: _snc.c
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Wed Sep 22 10:02:16 2010 +0800
+ * $Date: Thu Sep 23 11:16:14 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -123,13 +123,13 @@ static PyObject *snc_error_obj, *snc_error_timeout_obj;
 
 
 // if @host is NULL, it will be regarded as server and socket is automatically binded,
-// otherwise it will be connected to the host
+// otherwise it will be connected to the host, with timeout @timeout seconds
 //
 // @use_ipv6 is available only when @host is NULL
-static Snc_obj_socket* socket_new(const char *host, int port, int use_ipv6);
+static Snc_obj_socket* socket_new(const char *host, int port, int use_ipv6, double timeout);
 
 // parse args and call new_socket
-// args: (host:str, port:int, use_ipv6:int)
+// args: (host:str, port:int, use_ipv6:int, timeout:float)
 // host = None for server mode
 // module function
 static PyObject* socket_new_ex(PyObject *self, PyObject *args);
@@ -234,7 +234,7 @@ static void set_type_attr(void)
 }
 
 
-Snc_obj_socket* socket_new(const char *host, int port, int use_ipv6)
+Snc_obj_socket* socket_new(const char *host, int port, int use_ipv6, double timeout)
 {
 	Socket_t sockfd = 0;
 	int getaddrinfo_ret = 0, ok, ret;
@@ -311,7 +311,7 @@ Snc_obj_socket* socket_new(const char *host, int port, int use_ipv6)
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 
-		sprintf(port_str, "%d", port);
+		snprintf(port_str, sizeof(port_str), "%d", port);
 
 		getaddrinfo_ret = getaddrinfo(host, port_str, &hints, &result);
 		Py_END_ALLOW_THREADS
@@ -330,6 +330,7 @@ Snc_obj_socket* socket_new(const char *host, int port, int use_ipv6)
 			if (SOCKFD_ERROR(sockfd))
 				continue;
 
+			set_timeout(sockfd, timeout);
 			Py_BEGIN_ALLOW_THREADS
 			ret = connect(sockfd, ptr->ai_addr, ptr->ai_addrlen);
 			Py_END_ALLOW_THREADS
@@ -381,10 +382,11 @@ PyObject* socket_new_ex(PyObject *self, PyObject *args)
 {
 	const char *host;
 	int port, use_ipv6;
-	if (!PyArg_ParseTuple(args, "zii:socket", &host, &port, &use_ipv6))
+	double timeout;
+	if (!PyArg_ParseTuple(args, "ziid:socket", &host, &port, &use_ipv6, &timeout))
 		return NULL;
 
-	return (PyObject*) socket_new(host, port, use_ipv6);
+	return (PyObject*) socket_new(host, port, use_ipv6, timeout);
 }
 
 PyObject* socket_accept(Snc_obj_socket *self, PyObject *args)
@@ -511,6 +513,8 @@ void socket_dealloc(Snc_obj_socket *self)
 int set_timeout(Socket_t sockfd, double val)
 {
 	int tv = floor(val * 1000);
+	if (val < 0)
+		val = 0;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)))
 	{
 		socket_set_error();
@@ -529,6 +533,8 @@ int set_timeout(Socket_t sockfd, double val)
 int set_timeout(Socket_t sockfd, double val)
 {
 	struct timeval tv;
+	if (val < 0)
+		val = 0;
 	tv.tv_sec = floor(val);
 	tv.tv_usec = (val - floor(val)) * 1e6;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)))
@@ -803,8 +809,16 @@ int os_init()
 	if (ret)
 	{
 		PyErr_SetExcFromWindowsErr(snc_error_obj, ret);
+		Py_AtExit(os_cleanup);
 		return 0;
 	}
+	if (LOBYTE(WSAData.wVersion) != 2)
+	{
+		WSACleanup();
+		PyErr_SetString(snc_error_obj, "could not find a usable version of Winsock.dll");
+		return 0;
+	}
+
 	return 1;
 }
 
@@ -818,13 +832,23 @@ PyObject* socket_set_error(void)
 {
 #ifdef PLATFORM_WINDOWS
     int err_no = WSAGetLastError();
-    /* PyErr_SetExcFromWindowsErr() invokes FormatMessage() which
-       recognizes the error codes used by both GetLastError() and
-       WSAGetLastError */
+    // PyErr_SetExcFromWindowsErr() invokes FormatMessage() which
+    // recognizes the error codes used by both GetLastError() and
+    // WSAGetLastError
+	if (err_no == WSAETIMEDOUT)
+	{
+		PyErr_SetString(snc_error_timeout_obj, "timed out");
+		return NULL;
+	}
     if (err_no)
         return PyErr_SetExcFromWindowsErr(snc_error_obj, err_no);
 	return NULL;
 #else
+	if (errno == EAGAIN || errno == EWOULDBLOCK)
+	{
+		PyErr_SetString(snc_error_timeout_obj, "timed out");
+		return NULL;
+	}
     return PyErr_SetFromErrno(snc_error_obj);
 #endif
 }
@@ -964,8 +988,7 @@ init_snc(void)
 	if (!snc_error_obj)
 		return;
 
-	snc_error_timeout_obj = PyErr_NewException("_snc.error_timeout",
-			NULL, NULL);
+	snc_error_timeout_obj = PyErr_NewException("_snc.error_timeout", NULL, NULL);
 	if (!snc_error_timeout_obj)
 		return;
 

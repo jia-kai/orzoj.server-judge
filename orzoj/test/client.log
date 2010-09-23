@@ -130,3 +130,6 @@ socket error: error('failed to connect',)
 failed to read:
 error('SSL error [func SSL_read] [errno: Success]: error:00000006:lib(0):func(0):EVP lib',)
 
+[2010-09-23 12:00:36,635] [ERROR] from socket in snc at snc.py:52 :
+socket error: error('failed to connect',)
+

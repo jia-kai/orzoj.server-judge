@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 22 21:12:02 2010 +0800
+# $Date: Thu Sep 23 10:31:31 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,7 +23,7 @@
 and executes (by running the executor under limiter) user's
 program and verifies the output"""
 
-import os.path, errno, shutil, time, umask, shlex
+import os.path, errno, shutil, time, os, shlex
 
 try:
     import fcntl
