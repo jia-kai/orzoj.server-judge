@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 16:13:02 2010 +0800
+# $Date: Thu Sep 23 16:01:06 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -20,7 +20,29 @@
 # along with orzoj.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""interface for communicating with orzoj-website"""
+"""interface for communicating with orzoj-website
+
+version 1:
+    request to web:
+        POST data=json.dumps({"thread_id" : int or string, "req_id" : int, "data" : str, "checksum" : str})  
+
+        thread_id 
+        where req_id is a strictly increasing integer
+        checksum = sha1sum(str(thread_id) + str(req_id) + data + sha1sum(_dynamic_passwd + sha1sum(_static_passwd)))
+
+    response from web:
+        json.dumps({"status" : int, "data" : str, "checksum" : str})
+        where status is either 0 or 1, 0 = success, 1 = error (data is a human-readable reason)
+        checksum = sha1sum(str(thread_id) + str(req_id) + str(status) + data + sha1sum(_dynamic_passwd + sha1sum(_static_passwd)))
+
+    thread_id:
+        main thread: -1 (main thread only fetches task)
+        judge thread: judge_id
+        Note: On registration of judge, thread_id is the judge's identifier (string)
+"""
+
+from urllib2 import urlopen
+from urllib import urlencode
 
 class WebError(Exception):
     pass
