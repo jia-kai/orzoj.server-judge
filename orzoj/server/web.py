@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 23 17:03:06 2010 +0800
+# $Date: Thu Sep 23 17:14:15 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -28,12 +28,12 @@ version 1:
 
         thread_id 
         where req_id is a strictly increasing integer
-        checksum = sha1sum(str(thread_id) + str(req_id) + data + sha1sum(_dynamic_passwd + sha1sum(_static_passwd)))
+        checksum = sha1sum(str(thread_id) + str(req_id) + data + sha1sum(_dynamic_passwd + _static_passwd))
 
     response from web:
         json.dumps({"status" : int, "data" : str, "checksum" : str})
         where status is either 0 or 1, 0 = success, 1 = error (data is a human-readable reason)
-        checksum = sha1sum(str(thread_id) + str(req_id) + str(status) + data + sha1sum(_dynamic_passwd + sha1sum(_static_passwd)))
+        checksum = sha1sum(str(thread_id) + str(req_id) + str(status) + data + sha1sum(_dynamic_passwd + _static_passwd))
 
     thread_id:
         main thread: -1 (main thread only fetches task)
@@ -46,6 +46,9 @@ from urllib import urlencode
 
 _static_passwd = None
 _dynamic_passwd = None
+
+_VERSION = 1
+_DYNAMIC_PASSWD_MAXLEN = 128
 
 class WebError(Exception):
     pass
@@ -106,7 +109,9 @@ def report_prob_result(task, result):
 
 def login():
     """
-    1. get _dynamic_passwd from msg.php?action=login1
-    2. read from msg.php?action=login2&checksum=sha1sum(sha1sum(_dynamic_passwd + sha1sum(_static_passwd))),
-    and verify that it should be sha1sum(sha1sum(_dynamic_passwd) + sha1sum(_static_passwd))"""
+    1. read at most _DYNAMIC_PASSWD_MAXLEN bytes from msg.php?action=login1&version=_VERSION,
+       _dynamic_passwd is the data read
+       _dynamic_passwd = "0" means version check error
+    2. from msg.php?action=login2&checksum=sha1sum(sha1sum(_dynamic_passwd + _static_passwd)),
+       and verify that it should be sha1sum(sha1sum(_dynamic_passwd) + _static_passwd)"""
 
