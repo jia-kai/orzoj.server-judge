@@ -29,7 +29,7 @@ LogLevel debug
 
 # NetworkTimeout: the maximal time spent waiting message in communication
 # between orzoj-server and orzoj-client, given in seconds
-NetworkTimeout 2
+NetworkTimeout 30
 
 # Note:
 # the following three options are for SSL.

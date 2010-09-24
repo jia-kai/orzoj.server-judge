@@ -29,7 +29,7 @@ LogLevel debug
 
 # NetworkTimeout: the maximal time spent waiting message in communication
 # between orzoj-server and orzoj-client, given in seconds
-NetworkTimeout 2
+NetworkTimeout 30
 
 # Note:
 # the following three options are for SSL.
@@ -63,7 +63,19 @@ JudgeIdMaxLen 20
 DataDir /home/orzoj/data
 
 # WebAddress: the address where index.php for orzoj-web is
+# 
+# Note: if possible, using IP here is recommended
 WebAddress http://127.0.0.1/orzoj
+
+# WebTimeout: the timeout of communication with website
+# WebTimeout should be less than NetworkTimeout
+WebTimeout 5
+
+# WebRetryCount: the maximal tries on failure of communication with website
+# if it still failes, orzoj-server may exit
+#
+# set WebRetryCount to -1 to retry forever (dangerous!)
+WebRetryCount 5
 
 # RefreshInterval: orzoj-server will try to connect to orzoj-web
 # to find new tasks when every <RefreshInterval> second(s) passed.

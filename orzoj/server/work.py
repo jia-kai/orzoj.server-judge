@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 22 16:06:07 2010 +0800
+# $Date: Fri Sep 24 00:33:33 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -142,7 +142,7 @@ class thread_new_judge_connection(threading.Thread):
             with _lock_judge_online:
                 if judge.id in _judge_online:
                     del _judge_online[judge.id]
-            log.info("judge {0!r} disconnected" . format(judge.id))
+            log.info("[judge {0!r}] disconnected" . format(judge.id))
 
         if self._web_registered:
             web.remove_judge(judge)
@@ -180,7 +180,8 @@ class thread_new_judge_connection(threading.Thread):
 
         def _check_msg(m):
             if m != _read_msg():
-                log.warning("message check error.")
+                log.warning("[judge {0!r} message check error" .
+                        format(self._id))
                 raise _internal_error
 
         global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
@@ -193,7 +194,7 @@ class thread_new_judge_connection(threading.Thread):
             _write_msg(msg.TELL_ONLINE)
             return
         
-        log.info("judge {0!r} received task for problem {1!r}" .
+        log.info("[judge {0!r}] received task for problem {1!r}" .
                 format(judge.id, task.prob))
 
         self._cur_task = task
@@ -201,7 +202,8 @@ class thread_new_judge_connection(threading.Thread):
         datalist = _get_file_list(task.prob)
         if datalist is None:
             self._cur_task = None
-            log.error("No data for problem {0!r}, task discarded" . format(task.prob))
+            log.error("No data for problem {0!r}, task discarded" .
+                    format(task.prob))
             web.report_no_data(task)
             return
 
@@ -224,18 +226,18 @@ class thread_new_judge_connection(threading.Thread):
             if m == msg.DATA_ERROR:
                 self._cur_task = None
                 reason = _read_str()
-                log.error("judge {0!r} reports data error [prob: {1!r}]: {2!r}" . 
+                log.error("[judge {0!r}] data error [prob: {1!r}]: {2!r}" . 
                         format(judge.id, task.prob, reason))
                 web.report_error(task, "data error: {0!r}" . format(reason))
                 return
 
             if m != msg.NEED_FILE:
-                log.warning("message check error.")
+                log.warning("[judge {0!r}] message check error" . format(self._id))
                 raise _internal_error
 
             fpath = os.path.normpath(os.path.join(task.prob, _read_str()))
             speed = filetrans.send(fpath, self._snc)
-            log.info("file transfer speed with judge {0!r}: {1} kb/s" .
+            log.info("[judge {0!r}] file transfer speed: {1} kb/s" .
                     format(judge.id, speed))
 
         ncase = _read_uint32()
@@ -256,7 +258,8 @@ class thread_new_judge_connection(threading.Thread):
             if m == msg.START_JUDGE_OK:
                 break
             if m != msg.START_JUDGE_WAIT:
-                log.warning("message check error.")
+                log.warning("[judge {0!r}] message check error" .
+                        format(self._id))
                 raise _internal_error
 
         web.report_compiling(task, judge)
@@ -266,8 +269,9 @@ class thread_new_judge_connection(threading.Thread):
             web.report_compile_success(task)
         else:
             if m != msg.COMPILE_FAIL:
-                web.report_error(task, "message check error.")
-                log.warning("message check error.")
+                web.report_error(task, "message check error")
+                log.warning("[judge {0!r}] message check error" .
+                        format(self._id))
                 raise _internal_error
             web.report_compile_failure(task, _read_str())
             self._cur_task = None
@@ -306,7 +310,8 @@ class thread_new_judge_connection(threading.Thread):
 
         def _check_msg(m):
             if m != _read_msg():
-                log.warning("message check error.")
+                log.warning("[judge {0!r}] message check error" .
+                        format(self._id))
                 raise _internal_error
 
         global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
@@ -314,6 +319,7 @@ class thread_new_judge_connection(threading.Thread):
 
         self._cur_task = None
         self._web_registered = False
+        self._id = "None"
 
         judge = structures.judge()
         self._judge = judge
@@ -321,6 +327,7 @@ class thread_new_judge_connection(threading.Thread):
             self._snc = snc.snc(self._sock, True)
             _check_msg(msg.HELLO)
             judge.id = _read_str()
+            self._id = judge.id
 
             if len(judge.id) > _id_max_len:
                 _write_msg(msg.ID_TOO_LONG)
@@ -334,7 +341,8 @@ class thread_new_judge_connection(threading.Thread):
                     raise _internal_error
 
             if _read_uint32() != msg.PROTOCOL_VERSION:
-                log.warning("version check error.")
+                log.warning("[judge {0!r}] version check error" .
+                        format(self._id))
                 _write_msg(msg.ERROR)
                 raise _internal_error
 
@@ -361,7 +369,7 @@ class thread_new_judge_connection(threading.Thread):
             with _lock_judge_online:
                 _judge_online[judge.id] = judge
 
-            log.info("judge {0!r} connected successfully" . format(judge.id))
+            log.info("[judge {0!r}] successfully connected" . format(judge.id))
 
             while not control.test_termination_flag():
                 self._solve_task()
@@ -370,7 +378,7 @@ class thread_new_judge_connection(threading.Thread):
             self._sock.close()
 
         except snc.Error:
-            log.warning("failed to serve judge because of network error.")
+            log.warning("[judge {0!r}] failed because of network error" . format(self._id))
             self._clean()
             return
         except _internal_error:
@@ -378,16 +386,16 @@ class thread_new_judge_connection(threading.Thread):
             self._sock.close()
             self._clean()
             return
-        except web.WebError:
-            log.warning("failed to serve judge because of error while communicating with website.")
+        except web.Error:
+            log.warning("[judge {0!r}] failed because of error while communicating with website" . format(self._id))
             _write_msg(msg.ERROR)
             self._snc.close()
             self._sock.close()
             self._clean()
             return
         except filetrans.OFTPError:
-            log.warning("failed to transfer file to judge {0!r}." .
-                    format(self._judge.id))
+            log.warning("[judge {0!r}] failed to transfer file" .
+                    format(self._id))
             self._snc.close()
             self._sock.close()
             self._clean()

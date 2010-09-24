@@ -1,6 +1,6 @@
 # $File: snc.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 23 10:22:11 2010 +0800
+# $Date: Thu Sep 23 17:29:16 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -186,7 +186,7 @@ def _set_ca_file(arg):
     _ca_file = arg[1]
 
 conf.register_handler("UseIPv6", _ch_set_ipv6)
-conf.simple_conf_handler("NetworkTimeout", _set_timeout, default = "2")
+conf.simple_conf_handler("NetworkTimeout", _set_timeout, default = "30")
 conf.simple_conf_handler("CertificateFile", _set_cert_file)
 conf.simple_conf_handler("PrivateKeyFile", _set_key_file)
 conf.simple_conf_handler("CAFile", _set_ca_file)

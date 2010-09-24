@@ -1,6 +1,6 @@
 # $File: limiter.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Sep 21 16:46:26 2010 +0800
+# $Date: Thu Sep 23 23:17:50 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -48,7 +48,7 @@ try:
     else:
         NULL = open('/dev/null', 'w')
 except Exception as e:
-    sys.exit("faied to open NULL device: {0!r}", NULL)
+    sys.exit("orzoj-judge: faied to open NULL device: {0!r}", NULL)
 
 class _Limiter:
     def __init__(self, args):
