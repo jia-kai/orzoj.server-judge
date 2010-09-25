@@ -1,37 +1,18 @@
-[2010-09-23 10:33:35,228] [INFO] from run_server in main at main.py:69 :
-orzoj-server started, listening on 9351
+[2010-09-25 14:43:15,453] [ERROR] from _read in web at web.py:251 :
+website communication error: HTTPError()
 
-[2010-09-23 10:33:37,100] [INFO] from run_server in main at main.py:82 :
-connected by '127.0.0.1:41285'
+[2010-09-25 14:43:15,455] [ERROR] from _read in web at web.py:251 :
+website communication error: HTTPError()
 
-[2010-09-23 10:33:37,599] [INFO] from run in work at work.py:364 :
-judge 'orzoj-judge-default' connected successfully
+[2010-09-25 14:43:15,457] [ERROR] from _read in web at web.py:251 :
+website communication error: HTTPError()
 
-[2010-09-23 10:33:40,102] [ERROR] from write in snc at snc.py:127 :
-failed to write:
-error('SSL error [func SSL_write] [errno: Broken pipe]: error:00000005:lib(0):func(0):DH lib',)
+[2010-09-25 14:43:15,459] [ERROR] from _read in web at web.py:251 :
+website communication error: HTTPError()
 
-[2010-09-23 10:33:40,103] [WARNING] from run in work at work.py:373 :
-failed to serve judge because of network error.
+[2010-09-25 14:43:15,461] [ERROR] from _read in web at web.py:251 :
+website communication error: HTTPError()
 
-[2010-09-23 10:33:40,103] [INFO] from _clean in work at work.py:145 :
-judge 'orzoj-judge-default' disconnected
-
-[2010-09-23 10:33:40,845] [INFO] from sig_handler in control at control.py:45 :
-reveived signal 2, terminating...
-
-[2010-09-23 10:33:40,846] [ERROR] from accept in snc at snc.py:78 :
-socket error: error(4, 'Interrupted system call')
-
-[2010-09-23 10:33:40,847] [DEBUG] from run_server in main at main.py:88 :
-waiting for threads, current active count: 3
-
-[2010-09-23 10:33:40,847] [DEBUG] from run_server in main at main.py:90 :
-active thread: 'MainThread'
-
-[2010-09-23 10:33:40,848] [DEBUG] from run_server in main at main.py:90 :
-active thread: 'work.thread_work'
-
-[2010-09-23 10:33:40,848] [DEBUG] from run_server in main at main.py:90 :
-active thread: 'work._thread_fetch_task'
+[2010-09-25 14:43:15,462] [ERROR] from _login in web at web.py:285 :
+failed to login to the website
 

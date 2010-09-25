@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 25 14:14:51 2010 +0800
+# $Date: Sat Sep 25 14:42:34 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -197,7 +197,7 @@ def report_prob_result(task, result):
 def _sha1sum(s):
     return hashlib.sha1(s).hexdigest()
 
-def _read(data, maxlen = None)
+def _read(data, maxlen = None):
     """if @maxlen is not None, data should be dict and is sent via GET method and without checksum
     and return the data read;
     otherwise @data is dumped by json and sent via POST method and return the data read
@@ -222,8 +222,9 @@ def _read(data, maxlen = None)
                     "checksum" : _sha1sum(checksum_base + data)})})
 
     cnt = _retry_cnt
-    if not cnt
+    if not cnt:
         cnt = 1
+
     while cnt:
         cnt -= 1
         try:
@@ -292,11 +293,17 @@ def _set_web_timeout(arg):
     global _timeout
     _timeout = int(arg[1])
 
-def _set_web_addr(arg[1]):
+def _set_web_addr(arg):
     global _web_addr
-    _web_addr = arg[1].rstrip('/') + "msg.php"
+    _web_addr = arg[1].rstrip('/') + "/msg.php"
+
+def _set_web_retry(arg):
+    global _retry_cnt
+    _retry_cnt = int(arg[1])
 
 conf.simple_conf_handler("Password", _set_static_password)
 conf.simple_conf_handler("WebTimeout", _set_web_timeout, "5")
+conf.simple_conf_handler("WebAddress", _set_web_addr)
+conf.simple_conf_handler("WebRetryCount", _set_web_retry, "5")
 conf.register_init_func(_login)
 
