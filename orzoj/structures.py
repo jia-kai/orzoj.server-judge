@@ -1,6 +1,6 @@
 # $File: structures.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 22 15:31:42 2010 +0800
+# $Date: Sat Sep 25 12:04:03 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -28,6 +28,7 @@ class judge:
     def __init__(self):
         self.id = None  # should be assigned a string 
         self.lang_supported = set([])
+        self.id_num = None # will be assigned in web.register_new_judge
 
 class task:
     def __init__(self):

@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 25 10:59:23 2010 +0800
+# $Date: Sat Sep 25 14:14:51 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -42,7 +42,7 @@ _DYNAMIC_PASSWD_MAXLEN = 128
 
 import urllib2, urllib, sys, hashlib, threading, json
 
-from orzoj import conf, log
+from orzoj import conf, log, structures
 
 _static_passwd = None
 _passwd = None
@@ -70,28 +70,36 @@ def report_error(task, msg):
     Note:
         'data' is the data sent to website
         'return' is the data received from website"""
-    pass
+    _read({"action":"report_error", "task":task.id, "msg":msg})
 
 def get_query_list():
     """return a list containing the queries for judge info
 
     data: action=get_query_list
     return: array of query list"""
-    return []
+    ret = _read({"action":"get_query_list"})
+    if type(ret) != list:
+        log.error("type check error")
+        raise Error
+    return ret
 
 def register_new_judge(judge, query_ans):
     """register a new judge. @judge should be structures.judge,
     and query_ans should be a dict
 
-    data: action=register_new_judge, judge=...(id:str), query_ans=@query_ans
-    return: NULL"""
-    pass
+    data: action=register_new_judge, judge=...(id:str), query_ans=json.dumps(query_ans)
+    return: id_num=... (numeric judge id)"""
+    try:
+        judge.id_num = int(_read({"action":"register_new_judge", "judge":judge.id, "query_ans":json.dumps(query_ans)})["id_num"])
+    except Exception as e:
+        log.error("failed to register new judge: {0!r}" . format(e))
+        raise Error
 
 def remove_judge(judge):
     """
-    data: action=remove_judge
+    data: action=remove_judge, judge=...(id:int)
     return: NULL"""
-    pass
+    _read({"action":"remove_judge", "judge":judge.id_num})
 
 def fetch_task():
     """try to fetch a new task. return None if no new task available.
@@ -104,7 +112,21 @@ def fetch_task():
                       args: none
             "src"  -- new source file to be judged
                       args: id, prob, lang, src, input, output (see structures.py)"""
-    return None
+    try:
+        ret = _read({"action":"fetch_task"})
+        t = ret["type"]
+        if t == "none":
+            return
+        if t == "src":
+            v = structures.task()
+            for i in v.__dict__:
+                v.__dict__[i] = ret[i]
+            v.id = int(v.id)
+            return v
+        raise _internal_error("unknown task type: {0!r}" . format(t))
+    except Exception as e:
+        log.error("failed to fetch task: {0!r}" . format(e))
+        raise Error
 
 def report_no_judge(task):
     """tell the website that no judge supports the task's language
@@ -112,7 +134,7 @@ def report_no_judge(task):
 
     data: action=report_no_judge, task=...(id:int)
     return: NULL"""
-    pass
+    _read({"action":"report_no_judge", "task":task.id})
 
 def report_no_data(task):
     """tell the website that there are no data for the task
@@ -120,47 +142,56 @@ def report_no_data(task):
     
     data: action=report_no_data, task=...(id:int)
     return: NULL"""
+    _read({"action":"report_no_data", "task":task.id})
 
 def report_judge_waiting(task):
     """judge is waiting because it's serving another orzoj-server
 
     data: action=report_judge_waiting, task=...(id:int)
     return: NULL"""
-    pass
+    _read({"action":"report_judge_waiting", "task":task.id})
 
 def report_compiling(task, judge):
     """now compiling @task on @judge
 
     data: action=report_compiling, task=...(id:int), judge=...(id:int)
     return: NULL"""
-    pass
+    _read({"action":"report_compiling", "task":task.id, "judge":judge.id_num})
 
 def report_compile_success(task):
     """successfully compiled
 
     data: action=report_compile_success, task=...(id:int)
     return: NULL"""
-    pass
+    _read({"action":"report_compile_success", "task":task.id})
 
 def report_compile_failure(task, info):
     """failed to compile
 
     data: action=report_compile_failure, task=...(id:int), info=...
     return: NULL"""
-    pass
+    _read({"action":"report_compile_failure", "task":task.id, "info":info})
 
 def report_case_result(task, result):
     """
     data: action=report_case_result, exe_status=..., score=..., time=..., memory=..., extra_info=... (see structures.py)
     return: NULL"""
-    pass
+    data = {"action":"report_case_result"}
+    d = structures.case_result().__dict__
+    for i in d:
+        data[i] = result.__dict__[i]
+    _read(data)
 
 def report_prob_result(task, result):
     """
     data: action=report_prob_result, total_score=..., full_score=..., total_time=..., max_mem=... (see structures.py)
     return: NULL
     """
-    pass
+    data = {"action":"report_prob_result"}
+    d = structures.prob_result().__dict__
+    for i in d:
+        data[i] = result.__dict__[i]
+    _read(data)
 
 
 def _sha1sum(s):
@@ -186,9 +217,9 @@ def _read(data, maxlen = None)
         _thread_req_id[thread_id] = req_id + 1
         checksum_base = str(thread_id) + str(req_id) + _passwd
         data = json.dumps(data)
-        data_sent = urllib.urlencode("data" :
+        data_sent = urllib.urlencode({"data" :
                 json.dumps({"thread_id" : thread_id, "req_id" : req_id, "data" : data,
-                    "checksum" : _sha1sum(checksum_base + data)}))
+                    "checksum" : _sha1sum(checksum_base + data)})})
 
     cnt = _retry_cnt
     if not cnt
