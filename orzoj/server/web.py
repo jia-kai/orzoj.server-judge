@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 25 14:42:34 2010 +0800
+# $Date: Sat Sep 25 15:02:09 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -87,10 +87,12 @@ def register_new_judge(judge, query_ans):
     """register a new judge. @judge should be structures.judge,
     and query_ans should be a dict
 
-    data: action=register_new_judge, judge=...(id:str), query_ans=json.dumps(query_ans)
+    data: action=register_new_judge, judge=...(id:str), lang_supported=...(json encoded list of str),
+        query_ans=json.dumps(query_ans)
     return: id_num=... (numeric judge id)"""
     try:
-        judge.id_num = int(_read({"action":"register_new_judge", "judge":judge.id, "query_ans":json.dumps(query_ans)})["id_num"])
+        judge.id_num = int(_read({"action":"register_new_judge", "judge":judge.id,
+            "lang_supported":list(judge.lang_supported), "query_ans":json.dumps(query_ans)})["id_num"])
     except Exception as e:
         log.error("failed to register new judge: {0!r}" . format(e))
         raise Error
@@ -305,5 +307,6 @@ conf.simple_conf_handler("Password", _set_static_password)
 conf.simple_conf_handler("WebTimeout", _set_web_timeout, "5")
 conf.simple_conf_handler("WebAddress", _set_web_addr)
 conf.simple_conf_handler("WebRetryCount", _set_web_retry, "5")
+
 conf.register_init_func(_login)
 
