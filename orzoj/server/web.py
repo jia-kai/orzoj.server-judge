@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Sep 24 00:26:32 2010 +0800
+# $Date: Sat Sep 25 10:59:23 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -24,13 +24,14 @@
 
 version 1:
     request to web:
-        POST data=json.dumps({"thread_id" : int, "req_id" : int, "data" : str, "checksum" : str})  
+        POST data=json.dumps({"thread_id" : int, "req_id" : int,
+            "data" : str (json encoded), "checksum" : str})  
 
         where req_id is a strictly increasing integer for each thread
         checksum = sha1sum(str(thread_id) + str(req_id) + sha1sum(_dynamic_passwd + _static_passwd) + data)
 
     response from web:
-        json.dumps({"status" : int, "data" : str, "checksum" : str})
+        json.dumps({"status" : int, "data" : str (json encoded), "checksum" : str})
         where status is either 0 or 1, 0 = success, 1 = error (data is a human-readable reason)
         checksum = sha1sum(str(thread_id) + str(req_id) + sha1sum(_dynamic_passwd + _static_passwd) + str(status) + data)
 
@@ -59,56 +60,106 @@ class _internal_error(Exception):
 class Error(Exception):
     pass
 
+
 def report_error(task, msg):
-    """send a human-readable error message"""
+    """send a human-readable error message
+
+    data: action=report_error, task=...(id:int), msg=...(:str)
+    return: NULL
+
+    Note:
+        'data' is the data sent to website
+        'return' is the data received from website"""
     pass
 
 def get_query_list():
-    """return a list containing the queries for judge info"""
+    """return a list containing the queries for judge info
+
+    data: action=get_query_list
+    return: array of query list"""
     return []
 
 def register_new_judge(judge, query_ans):
     """register a new judge. @judge should be structures.judge,
-    and query_ans should be a dictionary"""
+    and query_ans should be a dict
+
+    data: action=register_new_judge, judge=...(id:str), query_ans=@query_ans
+    return: NULL"""
     pass
 
 def remove_judge(judge):
+    """
+    data: action=remove_judge
+    return: NULL"""
     pass
 
 def fetch_task():
     """try to fetch a new task. return None if no new task available.
-    this function does not raise exceptions"""
+    this function does not raise exceptions
+
+    data: action=fetch_task
+    return: array("type"=>type, <type specified arguments>)
+        type:
+            "none" -- no new task
+                      args: none
+            "src"  -- new source file to be judged
+                      args: id, prob, lang, src, input, output (see structures.py)"""
     return None
 
 def report_no_judge(task):
     """tell the website that no judge supports the task's language
-    this function does not raise exceptions"""
+    this function does not raise exceptions
+
+    data: action=report_no_judge, task=...(id:int)
+    return: NULL"""
     pass
 
 def report_no_data(task):
     """tell the website that there are no data for the task
-    this function does not raise exceptions"""
+    this function does not raise exceptions
+    
+    data: action=report_no_data, task=...(id:int)
+    return: NULL"""
 
 def report_judge_waiting(task):
-    """judge is waiting because it's serving another orzoj-server?"""
+    """judge is waiting because it's serving another orzoj-server
+
+    data: action=report_judge_waiting, task=...(id:int)
+    return: NULL"""
     pass
 
 def report_compiling(task, judge):
-    """now compiling @task on @judge"""
+    """now compiling @task on @judge
+
+    data: action=report_compiling, task=...(id:int), judge=...(id:int)
+    return: NULL"""
     pass
 
 def report_compile_success(task):
-    """successfully compiled"""
+    """successfully compiled
+
+    data: action=report_compile_success, task=...(id:int)
+    return: NULL"""
     pass
 
-def report_compile_failure(task):
-    """failed to compile"""
+def report_compile_failure(task, info):
+    """failed to compile
+
+    data: action=report_compile_failure, task=...(id:int), info=...
+    return: NULL"""
     pass
 
 def report_case_result(task, result):
+    """
+    data: action=report_case_result, exe_status=..., score=..., time=..., memory=..., extra_info=... (see structures.py)
+    return: NULL"""
     pass
 
 def report_prob_result(task, result):
+    """
+    data: action=report_prob_result, total_score=..., full_score=..., total_time=..., max_mem=... (see structures.py)
+    return: NULL
+    """
     pass
 
 
@@ -161,7 +212,7 @@ def _read(data, maxlen = None)
             if int(ret_status):
                 raise _internal_error("website says an error happens there: {0}" . format(ret_data))
 
-            return ret_data
+            return json.loads(ret_data)
 
         except Exception as e:
             log.error("website communication error: {0!r}" .
