@@ -1,6 +1,6 @@
 # $File: msg.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 17:19:40 2010 +0800
+# $Date: Wed Sep 29 16:28:30 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -45,8 +45,8 @@ CONNECT_OK, # s2c
 # packet format: (QUERY_INFO, info:string),
 # where info is something like "cpuinfo", "meminfo", etc.
 QUERY_INFO, # s2c 
-# packet format: (ANS_QEURY, ans:string)
-ANS_QEURY, # c2s 
+# packet format: (ANS_QUERY, ans:string)
+ANS_QUERY, # c2s 
 
 # packet format: (TELL_ONLINE)
 # TELL_ONLINE should be sent every 0.5 seconds if there is no task

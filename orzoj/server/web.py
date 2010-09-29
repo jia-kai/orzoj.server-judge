@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 25 15:02:09 2010 +0800
+# $Date: Wed Sep 29 16:17:36 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -87,7 +87,7 @@ def register_new_judge(judge, query_ans):
     """register a new judge. @judge should be structures.judge,
     and query_ans should be a dict
 
-    data: action=register_new_judge, judge=...(id:str), lang_supported=...(json encoded list of str),
+    data: action=register_new_judge, judge=...(id:str), lang_supported=...,
         query_ans=json.dumps(query_ans)
     return: id_num=... (numeric judge id)"""
     try:
@@ -176,9 +176,10 @@ def report_compile_failure(task, info):
 
 def report_case_result(task, result):
     """
-    data: action=report_case_result, exe_status=..., score=..., time=..., memory=..., extra_info=... (see structures.py)
+    data: action=report_case_result, task=...(id:int),
+        exe_status=..., score=..., time=..., memory=..., extra_info=... (see structures.py)
     return: NULL"""
-    data = {"action":"report_case_result"}
+    data = {"action":"report_case_result", "task":task.id}
     d = structures.case_result().__dict__
     for i in d:
         data[i] = result.__dict__[i]
@@ -186,10 +187,11 @@ def report_case_result(task, result):
 
 def report_prob_result(task, result):
     """
-    data: action=report_prob_result, total_score=..., full_score=..., total_time=..., max_mem=... (see structures.py)
+    data: action=report_prob_result, task=...(id:int)
+        total_score=..., full_score=..., total_time=..., max_mem=... (see structures.py)
     return: NULL
     """
-    data = {"action":"report_prob_result"}
+    data = {"action":"report_prob_result", "task":task.id}
     d = structures.prob_result().__dict__
     for i in d:
         data[i] = result.__dict__[i]
@@ -235,6 +237,8 @@ def _read(data, maxlen = None):
 
             ret = urllib2.urlopen(_web_addr, data_sent, _timeout).read()
 
+            log.debug("raw data from server: {0!r}" . format(ret))
+
             ret = json.loads(ret)
 
             ret_status = ret["status"]
@@ -270,15 +274,19 @@ def _login():
 
         try:
             _dynamic_passwd = _read({"action" : "login1", "version" : _VERSION},  _DYNAMIC_PASSWD_MAXLEN)
+
             if _dynamic_passwd == '0':
                 raise _internal_error("website version check error")
 
             vpwd = _sha1sum(_sha1sum(_dynamic_passwd) + _static_passwd)
             _passwd = _sha1sum(_dynamic_passwd + _static_passwd)
-  
-            if (_read({"action" : "login2",
-                "checksum" : _sha1sum(_passwd)}, len(vpwd)) != vpwd):
-                raise _internal_error("website verification error")
+
+            pwd_peer = _read({"action" : "login2",
+                "checksum" : _sha1sum(_passwd)}, len(vpwd));
+
+            if pwd_peer != vpwd:
+                raise _internal_error("website verification error [peer returned: {0!r}]" .
+                        format(pwd_peer))
 
         except Error:
             raise _internal_error("failed to login to the website")

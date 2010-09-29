@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Sep 21 17:15:23 2010 +0800
+# $Date: Wed Sep 29 16:29:09 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -147,7 +147,7 @@ def connect(sock):
             if m == msg.QUERY_INFO:
                 global _info_dict
                 q = _read_str()
-                _write_msg(msg.ANS_QEURY)
+                _write_msg(msg.ANS_QUERY)
                 try:
                     _write_str(_info_dict[q])
                 except KeyError:

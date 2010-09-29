@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Sep 24 00:33:33 2010 +0800
+# $Date: Wed Sep 29 16:23:39 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -147,16 +147,17 @@ class thread_new_judge_connection(threading.Thread):
         if self._web_registered:
             web.remove_judge(judge)
 
-        try:
-            while not control.test_termination_flag():
-                task = judge.queue.get_nowait()
+        if judge.queue:
+            try:
                 while not control.test_termination_flag():
-                    try:
-                        _task_queue.put(task, True, _QUEUE_TIMEOUT)
-                    except Queue.Full:
-                        continue
-        except Queue.Empty:
-            return
+                    task = judge.queue.get_nowait()
+                    while not control.test_termination_flag():
+                        try:
+                            _task_queue.put(task, True, _QUEUE_TIMEOUT)
+                        except Queue.Full:
+                            continue
+            except Queue.Empty:
+                return
 
 
     def _solve_task(self):
@@ -322,6 +323,7 @@ class thread_new_judge_connection(threading.Thread):
         self._id = "None"
 
         judge = structures.judge()
+        judge.queue = None
         self._judge = judge
         try:
             self._snc = snc.snc(self._sock, True)

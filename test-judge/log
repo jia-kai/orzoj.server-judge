@@ -1,13 +1,13 @@
-[2010-09-23 10:33:38,962] [INFO] from sig_handler in control at control.py:45 :
+[2010-09-29 16:47:15,347] [INFO] from sig_handler in control at control.py:45 :
 reveived signal 2, terminating...
 
-[2010-09-23 10:33:38,963] [ERROR] from read in snc at snc.py:114 :
+[2010-09-29 16:47:15,347] [ERROR] from read in snc at snc.py:114 :
 failed to read:
 error('SSL error [func SSL_read] [errno: Interrupted system call]: error:00000002:lib(0):func(0):system lib',)
 
-[2010-09-23 10:33:38,963] [ERROR] from connect in work at work.py:234 :
+[2010-09-29 16:47:15,348] [ERROR] from connect in work at work.py:234 :
 failed to communicate with orzoj-server because of network error
 
-[2010-09-23 10:33:38,964] [ERROR] from run_judge in main at main.py:76 :
+[2010-09-29 16:47:15,348] [ERROR] from run_judge in main at main.py:76 :
 error occurred, terminating program
 
