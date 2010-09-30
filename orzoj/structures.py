@@ -1,6 +1,6 @@
 # $File: structures.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 25 12:04:03 2010 +0800
+# $Date: Wed Sep 29 23:10:26 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -74,18 +74,18 @@ class case_result:
         self.time = None        # microseconds
         self.memory = None      # kb
         self.extra_info = None  # human-readable string
-    def write(self, snc, timeout = 0):
-        snc.write_uint32(self.exe_status, timeout)
-        snc.write_uint32(self.score, timeout)
-        snc.write_uint32(self.time, timeout)
-        snc.write_uint32(self.memory, timeout)
-        snc.write_str(self.extra_info, timeout)
-    def read(self, snc, timeout = 0):
-        self.exe_status = snc.read_uint32(timeout)
-        self.score = snc.read_uint32(timeout)
-        self.time = snc.read_uint32(timeout)
-        self.memory = snc.read_uint32(timeout)
-        self.extra_info = snc.read_str(timeout)
+    def write(self, conn, timeout = 0):
+        conn.write_uint32(self.exe_status, timeout)
+        conn.write_uint32(self.score, timeout)
+        conn.write_uint32(self.time, timeout)
+        conn.write_uint32(self.memory, timeout)
+        conn.write_str(self.extra_info, timeout)
+    def read(self, conn, timeout = 0):
+        self.exe_status = conn.read_uint32(timeout)
+        self.score = conn.read_uint32(timeout)
+        self.time = conn.read_uint32(timeout)
+        self.memory = conn.read_uint32(timeout)
+        self.extra_info = conn.read_str(timeout)
 
 class prob_result:
     def __init__(self):
@@ -93,14 +93,14 @@ class prob_result:
         self.full_score = 0
         self.total_time = 0
         self.max_mem = 0
-    def write(self, snc, timeout = 0):
-        snc.write_uint32(self.total_score)
-        snc.write_uint32(self.full_score)
-        snc.write_uint32(self.total_time)
-        snc.write_uint32(self.max_mem)
-    def read(self, snc, timeout = 0):
-        self.total_score = snc.read_uint32(timeout)
-        self.full_score = snc.read_uint32(timeout)
-        self.total_time = snc.read_uint32(timeout)
-        self.max_mem = snc.read_uint32(timeout)
+    def write(self, conn, timeout = 0):
+        conn.write_uint32(self.total_score)
+        conn.write_uint32(self.full_score)
+        conn.write_uint32(self.total_time)
+        conn.write_uint32(self.max_mem)
+    def read(self, conn, timeout = 0):
+        self.total_score = conn.read_uint32(timeout)
+        self.full_score = conn.read_uint32(timeout)
+        self.total_time = conn.read_uint32(timeout)
+        self.max_mem = conn.read_uint32(timeout)
 

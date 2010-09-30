@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 29 16:29:09 2010 +0800
+# $Date: Thu Sep 30 09:14:08 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -64,7 +64,7 @@ def _get_file_list(path):
         _file_list = dict()
         for i in os.listdir(path):
             pf = os.path.normpath(os.path.join(path, i))
-            if os.path.isfile():
+            if os.path.isfile(pf):
                 _file_list[i] = _sha1_file(pf)
             
     except OSError as e:
@@ -100,10 +100,9 @@ def connect(sock):
         return conn.read_uint32()
 
     def _check_msg(m):
-        def _check_msg(m):
-            if m != _read_msg():
-                log.error("message check error.")
-                raise Error
+        if m != _read_msg():
+            log.error("message check error.")
+            raise Error
     try:
         conn = snc.snc(sock)
 
@@ -134,6 +133,8 @@ def connect(sock):
                     format(m))
             raise Error
 
+        log.info('connection established')
+
         while not control.test_termination_flag():
             m = _read_msg()
 
@@ -141,7 +142,7 @@ def connect(sock):
                 continue
 
             if m == msg.ERROR:
-                log.warning("failed to work: orzoj-server says an error happens there`")
+                log.warning("failed to work: orzoj-server says an error happens there")
                 raise Error
 
             if m == msg.QUERY_INFO:
@@ -174,23 +175,26 @@ def connect(sock):
                 else:
                     os.mkdir(pcode)
 
-                th_hash = threading.Thread(target = _get_file_list, args = (pcode))
+                global _file_list
+                _file_list = None
+
+                th_hash = threading.Thread(target = _get_file_list, args = (pcode, ))
+                th_hash.start()
 
                 while th_hash.is_alive():
                     _write_msg(msg.DATA_COMPUTING_SHA1)
                     time.sleep(0.5)
 
-                global _file_list
                 if _file_list is None:
                     _write_msg(msg.DATA_ERROR)
                     _write_str("failed to list data directory")
-                    raise Error
+                    continue
 
                 for (tfname, thash) in tlist.iteritems():
                     if tfname not in _file_list or thash != _file_list[tfname]:
                         _write_msg(msg.NEED_FILE)
                         _write_str(tfname)
-                        speed = filetrans.recv(os.path.join(pcode, tfname), snc)
+                        speed = filetrans.recv(os.path.join(pcode, tfname), conn)
                         log.info("file transfer speed with orzoj-server: {0}" .
                                 format(speed))
 
@@ -202,14 +206,14 @@ def connect(sock):
 
             except filetrans.OFTPError:
                 raise Error
-            except Error:
-                raise
             except snc.Error:
                 raise Error
             except probconf.Error:
                 _write_msg(msg.DATA_ERROR)
                 _write_str("failed to analyse problem configuration (please contact the administrator to view log)")
-                raise Error
+                continue
+            except Error:
+                raise
             except Exception as e:
                 log.error("failed to transfer data for problem {0!r}: {1!r}" .
                         format(pcode, e))
@@ -219,8 +223,6 @@ def connect(sock):
 
             _write_msg(msg.DATA_OK)
             _write_uint32(len(pconf.case))
-            for case in pconf.case:
-                _write_uint32(case.time)
 
             _check_msg(msg.START_JUDGE)
             lang = _read_str()

@@ -1,6 +1,6 @@
 # $File: probconf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 22 23:42:55 2010 +0800
+# $Date: Wed Sep 29 20:44:53 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -58,7 +58,7 @@ class Prob_conf:
         self.extra_input = None # list, or None
         self.case = []          # list of Case_conf
 
-        self._parse(filename)
+        self._parse(pcode)
 
     def _parse(self, pcode):
 
@@ -68,17 +68,17 @@ class Prob_conf:
             tree = ElementTree()
             tree.parse(os.path.join(pcode, _PROBCONF_FILE))
 
-            for i in tree.getroot():
-                if i.tag == "orzoj-prob-conf":
-                    if "version" not in i.attrib:
-                        raise _Parse_error("version not found")
-                    v = i.attrib["version"]
-                    if v not in _parsers:
-                        raise _Parse_error("unknown version: {0!r}" . format(v))
-                    _parsers[v](i)
-                    return
+            root = tree.getroot()
+            if (root.tag != "orzoj-prob-conf"):
+                raise _Parse_error("tag 'orzoj-prob-conf' not found")
+            if "version" not in root.attrib:
+                raise _Parse_error("version not found")
+            v = root.attrib["version"]
+            if v not in _parsers:
+                raise _Parse_error("unknown version: {0!r}" . format(v))
 
-            raise _Parse_error("tag 'orzoj-prob-conf' not found")
+            _parsers[v](root)
+
 
         except Exception as e:
             log.error("[pcode: {0!r}] failed to parse problem configuration file: {1!r}" .
@@ -162,6 +162,7 @@ class Prob_conf:
                     raise _Parse_error("failed to convert to int: {0!r}" . format(e))
                 except AttributeError as e:
                     raise _Parse_error("broken 'case' section")
+                self.case.append(case)
                 continue
 
             raise _Parse_error("unknown tag: {0!r}" . format(section.tag))

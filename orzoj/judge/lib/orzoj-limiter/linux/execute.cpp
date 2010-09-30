@@ -1,7 +1,7 @@
 /*
  * $File: execute.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Fri Sep 17 21:17:26 2010 +0800
+ * $Date: Thu Sep 30 09:53:54 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -226,7 +226,7 @@ int execute(char * const argv[], Execute_arg &arg)
 		{
 			close(pipe_stderr[1]);
 			limit_stderr_arg.fd = pipe_stderr[0];
-			limit_stderr_arg.fd_target = STDOUT_FILENO;
+			limit_stderr_arg.fd_target = STDERR_FILENO;
 			limit_stderr_arg.size = arg.stderr_size;
 			int ret;
 			pthread_t pt;
@@ -234,7 +234,7 @@ int execute(char * const argv[], Execute_arg &arg)
 				ERROR("pthread_create");
 		}
 
-		int status;
+		int status, sig = -1;
 		struct rusage ru;
 
 		if (arg.syscall_left || arg.log_syscall)
@@ -290,6 +290,11 @@ int execute(char * const argv[], Execute_arg &arg)
 								else arg.syscall_cnt[scnr] ++;
 							}
 						} else first_stop = false;
+					} else
+					{
+						sig = WSTOPSIG(status);
+						ptrace(PTRACE_KILL, pid, NULL, NULL);
+						break;
 					}
 				} else break;
 				ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
@@ -360,9 +365,10 @@ int execute(char * const argv[], Execute_arg &arg)
 		if (arg.time && arg.result_time > arg.time * 1000)
 			return EXESTS_TLE;
 
-		if (WIFSIGNALED(status))
+		if (WIFSIGNALED(status) || sig != -1)
 		{
-			int sig = WTERMSIG(status);
+			if (sig == -1)
+				sig = WTERMSIG(status);
 
 			if (sig == SIGKILL)
 				return EXESTS_SIGKILL;
@@ -451,7 +457,7 @@ void* thread_limitout(void *arg0)
 			}
 			for (ssize_t cnt = 0; cnt < s; )
 			{
-				ssize_t t = write(arg.fd_target, buf, BUF_SIZE);
+				ssize_t t = write(arg.fd_target, buf, s - cnt);
 				if (t < 0)
 				{
 					arg.error = true;

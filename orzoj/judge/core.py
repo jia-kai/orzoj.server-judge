@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 23 10:31:31 2010 +0800
+# $Date: Thu Sep 30 11:15:06 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,7 +23,7 @@
 and executes (by running the executor under limiter) user's
 program and verifies the output"""
 
-import os.path, errno, shutil, time, os, shlex
+import os.path, errno, shutil, time, os, shlex, threading
 
 try:
     import fcntl
@@ -33,7 +33,7 @@ except:
 class Error(Exception):
     pass
 
-from orzoj import conf, log, structures, msg
+from orzoj import conf, log, structures, msg, snc
 from orzoj.judge import limiter
 
 _DEFAULT_PROG_NAME = "prog"  # file name of program being judged (without extention)
@@ -47,10 +47,10 @@ _prog_path_abs = None
 _lock_file_obj = None
 _lock_file_fd = None
 
-_executor_dict = {}
-lang_dict = {}
+_executor_dict = dict()
+lang_dict = dict()
 
-_cmd_vars = {"COMPILE_TIME" : msg.COMPILE_MAX_TIME * 1000}    # variables used in AddLimiter option
+_cmd_vars = dict()
 
 def _join_path(p1, p2):
     return os.path.normpath(os.path.join(p1, p2))
@@ -81,6 +81,20 @@ def _clean_temp():
         log.error("failed to clean temporary directory [{0!r}]: {1!r}" .
                 format(_dir_temp_abs))
         raise Error
+
+class _thread_tell_online(threading.Thread):
+    def __init__(self, conn):
+        threading.Thread.__init__(self)
+        self._conn = conn
+        self._stop = threading.Event()
+
+    def run(self):
+        while not self._stop.is_set():
+            msg.write_msg(self._conn, msg.TELL_ONLINE)
+            time.sleep(0.5)
+
+    def stop(self):
+        self._stop.set()
 
 class _Executor:
     def __init__(self, args):
@@ -136,8 +150,8 @@ class _Executor:
                                 l.exe_extra_info))
             return (True, None)
         except limiter.SysError as e:
-            return (False, "failed to compile: limiter error: {0}" .
-                    format(e.msg))
+            return (False, "failed to compile: limiter error: {0} [stderr: {1!r}]" .
+                    format(e.msg, l.stderr))
         except Exception as e:
             return (False, "failed to compile: caught exception: {0!r}" .
                     format(e))
@@ -182,6 +196,7 @@ class _Executor:
             else:
                 l.run(_cmd_vars, stdin = stdin, stdout = stdout)
 
+            res.score = 0
             res.exe_status = l.exe_status
             res.time = l.exe_time
             res.memory = l.exe_mem
@@ -213,8 +228,8 @@ class _Lang:
             raise conf.UserError("duplicated language: {0!r}" . format(args[1]))
 
         self._name = args[1]
-        self._src_ext = "." + args[2]
-        self._exe_ext = "." + args[3]
+        self._src_ext = args[2]
+        self._exe_ext = args[3]
 
         if args[4] == "None":
             self._compiler = None
@@ -227,23 +242,23 @@ class _Lang:
         if args[5] not in _executor_dict:
             raise conf.UserError("unknown program executor {0!r} for language {1!r}" .
                     format(args[5], args[1]))
-            self._executor = _executor_dict[args[5]]
+        self._executor = _executor_dict[args[5]]
 
         lang_dict[args[1]] = self
 
-    def judge(self, snc, pcode, pconf, src, input, output):
+    def judge(self, conn, pcode, pconf, src, input, output):
         """@pcode: problem code
         @pconf: problem configuration (defined in probconf.py)
         may raise Error or snc.Error"""
 
         def _write_msg(m):
-            msg.write_msg(snc, m)
+            msg.write_msg(conn, m)
 
         def _write_str(s):
-            snc.write_str(s)
+            conn.write_str(s)
 
         def _write_uint32(v):
-            snc.write_uint32(v)
+            conn.write_uint32(v)
 
         locked = False
 
@@ -284,10 +299,16 @@ class _Lang:
                 _cmd_vars["MEMORY"] = 0
                 _cmd_vars["DATADIR"] = os.path.abspath(pcode)
 
+                th_tell_online = _thread_tell_online(conn)
+                th_tell_online.start()
+
                 if pconf.compiler and self._name in pconf.compiler:
                     (ok, info) = self._compiler.run_as_compiler(_prog_path_abs, pconf.compiler[self._name])
                 else:
                     (ok, info) = self._compiler.run_as_compiler(_prog_path_abs)
+
+                th_tell_online.stop()
+                th_tell_online.join()
 
                 if not ok:
                     _write_msg(msg.COMPILE_FAIL)
@@ -307,57 +328,76 @@ class _Lang:
             prob_result = structures.prob_result()
             for case in pconf.case:
 
-                stdin_path = _join_path(pcode, case.stdin)
-                if not input: # use stdin
-                    prog_fin = open(stdin_path)
+                prob_result.full_score += case.score
+
+                try:
+                    stdin_path = _join_path(pcode, case.stdin)
+                    if not input: # use stdin
+                        prog_fin = open(stdin_path)
+                    else:
+                        tpath = _join_path(_dir_temp_abs, input)
+                        shutil.copy(stdin_path, tpath)
+                        prog_fin = None
+
+                    if not output: # use stdout
+                        prog_fout_path = _join_path(_dir_temp_abs, "output.{0}" .
+                                format(time.time()))
+                        prog_fout = open(prog_fout_path, "w")
+                    else:
+                        prog_fout_path = _join_path(_dir_temp_abs, output)
+                        prog_fout = None
+                except Exception as e:
+                    log.error("failed to open data file: {0!r}" . format(e))
+                    case_result = structures.case_result()
+                    case_result.exe_status = structures.EXESTS_SYSTEM_ERROR
+                    case_result.score = 0
+                    case_result.time = 0
+                    case_result.memory = 0
+                    case_result.extra_info = "failed to open data file"
+
                 else:
-                    tpath = _join_path(_dir_temp_abs, pconf.input)
-                    shutil.copy(stdin_path, tpath)
-                    prog_fin = None
 
-                if not output: # use stdout
-                    prog_fout_path = _join_path(_dir_temp_abs, "output.{0}" .
-                            format(time.time()))
-                    prog_fout = open(prog_fout_path, "w")
-                else:
-                    prog_fout_path = _join_path(_dir_temp_abs, output)
-                    prog_fout = None
+                    _cmd_vars["TIME"] = case.time
+                    _cmd_vars["MEMORY"] = case.mem
 
-                _cmd_vars["TIME"] = case.time
-                _cmd_vars["MEMORY"] = case.mem
 
-                umask_prev = os.umask(0)
-                case_result = self._executor.run(prog_path, stdin = prog_fin, stdout = prog_fout)
-                os.umask(umask_prev)
+                    th_tell_online = _thread_tell_online(conn)
+                    th_tell_online.start()
 
-                if prog_fin:
-                    prog_fin.close()
-                if prog_fout:
-                    prog_fout.close()
+                    umask_prev = os.umask(0)
+                    case_result = self._executor.run(prog_path, stdin = prog_fin, stdout = prog_fout)
+                    os.umask(umask_prev)
 
-                if case_result.exe_status == structures.EXESTS_RIGHT:
+                    th_tell_online.stop()
+                    th_tell_online.join()
 
-                    (case_result.score, case_result.extra_info) = case.verify_func(case.score, stdin_path, 
-                            _join_path(pcode, case.stdout), prog_fout_path)
-                    if case_result.score < case.score:
+                    if prog_fin:
+                        prog_fin.close()
+                    if prog_fout:
+                        prog_fout.close()
+
+                    if case_result.exe_status == structures.EXESTS_RIGHT:
+
+                        (case_result.score, case_result.extra_info) = pconf.verify_func(case.score, stdin_path, 
+                                _join_path(pcode, case.stdout), prog_fout_path)
+                        if case_result.score < case.score:
+                            if case_result.score:
+                                case_result.exe_status = structures.EXESTS_PARTIALLY_RIGHT
+                            else:
+                                case_result.exe_status = structures.EXESTS_WRONG_ANSWER
+
+                        prob_result.total_score += case_result.score
+
                         if case_result.score:
-                            case_result.exe_status = structures.EXESTS_PARTIALLY_RIGHT
-                        else:
-                            case_result.exe_status = structures.EXESTS_WRONG_ANSWER
-
-                    prob_result.total_score += case_result.score
-                    prob_result.full_score += case.score
-
-                    if case_result.score:
-                        prob_result.total_time += case_result.time
-                        if case_result.memory > prob_result.max_mem:
-                            prob_result.max_mem = case_result.memory
+                            prob_result.total_time += case_result.time
+                            if case_result.memory > prob_result.max_mem:
+                                prob_result.max_mem = case_result.memory
 
                 _write_msg(msg.REPORT_CASE)
-                case_result.write(snc)
+                case_result.write(conn)
 
             _write_msg(msg.REPORT_JUDGE_FINISH)
-            prob_result.write(snc)
+            prob_result.write(conn)
 
             if locked:
                 fcntl.flock(_lock_file_fd, fcntl.LOCK_UN)

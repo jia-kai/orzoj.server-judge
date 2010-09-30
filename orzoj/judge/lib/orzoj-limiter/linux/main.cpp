@@ -1,7 +1,7 @@
 /*
  * $File: main.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Fri Sep 17 20:16:29 2010 +0800
+ * $Date: Wed Sep 29 23:41:22 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -45,6 +45,7 @@ static void report_result(int sockfd, int exe_status, const Execute_arg &arg);
 static void init_syscall(Execute_arg &arg, const char *fname);
 static int str2int(const char *str);
 
+#define PROG_NAME "orzoj-limiter"
 
 int main(int argc, char **argv)
 {
@@ -77,8 +78,8 @@ int main(int argc, char **argv)
 			int opt = getopt_long(argc, argv, "", longopt, NULL);
 			if (opt == -1)
 			{
-				fprintf(stderr, "option --exec not found.\n");
-				usage(argv[0]);
+				fprintf(stderr, "%s: option --exec not found.\n", PROG_NAME);
+				usage(PROG_NAME);
 			}
 			int exe_status;
 			switch (opt)
@@ -86,7 +87,7 @@ int main(int argc, char **argv)
 				case 0:
 					if (sockfd != -1)
 					{
-						fprintf(stderr, "duplicated --socket option.\n");
+						fprintf(stderr, "%s: duplicated --socket option.\n", PROG_NAME);
 						throw Error();
 					}
 					sockfd = opensocket(optarg);
@@ -112,31 +113,31 @@ int main(int argc, char **argv)
 				case 12:
 						if (syscall_flog)
 						{
-							fprintf(stderr, "duplicated --gen-list option.\n");
+							fprintf(stderr, "%s: duplicated --gen-list option.\n", PROG_NAME);
 							throw Error();
 						}
 						syscall_flog = fopen(optarg, "w");
 						if (!syscall_flog)
 						{
-							perror("failed to open file for --gen-list");
+							perror(PROG_NAME ": failed to open file for --gen-list");
 							throw Error();
 						}
 						exe_arg.log_syscall = true;
 						break;
 				case 13:
-						usage(argv[0]);
+						usage(PROG_NAME);
 						break;
 				case 14:
 						if (sockfd == -1)
 						{
-							fprintf(stderr, "option --socket not found.\n");
-							usage(argv[0]);
+							fprintf(stderr, "%s: option --socket not found.\n", PROG_NAME);
+							usage(PROG_NAME);
 						}
 						exe_status = execute(argv + optind, exe_arg);
 						report_result(sockfd, exe_status, exe_arg);
 						break;
 				default:
-						usage(argv[0]);
+						usage(PROG_NAME);
 			}
 		}
 	} catch (Error)
@@ -209,7 +210,7 @@ int opensocket(const char *name)
 	int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sockfd < 0)
 	{
-		perror("socket");
+		perror(PROG_NAME ": socket");
 		throw Error();
 	}
 	struct sockaddr_un adr_unix;
@@ -223,7 +224,7 @@ int opensocket(const char *name)
 
 	if (connect(sockfd, (sockaddr*)(&adr_unix), len_unix))
 	{
-		perror("connect");
+		perror(PROG_NAME ": connect");
 		throw Error();
 	}
 	return sockfd;
@@ -252,7 +253,7 @@ void report_result(int sockfd, int exe_status, const Execute_arg &arg)
 		int t = write(sockfd, buf + tot, buflen - tot);
 		if (t <= 0)
 		{
-			perror("write");
+			perror(PROG_NAME ": write");
 			delete []buf;
 			close(sockfd);
 			throw Error();
@@ -268,13 +269,13 @@ void init_syscall(Execute_arg &arg, const char *fname)
 {
 	if (arg.syscall_left)
 	{
-		fprintf(stderr, "duplicated --syscall option.\n");
+		fprintf(stderr, "%s: duplicated --syscall option.\n", PROG_NAME);
 		throw Error();
 	}
 	FILE *fin = fopen(fname, "r");
 	if (!fin)
 	{
-		perror("failed to open syscall list");
+		perror(PROG_NAME ": failed to open syscall list");
 		throw Error();
 	}
 	int max_nr = 0, nr, cnt;
@@ -282,7 +283,7 @@ void init_syscall(Execute_arg &arg, const char *fname)
 	{
 		if (nr > SYSNR_MAX)
 		{
-			fprintf(stderr, "syscall number too large: %d\n", nr);
+			fprintf(stderr, "%s: syscall number too large: %d\n", PROG_NAME, nr);
 			throw Error();
 		}
 		if (nr > max_nr)
@@ -295,14 +296,14 @@ void init_syscall(Execute_arg &arg, const char *fname)
 	fin = fopen(fname, "r");
 	if (!fin)
 	{
-		perror("failed to open syscall list");
+		perror(PROG_NAME ": failed to open syscall list");
 		throw Error();
 	}
 	while (fscanf(fin, "%d%d", &nr, &cnt) == 2)
 	{
 		if (nr > max_nr)
 		{
-			fprintf(stderr, "syscall list chanded ?!\n");
+			fprintf(stderr, "%s: syscall list chanded ?!\n", PROG_NAME);
 			throw Error();
 		}
 		arg.syscall_left[nr] = cnt;
@@ -314,7 +315,7 @@ int str2int(const char *str)
 	int ret;
 	if (sscanf(str, "%d", &ret) != 1)
 	{
-		fprintf(stderr, "failed to convert \"%s\" to an integer.\n", str);
+		fprintf(stderr, "%s: failed to convert \"%s\" to an integer.\n", PROG_NAME, str);
 		throw Error();
 	}
 	return ret;

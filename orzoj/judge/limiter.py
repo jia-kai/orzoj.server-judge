@@ -1,6 +1,6 @@
 # $File: limiter.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 23 23:17:50 2010 +0800
+# $Date: Thu Sep 30 00:17:17 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -147,6 +147,7 @@ class _Limiter:
             try:
                 s.settimeout(1)
                 (conn, addr) = s.accept()
+                s.settimeout(None)
                 (self.exe_status, self.exe_time, self.exe_mem, info_len) = \
                         struct.unpack("IIII", conn.recv(16))
                 if info_len:
@@ -167,6 +168,8 @@ class _Limiter:
         else:
             p.wait()
 
+        log.debug('the command above now finished')
+
         if self._type == _LIMITER_FILE:
             try:
                 with os.fdopen(ftmp[0], 'rb') as f:
@@ -181,7 +184,7 @@ class _Limiter:
             except Exception as e:
                 log.error("[limiter {0!r}] failed to retrieve data through file: {1!r}" .
                         format(self._name, e))
-                raise SysError("limiter socket error")
+                raise SysError("limiter file error")
 
         if self._type == _LIMITER_SOCKET:
             try:

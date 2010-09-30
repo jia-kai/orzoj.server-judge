@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 29 16:23:39 2010 +0800
+# $Date: Thu Sep 30 09:38:04 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -36,9 +36,18 @@ _refresh_interval = None
 _id_max_len = None
 
 _QUEUE_TIMEOUT = 0.5
+_CASE_CHECK_ADDITION_TIMEOUT = 10
 
 class _internal_error(Exception):
     pass
+
+def _add_task(task):
+    while not control.test_termination_flag():
+        try:
+            _task_queue.put(task, True, _QUEUE_TIMEOUT)
+            break
+        except Queue.Full:
+            continue
 
 def _thread_fetch_task():
     global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
@@ -46,15 +55,18 @@ def _thread_fetch_task():
 
     while not control.test_termination_flag():
         while not control.test_termination_flag():
-            task = web.fetch_task()
+            try:
+                task = web.fetch_task()
+            except web.Error as e:
+                log.error("ending program because of communication error with website")
+                control.set_termination_flag()
+                return
             if task is None:
                 break
 
-            while not control.test_termination_flag():
-                try:
-                    _task_queue.put(task, True, _QUEUE_TIMEOUT)
-                except Queue.Full:
-                    continue
+            _add_task(task)
+
+            log.debug("fetched task #{0}" . format(task.id))
 
         time.sleep(_refresh_interval)
 
@@ -77,7 +89,7 @@ def thread_work():
                             judge = j
 
             if judge is None:
-                web.report_no_judge(task)
+                _add_task(task)
             else:
                 while not control.test_termination_flag():
                     try:
@@ -109,7 +121,7 @@ def _get_file_list(path):
         ret = {}
         for i in os.listdir(path):
             pf = os.path.normpath(os.path.join(path, i))
-            if os.path.isfile():
+            if os.path.isfile(pf):
                 ret[i] = _sha1_file(pf)
         return ret
             
@@ -145,7 +157,10 @@ class thread_new_judge_connection(threading.Thread):
             log.info("[judge {0!r}] disconnected" . format(judge.id))
 
         if self._web_registered:
-            web.remove_judge(judge)
+            try:
+                web.remove_judge(judge)
+            except web.Error:
+                pass
 
         if judge.queue:
             try:
@@ -243,11 +258,6 @@ class thread_new_judge_connection(threading.Thread):
 
         ncase = _read_uint32()
 
-        case_tl = []
-        for i in range(ncase):
-            case_tl.append(_read_uint32())
-
-
         _write_msg(msg.START_JUDGE)
         _write_str(task.lang)
         _write_str(task.src)
@@ -264,24 +274,37 @@ class thread_new_judge_connection(threading.Thread):
                 raise _internal_error
 
         web.report_compiling(task, judge)
-        m = msg.read_msg(self._snc, msg.COMPILE_MAX_TIME)
 
-        if m == msg.COMPILE_SUCCEED:
-            web.report_compile_success(task)
-        else:
-            if m != msg.COMPILE_FAIL:
-                web.report_error(task, "message check error")
-                log.warning("[judge {0!r}] message check error" .
-                        format(self._id))
-                raise _internal_error
-            web.report_compile_failure(task, _read_str())
-            self._cur_task = None
-            return
+        while True:
+            m = _read_msg()
+            if m == msg.TELL_ONLINE:
+                continue
+
+            if m == msg.COMPILE_SUCCEED:
+                web.report_compile_success(task)
+                break
+            else:
+                if m != msg.COMPILE_FAIL:
+                    web.report_error(task, "message check error")
+                    log.warning("[judge {0!r}] message check error" .
+                            format(self._id))
+                    raise _internal_error
+                web.report_compile_failure(task, _read_str())
+                self._cur_task = None
+                return
 
         for i in range(ncase):
-            _check_msg(msg.REPORT_CASE)
+            while True:
+                m = _read_msg()
+                if m == msg.REPORT_CASE:
+                    break
+                if m != msg.TELL_ONLINE:
+                    web.report_error(task, "message check error")
+                    log.warning("[judge {0!r}] message check error" .
+                            format(self._id))
+                    raise _internal_error
             result = structures.case_result()
-            result.read(self._snc, case_tl[i])
+            result.read(self._snc)
             web.report_case_result(task, result)
 
         _check_msg(msg.REPORT_JUDGE_FINISH)

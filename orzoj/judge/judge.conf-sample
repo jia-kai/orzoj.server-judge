@@ -123,11 +123,8 @@ AddLimiter lim-java socket /usr/bin/orzoj-limiter --socket $SOCKNAME --time "$TI
 #
 # and maximal output length should be limited because
 # some code can cause the compiler to produce large error infomation
-#
-# additional variable:
-#   COMPILE_TIME	--	maximal compilation time
 AddLimiter lim-compiler socket /usr/bin/orzoj-limiter --socket $SOCKNAME \
-	--time $COMPILE_TIME --stderr-max 65536 --exec $TARGET
+	--mem 262144 --hard-time 30000 --stderr-max 65536 --exec $TARGET
 
 
 # AddExecutor: add an executor, which is used to execute the compiler or target program
@@ -154,10 +151,10 @@ AddExecutor exe-java	lim-java		/usr/bin/java "$\"-Xmx{0}k\".format(MEMORY)" %s
 #
 # <compiler executor> can be set to "None" if not needed
 # <language> must match the language on the website
-AddLang	gcc		c		""	cmp-gcc		exe-default
-AddLang g++		cpp		""	cmp-g++		exe-default
-AddLang	fpc		pas		""	cmp-fpc		exe-default
-AddLang	java	java	""	cmp-java	exe-java
+AddLang	gcc		.c		""	cmp-gcc		exe-default
+AddLang g++		.cpp	""	cmp-g++		exe-default
+AddLang	fpc		.pas	""	cmp-fpc		exe-default
+AddLang	java	.java	""	cmp-java	exe-java
 #AddLang binary	""		None	None	default
 
 

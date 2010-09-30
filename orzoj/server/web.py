@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 29 16:17:36 2010 +0800
+# $Date: Thu Sep 30 10:41:50 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -34,6 +34,8 @@ version 1:
         json.dumps({"status" : int, "data" : str (json encoded), "checksum" : str})
         where status is either 0 or 1, 0 = success, 1 = error (data is a human-readable reason)
         checksum = sha1sum(str(thread_id) + str(req_id) + sha1sum(_dynamic_passwd + _static_passwd) + str(status) + data)
+
+    website can send 'relogin' for reeusting a new login
 
 """
 
@@ -130,14 +132,6 @@ def fetch_task():
         log.error("failed to fetch task: {0!r}" . format(e))
         raise Error
 
-def report_no_judge(task):
-    """tell the website that no judge supports the task's language
-    this function does not raise exceptions
-
-    data: action=report_no_judge, task=...(id:int)
-    return: NULL"""
-    _read({"action":"report_no_judge", "task":task.id})
-
 def report_no_data(task):
     """tell the website that there are no data for the task
     this function does not raise exceptions
@@ -210,9 +204,8 @@ def _read(data, maxlen = None):
     """
     global _retry_cnt, _web_addr, _thread_req_id, _passwd
 
-    if maxlen:
-        url = _web_addr + "?" + urllib.urlencode(data)
-    else:
+    def make_data():
+        """return a tuple (checksum_base, data_sent)"""
         thread_id = threading.current_thread().ident
         try:
             req_id = _thread_req_id[thread_id]
@@ -220,24 +213,37 @@ def _read(data, maxlen = None):
             req_id = 0
         _thread_req_id[thread_id] = req_id + 1
         checksum_base = str(thread_id) + str(req_id) + _passwd
-        data = json.dumps(data)
         data_sent = urllib.urlencode({"data" :
                 json.dumps({"thread_id" : thread_id, "req_id" : req_id, "data" : data,
                     "checksum" : _sha1sum(checksum_base + data)})})
 
+        return (checksum_base, data_sent)
+
+    if maxlen:
+        url = _web_addr + "?" + urllib.urlencode(data)
+    else:
+        data = json.dumps(data)
+        (checksum_base, data_sent) = make_data()
+
     cnt = _retry_cnt
-    if not cnt:
-        cnt = 1
 
     while cnt:
         cnt -= 1
         try:
+            ret = None
+
             if maxlen:
                 return urllib2.urlopen(url, None, _timeout).read(maxlen)
 
             ret = urllib2.urlopen(_web_addr, data_sent, _timeout).read()
 
-            log.debug("raw data from server: {0!r}" . format(ret))
+            if ret == 'relogin':
+                log.warning("website requests relogin")
+                _login()
+                cnt = _retry_cnt
+                _thread_req_id = dict()
+                (checksum_base, data_sent) = make_data()
+                continue
 
             ret = json.loads(ret)
 
@@ -253,9 +259,10 @@ def _read(data, maxlen = None):
             return json.loads(ret_data)
 
         except Exception as e:
-            log.error("website communication error: {0!r}" .
-                    format(e))
-            sys.stderr.write("orzoj-server: website communicating error. See the log for details.\n")
+            log.debug("raw data from server: {0!r}" . format(ret))
+            log.error("website communication error [left retries: {0}]: {1!r}" .
+                    format(cnt, e))
+            sys.stderr.write("orzoj-server: website communication error. See the log for details.\n")
             continue
 
     raise Error
@@ -310,6 +317,8 @@ def _set_web_addr(arg):
 def _set_web_retry(arg):
     global _retry_cnt
     _retry_cnt = int(arg[1])
+    if _retry_cnt == 0:
+        _retry_cnt = 1
 
 conf.simple_conf_handler("Password", _set_static_password)
 conf.simple_conf_handler("WebTimeout", _set_web_timeout, "5")
