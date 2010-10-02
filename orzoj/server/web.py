@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 30 10:41:50 2010 +0800
+# $Date: Fri Oct 01 15:24:00 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -269,10 +269,10 @@ def _read(data, maxlen = None):
 
 def _login():
     """
-    1. read at most _DYNAMIC_PASSWD_MAXLEN bytes from msg.php?action=login1&version=_VERSION,
+    1. read at most _DYNAMIC_PASSWD_MAXLEN bytes from orz.php?action=login1&version=_VERSION,
        _dynamic_passwd is the data read
        _dynamic_passwd = "0" means version check error
-    2. from msg.php?action=login2&checksum=_sha1sum(_sha1sum(_dynamic_passwd + _static_passwd)),
+    2. from orz.php?action=login2&checksum=_sha1sum(_sha1sum(_dynamic_passwd + _static_passwd)),
        and verify that it should be _sha1sum(_sha1sum(_dynamic_passwd) + _static_passwd)"""
 
     global _dynamic_passwd, _static_passwd, _passwd
@@ -312,7 +312,7 @@ def _set_web_timeout(arg):
 
 def _set_web_addr(arg):
     global _web_addr
-    _web_addr = arg[1].rstrip('/') + "/msg.php"
+    _web_addr = arg[1].rstrip('/') + "/orz.php"
 
 def _set_web_retry(arg):
     global _retry_cnt
