@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Oct 01 15:24:00 2010 +0800
+# $Date: Wed Oct 13 18:58:18 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -42,13 +42,14 @@ version 1:
 _VERSION = 1
 _DYNAMIC_PASSWD_MAXLEN = 128
 
-import urllib2, urllib, sys, hashlib, threading, json
+import urllib2, urllib, sys, hashlib, threading, json, time
 
-from orzoj import conf, log, structures
+from orzoj import conf, log, structures, control
 
 _static_passwd = None
 _passwd = None
 _retry_cnt = None
+_retry_wait = None
 _timeout = None
 _web_addr = None
 _thread_req_id = dict()
@@ -263,6 +264,9 @@ def _read(data, maxlen = None):
             log.error("website communication error [left retries: {0}]: {1!r}" .
                     format(cnt, e))
             sys.stderr.write("orzoj-server: website communication error. See the log for details.\n")
+            time.sleep(_retry_wait);
+            if control.test_termination_flag():
+                raise Error
             continue
 
     raise Error
@@ -314,16 +318,23 @@ def _set_web_addr(arg):
     global _web_addr
     _web_addr = arg[1].rstrip('/') + "/orz.php"
 
-def _set_web_retry(arg):
+def _set_web_retry_cnt(arg):
     global _retry_cnt
     _retry_cnt = int(arg[1])
     if _retry_cnt == 0:
         _retry_cnt = 1
 
+def _set_web_retry_wait(arg):
+    global _retry_wait
+    _retry_wait = float(arg[1])
+    if _retry_wait < 1:
+        _retry_wait = 1
+
 conf.simple_conf_handler("Password", _set_static_password)
 conf.simple_conf_handler("WebTimeout", _set_web_timeout, "5")
 conf.simple_conf_handler("WebAddress", _set_web_addr)
-conf.simple_conf_handler("WebRetryCount", _set_web_retry, "5")
+conf.simple_conf_handler("WebRetryCount", _set_web_retry_cnt, "5")
+conf.simple_conf_handler("WebRetryWait", _set_web_retry_wait, "2")
 
 conf.register_init_func(_login)
 

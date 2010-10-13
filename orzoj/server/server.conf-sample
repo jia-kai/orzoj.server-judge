@@ -77,6 +77,9 @@ WebTimeout 5
 # set WebRetryCount to -1 to retry forever (dangerous!)
 WebRetryCount 5
 
+# WebRetryWait: the time in seconds to wait before retrying
+WebRetryWait 2
+
 # RefreshInterval: orzoj-server will try to connect to orzoj-web
 # to find new tasks when every <RefreshInterval> second(s) passed.
 RefreshInterval 1

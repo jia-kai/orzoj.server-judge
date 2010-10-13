@@ -1,232 +1,85 @@
-[2010-10-01 15:49:00,154] [INFO] from connect in work at work.py:136 :
+[2010-10-13 19:06:09,700] [INFO] from connect in work at work.py:136 :
 connection established
 
-[2010-10-01 15:49:05,254] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919345.25', '--mem', '262144', '--hard-time', '30000', '--stderr-max', '65536', '--exec', '/usr/bin/g++', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog.cpp', '-o', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog', '-static']
+[2010-10-13 19:06:22,066] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967982.07', '--mem', '262144', '--hard-time', '30000', '--stderr-max', '65536', '--exec', '/usr/bin/g++', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog.cpp', '-o', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog', '-static']
 
-[2010-10-01 15:49:05,510] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:22,735] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:05,757] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919345.76', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
+[2010-10-13 19:06:23,077] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967983.08', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
 
-[2010-10-01 15:49:05,764] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:23,117] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:06,261] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919346.26', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
+[2010-10-13 19:06:23,604] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967983.6', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
 
-[2010-10-01 15:49:06,269] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:23,624] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:06,765] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919346.77', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
+[2010-10-13 19:06:24,120] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967984.12', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
 
-[2010-10-01 15:49:06,773] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:24,134] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:07,269] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919347.27', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
+[2010-10-13 19:06:24,619] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967984.62', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
 
-[2010-10-01 15:49:07,277] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:24,635] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:07,779] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919347.78', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
+[2010-10-13 19:06:25,121] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967985.12', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
 
-[2010-10-01 15:49:07,791] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:25,139] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:08,279] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919348.28', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
+[2010-10-13 19:06:25,624] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967985.62', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
 
-[2010-10-01 15:49:08,287] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:25,638] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:08,783] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919348.78', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
+[2010-10-13 19:06:26,127] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967986.13', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
 
-[2010-10-01 15:49:08,791] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:26,146] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:09,287] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919349.29', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
+[2010-10-13 19:06:26,630] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967986.63', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
 
-[2010-10-01 15:49:09,295] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:26,646] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:09,791] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919349.79', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
+[2010-10-13 19:06:27,133] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967987.13', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
 
-[2010-10-01 15:49:09,799] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:27,149] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:10,295] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919350.3', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
+[2010-10-13 19:06:27,643] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967987.64', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
 
-[2010-10-01 15:49:10,303] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:27,670] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:10,799] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919350.8', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
+[2010-10-13 19:06:28,156] [DEBUG] from run in limiter at limiter.py:128 :
+executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.18662.1286967988.16', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
 
-[2010-10-01 15:49:10,807] [DEBUG] from run in limiter at limiter.py:171 :
+[2010-10-13 19:06:28,170] [DEBUG] from run in limiter at limiter.py:171 :
 the command above now finished
 
-[2010-10-01 15:49:32,913] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919372.91', '--mem', '262144', '--hard-time', '30000', '--stderr-max', '65536', '--exec', '/usr/bin/g++', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog.cpp', '-o', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog', '-static']
-
-[2010-10-01 15:49:33,167] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:49:33,416] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919373.42', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:49:33,423] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:49:33,920] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919373.92', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:49:33,928] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:49:34,425] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919374.43', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:49:34,432] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:49:34,929] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919374.93', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:49:34,937] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:49:35,433] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919375.43', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:49:35,453] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:49:35,937] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919375.94', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:49:35,945] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:49:36,441] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919376.44', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:49:36,449] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:49:36,945] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919376.95', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:49:36,953] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:49:37,450] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919377.45', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:49:37,457] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:49:37,954] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919377.95', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:49:37,961] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:49:38,458] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919378.46', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:49:38,465] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:30,528] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919670.53', '--mem', '262144', '--hard-time', '30000', '--stderr-max', '65536', '--exec', '/usr/bin/g++', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog.cpp', '-o', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog', '-static']
-
-[2010-10-01 15:54:30,783] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:31,031] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919671.03', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:54:31,039] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:31,535] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919671.54', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:54:31,543] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:32,039] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919672.04', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:54:32,047] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:32,543] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919672.54', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:54:32,551] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:33,051] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919673.05', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:54:33,060] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:33,555] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919673.56', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:54:33,562] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:34,059] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919674.06', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:54:34,081] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:34,563] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919674.56', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:54:34,571] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:35,067] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919675.07', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:54:35,075] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:35,571] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919675.57', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:54:35,579] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:54:36,075] [DEBUG] from run in limiter at limiter.py:128 :
-executing command: ['/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/main', '--socket', 'orzoj-limiter-socket.15104.1285919676.08', '--time', '1000', '--hard-time', '6000', '--mem', '0', '--chdir', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp', '--nproc', '1', '--gen-list', '/home/jiakai/programming/orzoj/server-judge/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed', '--exec', '/home/jiakai/programming/orzoj/server-judge/test-judge/chroot/tmp/prog']
-
-[2010-10-01 15:54:36,083] [DEBUG] from run in limiter at limiter.py:171 :
-the command above now finished
-
-[2010-10-01 15:55:30,089] [INFO] from sig_handler in control at control.py:45 :
-reveived signal 2, terminating...
-
-[2010-10-01 15:55:30,089] [ERROR] from read in snc at snc.py:114 :
+[2010-10-13 19:07:18,811] [ERROR] from read in snc at snc.py:114 :
 failed to read:
-error('SSL error [func SSL_read] [errno: Interrupted system call]: error:00000002:lib(0):func(0):system lib',)
+error('SSL error [func SSL_read] [errno: Success]: error:00000006:lib(0):func(0):EVP lib',)
 
-[2010-10-01 15:55:30,089] [ERROR] from connect in work at work.py:236 :
+[2010-10-13 19:07:18,812] [ERROR] from connect in work at work.py:236 :
 failed to communicate with orzoj-server because of network error
 
-[2010-10-01 15:55:30,090] [ERROR] from run_judge in main at main.py:76 :
+[2010-10-13 19:07:18,813] [ERROR] from run_judge in main at main.py:76 :
 error occurred, terminating program
 
