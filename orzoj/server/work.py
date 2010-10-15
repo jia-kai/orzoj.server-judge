@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 30 09:38:04 2010 +0800
+# $Date: Fri Oct 15 18:51:15 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -90,6 +90,8 @@ def thread_work():
 
             if judge is None:
                 _add_task(task)
+                time.sleep(0.5)
+                log.warning("no judge for task #{0}" . format(task.id))
             else:
                 while not control.test_termination_flag():
                     try:
