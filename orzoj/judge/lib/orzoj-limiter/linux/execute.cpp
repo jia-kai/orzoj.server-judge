@@ -1,7 +1,7 @@
 /*
  * $File: execute.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Thu Sep 30 09:53:54 2010 +0800
+ * $Date: Fri Oct 15 17:26:52 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -362,7 +362,7 @@ int execute(char * const argv[], Execute_arg &arg)
 		arg.result_mem = ((unsigned long long)ru.ru_minflt *
 				(unsigned long long)sysconf(_SC_PAGESIZE)) / 1024ull;
 
-		if (arg.time && arg.result_time > arg.time * 1000)
+		if (arg.time && arg.result_time > (arg.time - 50) * 1000)
 			return EXESTS_TLE;
 
 		if (WIFSIGNALED(status) || sig != -1)
