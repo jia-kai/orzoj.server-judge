@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Oct 13 18:58:18 2010 +0800
+# $Date: Sun Oct 17 10:06:13 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -24,11 +24,11 @@
 
 version 1:
     request to web:
-        POST data=json.dumps({"thread_id" : int, "req_id" : int,
+        POST data=json.dumps({"thread_id" : int, 
             "data" : str (json encoded), "checksum" : str})  
 
-        where req_id is a strictly increasing integer for each thread
         checksum = sha1sum(str(thread_id) + str(req_id) + sha1sum(_dynamic_passwd + _static_passwd) + data)
+        where req_id is an integer increasing by 1 per post for each thread
 
     response from web:
         json.dumps({"status" : int, "data" : str (json encoded), "checksum" : str})
@@ -215,7 +215,7 @@ def _read(data, maxlen = None):
         _thread_req_id[thread_id] = req_id + 1
         checksum_base = str(thread_id) + str(req_id) + _passwd
         data_sent = urllib.urlencode({"data" :
-                json.dumps({"thread_id" : thread_id, "req_id" : req_id, "data" : data,
+                json.dumps({"thread_id" : thread_id, "data" : data,
                     "checksum" : _sha1sum(checksum_base + data)})})
 
         return (checksum_base, data_sent)
@@ -252,7 +252,7 @@ def _read(data, maxlen = None):
             ret_data = ret["data"]
 
             if ret["checksum"] != _sha1sum(checksum_base + str(ret_status) + ret_data):
-                raise _internal_error("checksum error")
+                raise _internal_error("website checksum error")
 
             if int(ret_status):
                 raise _internal_error("website says an error happens there: {0}" . format(ret_data))
