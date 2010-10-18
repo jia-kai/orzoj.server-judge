@@ -2,14 +2,12 @@
 #ifndef _HEADER_EXE_STATUS_
 #define _HEADER_EXE_STATUS_
 typedef unsigned int Exests_t;
-static const Exests_t EXESTS_RIGHT = 0;
-static const Exests_t EXESTS_PARTIALLY_RIGHT = 1;
-static const Exests_t EXESTS_WRONG_ANSWER = 2;
-static const Exests_t EXESTS_TLE = 3;
-static const Exests_t EXESTS_SIGKILL = 4;
-static const Exests_t EXESTS_SIGSEGV = 5;
-static const Exests_t EXESTS_SIGNAL = 6;
-static const Exests_t EXESTS_ILLEGAL_CALL = 7;
-static const Exests_t EXESTS_EXIT_NONZERO = 8;
-static const Exests_t EXESTS_SYSTEM_ERROR = 9;
+static const Exests_t EXESTS_NORMAL = 0;
+static const Exests_t EXESTS_TLE = 1;
+static const Exests_t EXESTS_SIGKILL = 2;
+static const Exests_t EXESTS_SIGSEGV = 3;
+static const Exests_t EXESTS_SIGNAL = 4;
+static const Exests_t EXESTS_ILLEGAL_CALL = 5;
+static const Exests_t EXESTS_EXIT_NONZERO = 6;
+static const Exests_t EXESTS_SYSTEM_ERROR = 7;
 #endif

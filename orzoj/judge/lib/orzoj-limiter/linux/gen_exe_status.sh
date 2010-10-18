@@ -1,7 +1,7 @@
 #!/bin/bash -e
 # $File: gen_exe_status.sh
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Sep 18 11:47:55 2010 +0800
+# $Date: Mon Oct 18 08:39:14 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -32,7 +32,7 @@ _EOF_
 
 id=0
 
-for i in $(cat ../../../structures.py | grep -o '^EXESTS[A-Z_]*')
+for i in $(cat ../../../../structures.py | grep -o '^EXESTS[A-Z_]*')
 do
 	echo "static const Exests_t $i = $id;" >> $FILE
 	let id=$id+1

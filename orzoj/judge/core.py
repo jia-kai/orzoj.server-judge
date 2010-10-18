@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 30 11:15:06 2010 +0800
+# $Date: Mon Oct 18 14:13:07 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,7 +23,7 @@
 and executes (by running the executor under limiter) user's
 program and verifies the output"""
 
-import os.path, errno, shutil, time, os, shlex, threading
+import os.path, errno, shutil, time, os, shlex, threading, Queue
 
 try:
     import fcntl
@@ -82,6 +82,37 @@ def _clean_temp():
                 format(_dir_temp_abs))
         raise Error
 
+class _thread_report_case_result(threading.Thread):
+    def __init__(self, conn, ncase):
+        threading.Thread.__init__(self)
+        self._conn = conn
+        self._ncase = ncase
+        self._queue = Queue.Queue()
+        self._error = None
+
+    def run(self):
+        try:
+            while self._ncase:
+                try:
+                    res = self._queue.get(False)
+                    msg.write_msg(self._conn, msg.REPORT_CASE)
+                    res.write(self._conn)
+                    self._ncase -= 1
+                except Queue.Empty:
+                    msg.write_msg(self._conn, msg.TELL_ONLINE)
+                    time.sleep(0.5)
+        except Exception as e:
+            log.error("failed to report case result: {0!r}" . format(e))
+            self._error = e
+
+    def check_error(self):
+        if self._error is not None:
+            raise self._error
+
+    def add(self, res):
+        self._queue.put(res)
+
+
 class _thread_tell_online(threading.Thread):
     def __init__(self, conn):
         threading.Thread.__init__(self)
@@ -95,6 +126,7 @@ class _thread_tell_online(threading.Thread):
 
     def stop(self):
         self._stop.set()
+
 
 class _Executor:
     def __init__(self, args):
@@ -172,6 +204,7 @@ class _Executor:
         def mkerror(msg):
             res.exe_status = structures.EXESTS_SYSTEM_ERROR
             res.score = 0
+            res.full_score = 0
             res.time = 0
             res.memory = 0
             res.extra_info = msg
@@ -197,6 +230,7 @@ class _Executor:
                 l.run(_cmd_vars, stdin = stdin, stdout = stdout)
 
             res.score = 0
+            res.full_score = 0
             res.exe_status = l.exe_status
             res.time = l.exe_time
             res.memory = l.exe_mem
@@ -325,10 +359,11 @@ class _Lang:
 
             global _prog_path
             prog_path = _prog_path + self._exe_ext
-            prob_result = structures.prob_result()
-            for case in pconf.case:
 
-                prob_result.full_score += case.score
+            th_report_case = _thread_report_case_result(conn, len(pconf.case))
+            th_report_case.start()
+
+            for case in pconf.case:
 
                 try:
                     stdin_path = _join_path(pcode, case.stdin)
@@ -351,6 +386,7 @@ class _Lang:
                     case_result = structures.case_result()
                     case_result.exe_status = structures.EXESTS_SYSTEM_ERROR
                     case_result.score = 0
+                    case_result.full_score = 0
                     case_result.time = 0
                     case_result.memory = 0
                     case_result.extra_info = "failed to open data file"
@@ -360,44 +396,28 @@ class _Lang:
                     _cmd_vars["TIME"] = case.time
                     _cmd_vars["MEMORY"] = case.mem
 
-
-                    th_tell_online = _thread_tell_online(conn)
-                    th_tell_online.start()
-
                     umask_prev = os.umask(0)
                     case_result = self._executor.run(prog_path, stdin = prog_fin, stdout = prog_fout)
+                    case_result.full_score = case.score
                     os.umask(umask_prev)
-
-                    th_tell_online.stop()
-                    th_tell_online.join()
 
                     if prog_fin:
                         prog_fin.close()
                     if prog_fout:
                         prog_fout.close()
 
-                    if case_result.exe_status == structures.EXESTS_RIGHT:
-
-                        (case_result.score, case_result.extra_info) = pconf.verify_func(case.score, stdin_path, 
+                    if case_result.exe_status == structures.EXESTS_NORMAL:
+                        if (not os.path.isfile(prog_fout_path)) or os.path.islink(prog_fout_path):
+                            (case_result.score, case_result.extra_info) = (0, "output file not found")
+                        else:
+                            (case_result.score, case_result.extra_info) = pconf.verify_func(case.score, stdin_path, 
                                 _join_path(pcode, case.stdout), prog_fout_path)
-                        if case_result.score < case.score:
-                            if case_result.score:
-                                case_result.exe_status = structures.EXESTS_PARTIALLY_RIGHT
-                            else:
-                                case_result.exe_status = structures.EXESTS_WRONG_ANSWER
 
-                        prob_result.total_score += case_result.score
+                th_report_case.add(case_result)
 
-                        if case_result.score:
-                            prob_result.total_time += case_result.time
-                            if case_result.memory > prob_result.max_mem:
-                                prob_result.max_mem = case_result.memory
-
-                _write_msg(msg.REPORT_CASE)
-                case_result.write(conn)
-
+            th_report_case.join()
+            th_report_case.check_error()
             _write_msg(msg.REPORT_JUDGE_FINISH)
-            prob_result.write(conn)
 
             if locked:
                 fcntl.flock(_lock_file_fd, fcntl.LOCK_UN)

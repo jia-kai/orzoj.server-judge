@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Oct 15 18:51:15 2010 +0800
+# $Date: Mon Oct 18 11:44:38 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -69,6 +69,30 @@ def _thread_fetch_task():
             log.debug("fetched task #{0}" . format(task.id))
 
         time.sleep(_refresh_interval)
+
+class _thread_report_judge_progress(threading.Thread):
+    def __init__(self, task):
+        threading.Thread.__init__(self)
+        self._task = task
+        self._now = 0
+        self._stop = threading.Event()
+        self._lock = threading.Lock()
+
+    def run(self):
+        while not self._stop.is_set():
+            with self._lock:
+                n = self._now
+            try:
+                web.report_judge_progress(self._task, n)
+            except web.Error:
+                log.error("failed to report judge progress for task #{0}" . format(self._task.id))
+
+    def stop(self):
+        self._stop.set()
+
+    def set_progress(self, now):
+        with self._lock:
+            self._now = now
 
 def thread_work():
     """wait for tasks and distribute them to judges"""
@@ -251,6 +275,7 @@ class thread_new_judge_connection(threading.Thread):
 
             if m != msg.NEED_FILE:
                 log.warning("[judge {0!r}] message check error" . format(self._id))
+                web.report_error(task, "message check error")
                 raise _internal_error
 
             fpath = os.path.normpath(os.path.join(task.prob, _read_str()))
@@ -273,6 +298,7 @@ class thread_new_judge_connection(threading.Thread):
             if m != msg.START_JUDGE_WAIT:
                 log.warning("[judge {0!r}] message check error" .
                         format(self._id))
+                web.report_error(task, "message check error")
                 raise _internal_error
 
         web.report_compiling(task, judge)
@@ -283,7 +309,7 @@ class thread_new_judge_connection(threading.Thread):
                 continue
 
             if m == msg.COMPILE_SUCCEED:
-                web.report_compile_success(task)
+                web.report_compile_success(task, ncase)
                 break
             else:
                 if m != msg.COMPILE_FAIL:
@@ -295,25 +321,32 @@ class thread_new_judge_connection(threading.Thread):
                 self._cur_task = None
                 return
 
+        th_progress = _thread_report_judge_progress(task)
+        th_progress.start()
+        prob_res = list()
+
         for i in range(ncase):
+            th_progress.set_progress(i)
             while True:
                 m = _read_msg()
                 if m == msg.REPORT_CASE:
                     break
                 if m != msg.TELL_ONLINE:
+                    th_progress.stop()
+                    th_progress.join()
                     web.report_error(task, "message check error")
                     log.warning("[judge {0!r}] message check error" .
                             format(self._id))
                     raise _internal_error
             result = structures.case_result()
             result.read(self._snc)
-            web.report_case_result(task, result)
+            prob_res.append(result)
 
+        th_progress.stop()
         _check_msg(msg.REPORT_JUDGE_FINISH)
-        result = structures.prob_result()
-        result.read(self._snc)
+        th_progress.join()
 
-        web.report_prob_result(task, result)
+        web.report_prob_result(task, prob_res)
 
         self._cur_task = None
 

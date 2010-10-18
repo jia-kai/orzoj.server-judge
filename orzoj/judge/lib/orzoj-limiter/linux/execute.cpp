@@ -1,7 +1,7 @@
 /*
  * $File: execute.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Fri Oct 15 17:26:52 2010 +0800
+ * $Date: Mon Oct 18 08:40:23 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -388,7 +388,7 @@ int execute(char * const argv[], Execute_arg &arg)
 			return EXESTS_EXIT_NONZERO;
 		}
 
-		return 0;
+		return EXESTS_NORMAL;
 
 #undef ERROR
 	}

@@ -1,6 +1,6 @@
 # $File: msg.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 30 09:23:34 2010 +0800
+# $Date: Mon Oct 18 09:09:40 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -85,7 +85,7 @@ COMPILE_SUCCEED, # c2s
 COMPILE_FAIL, # c2s 
 # packet format: (REPORT_CASE, result:case_result)
 REPORT_CASE, # c2s 
-# packet format: (JUDGE_FINISH,  result:prob_result)
+# packet format: (REPORT_JUDGE_FINISH)
 REPORT_JUDGE_FINISH, # c2s 
 
 OFTP_BEGIN, 

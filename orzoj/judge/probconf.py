@@ -1,6 +1,6 @@
 # $File: probconf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 29 20:44:53 2010 +0800
+# $Date: Mon Oct 18 08:43:12 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -177,7 +177,7 @@ def _build_verifier(pcode, lang, exe, time, mem):
     """@lang is an instance of core._Lang"""
     def func(score, fstdin, fstdout, fusrout):
         res = lang.verifier_execute(pcode, exe, time, mem, [score, fstdin, fstdout, fusrout])
-        if res[0].exe_status != structures.EXESTS_RIGHT:
+        if res[0].exe_status != structures.EXESTS_NORMAL:
             return (0, "failed to execute verifier [status: {0}]: {1}" .
                     format(structures.EXECUTION_STATUS_STR[res[0].exe_status], res[0].extra_info))
 

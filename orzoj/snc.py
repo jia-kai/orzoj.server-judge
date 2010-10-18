@@ -1,6 +1,6 @@
 # $File: snc.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 23 17:29:16 2010 +0800
+# $Date: Mon Oct 18 13:56:34 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -33,7 +33,8 @@ _ca_file    = None
 
 
 class Error(Exception):
-    pass
+    def __repr__(self):
+        return "SSL connection error"
 
 class ErrorTimeout(Exception):
     pass

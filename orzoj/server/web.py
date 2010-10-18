@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Oct 17 10:06:13 2010 +0800
+# $Date: Mon Oct 18 11:48:26 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -155,12 +155,12 @@ def report_compiling(task, judge):
     return: NULL"""
     _read({"action":"report_compiling", "task":task.id, "judge":judge.id_num})
 
-def report_compile_success(task):
+def report_compile_success(task, ncase):
     """successfully compiled
 
-    data: action=report_compile_success, task=...(id:int)
+    data: action=report_compile_success, task=...(id:int), ncase=...
     return: NULL"""
-    _read({"action":"report_compile_success", "task":task.id})
+    _read({"action": "report_compile_success", "task": task.id, "ncase": ncase})
 
 def report_compile_failure(task, info):
     """failed to compile
@@ -169,27 +169,26 @@ def report_compile_failure(task, info):
     return: NULL"""
     _read({"action":"report_compile_failure", "task":task.id, "info":info})
 
-def report_case_result(task, result):
+def report_judge_progress(task, now):
     """
-    data: action=report_case_result, task=...(id:int),
-        exe_status=..., score=..., time=..., memory=..., extra_info=... (see structures.py)
+    @now: current case number, starting from 0
+
+    data: action=report_judge_progress, task=...(id:int), now=...
     return: NULL"""
-    data = {"action":"report_case_result", "task":task.id}
-    d = structures.case_result().__dict__
-    for i in d:
-        data[i] = result.__dict__[i]
-    _read(data)
+    _read({"action":"report_judge_progress", "task":task.id, "now": now})
 
 def report_prob_result(task, result):
     """
-    data: action=report_prob_result, task=...(id:int)
-        total_score=..., full_score=..., total_time=..., max_mem=... (see structures.py)
+    @result: list of case_result
+
+    data: action=report_prob_result, task=...(id:int),
+        exe_status=array(...), score=array(...), ... (see case_result in structures.py)
     return: NULL
     """
     data = {"action":"report_prob_result", "task":task.id}
-    d = structures.prob_result().__dict__
+    d = structures.case_result().__dict__
     for i in d:
-        data[i] = result.__dict__[i]
+        data[i] = [case.__dict__[i] for case in result]
     _read(data)
 
 

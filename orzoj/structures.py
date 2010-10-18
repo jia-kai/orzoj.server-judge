@@ -1,6 +1,6 @@
 # $File: structures.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 29 23:10:26 2010 +0800
+# $Date: Mon Oct 18 08:38:18 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -42,9 +42,7 @@ class task:
         # all attributes except self.id should be string
 
 (
-EXESTS_RIGHT,
-EXESTS_PARTIALLY_RIGHT,
-EXESTS_WRONG_ANSWER,
+EXESTS_NORMAL,
 EXESTS_TLE,
 EXESTS_SIGKILL,
 EXESTS_SIGSEGV,
@@ -52,12 +50,10 @@ EXESTS_SIGNAL,
 EXESTS_ILLEGAL_CALL,  # illegal syscall
 EXESTS_EXIT_NONZERO,
 EXESTS_SYSTEM_ERROR
-) = range(10)
+) = range(8)
 
 EXECUTION_STATUS_STR = {
-    EXESTS_RIGHT : "right",
-    EXESTS_PARTIALLY_RIGHT : "partially right",
-    EXESTS_WRONG_ANSWER : "wrong answer",
+    EXESTS_NORMAL : "normal",
     EXESTS_TLE : "time limit exceeded",
     EXESTS_SIGKILL : "received SIGKILL",
     EXESTS_SIGSEGV : "received SIGSEGV",
@@ -71,36 +67,22 @@ class case_result:
     def __init__(self):
         self.exe_status = None
         self.score = None
+        self.full_score = None
         self.time = None        # microseconds
         self.memory = None      # kb
         self.extra_info = None  # human-readable string
     def write(self, conn, timeout = 0):
         conn.write_uint32(self.exe_status, timeout)
         conn.write_uint32(self.score, timeout)
+        conn.write_uint32(self.full_score, timeout)
         conn.write_uint32(self.time, timeout)
         conn.write_uint32(self.memory, timeout)
         conn.write_str(self.extra_info, timeout)
     def read(self, conn, timeout = 0):
         self.exe_status = conn.read_uint32(timeout)
         self.score = conn.read_uint32(timeout)
+        self.full_score = conn.read_uint32(timeout)
         self.time = conn.read_uint32(timeout)
         self.memory = conn.read_uint32(timeout)
         self.extra_info = conn.read_str(timeout)
-
-class prob_result:
-    def __init__(self):
-        self.total_score = 0
-        self.full_score = 0
-        self.total_time = 0
-        self.max_mem = 0
-    def write(self, conn, timeout = 0):
-        conn.write_uint32(self.total_score)
-        conn.write_uint32(self.full_score)
-        conn.write_uint32(self.total_time)
-        conn.write_uint32(self.max_mem)
-    def read(self, conn, timeout = 0):
-        self.total_score = conn.read_uint32(timeout)
-        self.full_score = conn.read_uint32(timeout)
-        self.total_time = conn.read_uint32(timeout)
-        self.max_mem = conn.read_uint32(timeout)
 
