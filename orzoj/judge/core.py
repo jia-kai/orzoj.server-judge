@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Oct 18 14:13:07 2010 +0800
+# $Date: Wed Oct 20 09:11:52 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -225,9 +225,9 @@ class _Executor:
             _cmd_vars["TARGET"] = args
 
             if retrieve_stdout:
-                l.run(_cmd_vars, stdout = limiter.SAVE_OUTPUT)
+                l.run(_cmd_vars, stdout = limiter.SAVE_OUTPUT, stderr = limiter.get_null_dev())
             else:
-                l.run(_cmd_vars, stdin = stdin, stdout = stdout)
+                l.run(_cmd_vars, stdin = stdin, stdout = stdout, stderr = limiter.get_null_dev())
 
             res.score = 0
             res.full_score = 0
@@ -372,7 +372,7 @@ class _Lang:
                     else:
                         tpath = _join_path(_dir_temp_abs, input)
                         shutil.copy(stdin_path, tpath)
-                        prog_fin = None
+                        prog_fin = limiter.get_null_dev(False)
 
                     if not output: # use stdout
                         prog_fout_path = _join_path(_dir_temp_abs, "output.{0}" .
@@ -380,7 +380,7 @@ class _Lang:
                         prog_fout = open(prog_fout_path, "w")
                     else:
                         prog_fout_path = _join_path(_dir_temp_abs, output)
-                        prog_fout = None
+                        prog_fout = limiter.get_null_dev()
                 except Exception as e:
                     log.error("failed to open data file: {0!r}" . format(e))
                     case_result = structures.case_result()

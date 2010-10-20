@@ -1,6 +1,6 @@
 # $File: limiter.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 30 00:17:17 2010 +0800
+# $Date: Wed Oct 20 09:09:49 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -42,13 +42,26 @@ SAVE_OUTPUT = _empty_class()
 _LIMITER_SOCKET = 0
 _LIMITER_FILE = 1
 
-try:
-    if conf.is_windows:
-        NULL = open('nul', 'w')
+def get_null_dev(for_writing = True):
+    """
+    get a file object pointing to the NULL device
+    @for_writing: whether opens NULL device for writing (True)
+            or reading (False)
+    """
+    if for_writing:
+        method = 'w'
     else:
-        NULL = open('/dev/null', 'w')
-except Exception as e:
-    sys.exit("orzoj-judge: faied to open NULL device: {0!r}", NULL)
+        method = 'r'
+    try:
+        if conf.is_windows:
+            f = open('nul', method)
+        else:
+            f = open('/dev/null', method)
+        return f
+    except Exception as e:
+        log.error("failed to open NULL device: {0!r}", e)
+        raise SysError("limiter system error")
+
 
 class _Limiter:
     def __init__(self, args):
@@ -134,6 +147,7 @@ class _Limiter:
             stderr_ = stderr
             if stderr_ is SAVE_OUTPUT:
                 stderr_ = subprocess.PIPE
+
             p = subprocess.Popen(args, stdin = stdin, stdout = stdout_, stderr = stderr_)
         except OSError as e:
             log.error("error while calling Popen [errno {0}] "
