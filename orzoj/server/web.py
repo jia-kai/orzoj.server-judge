@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Oct 21 18:40:11 2010 +0800
+# $Date: Thu Oct 21 18:53:31 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -295,7 +295,10 @@ def _login():
        _dynamic_passwd is the data read
        _dynamic_passwd = "0" means version check error
     2. from orz.php?action=login2&checksum=_sha1sum(_sha1sum(_dynamic_passwd + _static_passwd)),
-       and verify that it should be _sha1sum(_sha1sum(_dynamic_passwd) + _static_passwd)"""
+       and verify that it should be _sha1sum(_sha1sum(_dynamic_passwd) + _static_passwd)
+    3. if it's the first time to login (i.e. relogin), send "refetch" to fetch all tasks with
+        status "waiting on orzoj-server"
+       """
 
     global _static_passwd, _passwd, _first_login
 
