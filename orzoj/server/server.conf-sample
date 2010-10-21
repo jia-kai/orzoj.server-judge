@@ -80,11 +80,15 @@ WebRetryCount 5
 # WebRetryWait: the time in seconds to wait before retrying
 WebRetryWait 2
 
+# WebSchedInterval: orzoj-server will ask orzoj-web to find new
+# scheduled jobs every <WebSchedInterval> second(s) passed
+WebSchedInterval 1
+
 # RefreshInterval: orzoj-server will try to connect to orzoj-web
 # to find new tasks when every <RefreshInterval> second(s) passed.
 RefreshInterval 1
 
-# UseIpv6: use ipv6 socket
+# UseIpv6: use ipv6 socket to communicate with orzoj-judge
 # uncomment the following line to enable this option
 # UseIpv6
 

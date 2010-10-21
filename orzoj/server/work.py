@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Oct 18 11:44:38 2010 +0800
+# $Date: Thu Oct 21 18:47:45 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -100,6 +100,7 @@ def thread_work():
     global _QUEUE_TIMEOUT
 
     threading.Thread(target = _thread_fetch_task, name = "work._thread_fetch_task").start()
+    threading.Thread(target = web.thread_sched_work, name = "web.thread_web_sched_work").start()
 
     while not control.test_termination_flag():
         try:
@@ -115,7 +116,9 @@ def thread_work():
             if judge is None:
                 _add_task(task)
                 time.sleep(0.5)
-                log.warning("no judge for task #{0}" . format(task.id))
+                if "no_judge_reported" not in task.__dict__:
+                    log.warning("no judge for task #{0} (lang: {1!r})" . format(task.id, task.lang))
+                    task.no_judge_reported = True
             else:
                 while not control.test_termination_flag():
                     try:
@@ -349,6 +352,9 @@ class thread_new_judge_connection(threading.Thread):
         web.report_prob_result(task, prob_res)
 
         self._cur_task = None
+
+        log.info("[judge {0!r}] finished task for problem {1!r} normally" .
+                format(judge.id, task.prob))
 
 
     def run(self):

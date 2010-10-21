@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Oct 18 11:48:26 2010 +0800
+# $Date: Thu Oct 21 18:40:11 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -21,6 +21,10 @@
 #
 
 """interface for communicating with orzoj-website
+
+sched_work:
+    request on orz.php?sched_work
+    return "0" for success, otherwise a human readable string describing the error
 
 version 1:
     request to web:
@@ -52,6 +56,7 @@ _retry_cnt = None
 _retry_wait = None
 _timeout = None
 _web_addr = None
+_sched_interval = None
 _thread_req_id = dict()
 
 class _internal_error(Exception):
@@ -63,6 +68,19 @@ class _internal_error(Exception):
 class Error(Exception):
     pass
 
+def thread_sched_work():
+    global _web_addr, _timeout, _sched_interval
+    while not control.test_termination_flag():
+        err = None
+        try:
+            ret = urllib2.urlopen(_web_addr + "?sched_work", None, _timeout).read()
+            if ret != "0":
+                err = ret
+        except Exception as e:
+            err = repr(e)
+        if err is not None:
+            log.error("error while refreshing website scheduled jobs: {0}" . format(err))
+        time.sleep(_sched_interval)
 
 def report_error(task, msg):
     """send a human-readable error message
@@ -270,6 +288,7 @@ def _read(data, maxlen = None):
 
     raise Error
 
+_first_login = True
 def _login():
     """
     1. read at most _DYNAMIC_PASSWD_MAXLEN bytes from orz.php?action=login1&version=_VERSION,
@@ -278,7 +297,7 @@ def _login():
     2. from orz.php?action=login2&checksum=_sha1sum(_sha1sum(_dynamic_passwd + _static_passwd)),
        and verify that it should be _sha1sum(_sha1sum(_dynamic_passwd) + _static_passwd)"""
 
-    global _dynamic_passwd, _static_passwd, _passwd
+    global _static_passwd, _passwd, _first_login
 
     try:
 
@@ -291,8 +310,12 @@ def _login():
             vpwd = _sha1sum(_sha1sum(_dynamic_passwd) + _static_passwd)
             _passwd = _sha1sum(_dynamic_passwd + _static_passwd)
 
-            pwd_peer = _read({"action" : "login2",
-                "checksum" : _sha1sum(_passwd)}, len(vpwd));
+            data = {"action" : "login2", "checksum" : _sha1sum(_passwd)}
+            if _first_login:
+                _first_login = False
+                data["refetch"] = 1
+
+            pwd_peer = _read(data, len(vpwd));
 
             if pwd_peer != vpwd:
                 raise _internal_error("website verification error [peer returned: {0!r}]" .
@@ -329,11 +352,18 @@ def _set_web_retry_wait(arg):
     if _retry_wait < 1:
         _retry_wait = 1
 
+def _set_web_sched_interval(arg):
+    global _sched_interval
+    _sched_interval = float(arg[1])
+    if _sched_interval < 0.5:
+        _sched_interval = 0.5
+
 conf.simple_conf_handler("Password", _set_static_password)
 conf.simple_conf_handler("WebTimeout", _set_web_timeout, "5")
 conf.simple_conf_handler("WebAddress", _set_web_addr)
 conf.simple_conf_handler("WebRetryCount", _set_web_retry_cnt, "5")
 conf.simple_conf_handler("WebRetryWait", _set_web_retry_wait, "2")
+conf.simple_conf_handler("WebSchedInterval", _set_web_sched_interval, "1")
 
 conf.register_init_func(_login)
 
