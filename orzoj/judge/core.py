@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Oct 27 17:30:42 2010 +0800
+# $Date: Wed Oct 27 23:22:44 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,7 +23,7 @@
 and executes (by running the executor under limiter) user's
 program and verifies the output"""
 
-import os.path, errno, shutil, time, os, shlex, threading, Queue
+import os.path, errno, shutil, time, os, shlex, threading, Queue, stat
 
 try:
     import fcntl
@@ -357,6 +357,10 @@ class _Lang:
                 for i in pconf.extra_input:
                     shutil.copy(_join_path(pcode, i), _dir_temp_abs)
 
+            os.chmod(_prog_path_abs + self._exe_ext,
+                    stat.S_IRUSR | stat.S_IXUSR |
+                    stat.S_IRGRP | stat.S_IXGRP |
+                    stat.S_IROTH | stat.S_IXOTH)
             global _prog_path
             prog_path = _prog_path + self._exe_ext
 
@@ -372,6 +376,7 @@ class _Lang:
                     else:
                         tpath = _join_path(_dir_temp_abs, input)
                         shutil.copy(stdin_path, tpath)
+                        os.chmod(tpath, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
                         prog_fin = limiter.get_null_dev(False)
 
                     if not output: # use stdout
@@ -537,16 +542,31 @@ def _set_chroot_dir(arg):
         global _cmd_vars, _dir_temp
         if _dir_temp:
             raise conf.UserError("Option {0} must be set before TempDir" . format(arg[0]))
+        if not os.path.isabs(arg[1]):
+            raise conf.UserError("Option {0} takes an absolute path as argument" . format(arg[0]))
         _cmd_vars["CHROOT_DIR"] = arg[1]
 
 def _set_temp_dir(arg):
     global _cmd_vars, _dir_temp, _dir_temp_abs, _prog_path, _prog_path_abs
+    _dir_temp = arg[1]
     if "CHROOT_DIR" in _cmd_vars:
-        _dir_temp = arg[1]
         _dir_temp_abs = _join_path(_cmd_vars["CHROOT_DIR"], _dir_temp)
+        _dir_temp = os.path.join('/', _dir_temp)
     else:
-        _dir_temp = os.path.abspath(arg[1])
+        if not os.path.isabs(_dir_temp):
+            raise conf.UserError("Option {0} takes an absolute path as argument" . format(arg[0]))
         _dir_temp_abs = _dir_temp
+
+    if not os.path.isdir(_dir_temp_abs):
+        raise conf.UserError("path {0!r} is not a directory" . format(_dir_temp_abs))
+
+    try:
+        os.chmod(_dir_temp_abs,
+                stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
+                stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP |
+                stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
+    except Exception as e:
+        raise conf.UserError("failed to change permission for temporary directory: {0!r}" . format(e))
 
     _prog_path = _join_path(_dir_temp, _DEFAULT_PROG_NAME)
     _prog_path_abs = _join_path(_dir_temp_abs, _DEFAULT_PROG_NAME)

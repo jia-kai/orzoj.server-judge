@@ -1,7 +1,7 @@
 /*
  * $File: execute.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Mon Oct 18 08:40:23 2010 +0800
+ * $Date: Wed Oct 27 20:34:14 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -45,6 +45,8 @@ along with orzoj.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
+
+static const char *func_error_msg_arg = NULL;
 
 static const std::string& _get_error_message(const char *func, int line);
 #define get_error_message(_func_) \
@@ -136,15 +138,19 @@ int execute(char * const argv[], Execute_arg &arg)
 
 		if (!arg.chroot.empty())
 		{
-			if (chroot(arg.chroot.c_str()))
+			if (chroot(func_error_msg_arg = arg.chroot.c_str()))
 				ERROR("chroot");
-			if (chdir("/"))
+			if (chdir(func_error_msg_arg = "/"))
 				ERROR("chdir");
+			func_error_msg_arg = NULL;
 		}
 
 		if (!arg.chdir.empty())
-			if (chdir(arg.chdir.c_str()))
+		{
+			if (chdir(func_error_msg_arg = arg.chdir.c_str()))
 				ERROR("chdir");
+			func_error_msg_arg = NULL;
+		}
 
 		if (arg.group)
 			if (setresgid(arg.group, arg.group, arg.group))
@@ -185,9 +191,11 @@ int execute(char * const argv[], Execute_arg &arg)
 			// because we'll call execv later.
 		}
 
-		execv(argv[0], argv);
+		execv(func_error_msg_arg = argv[0], argv);
 
 		ERROR("execv");
+
+		func_error_msg_arg = NULL;
 #undef ERROR
 	} else // parent process
 	{
@@ -401,6 +409,8 @@ const std::string& _get_error_message(const char *func, int line)
 	msg.append(func).append(" at ").append(__FILE__)
 		.append(":").append(num2str(line)).append(" : ")
 		.append(strerror(errno));
+	if (func_error_msg_arg)
+		msg.append(" [arg: ").append(func_error_msg_arg).append("]");
 	return msg;
 }
 

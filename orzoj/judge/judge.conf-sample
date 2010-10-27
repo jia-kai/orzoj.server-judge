@@ -135,7 +135,7 @@ AddLimiter lim-compiler socket /usr/bin/orzoj-limiter --socket $SOCKNAME \
 # Note: for compiler executors, this is the basic part of compilation arguments,
 # while another part is stored in the problem configuration
 #
-# variables except TARGET in AddLimiter except can also be used
+# variables except TARGET in AddLimiter can also be used
 
 # compiler executors:
 AddExecutor cmp-gcc		lim-compiler	/usr/bin/gcc %s.c -o %s -static -lm

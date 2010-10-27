@@ -1,6 +1,6 @@
 # $File: snc.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Oct 18 13:56:34 2010 +0800
+# $Date: Wed Oct 27 22:50:07 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -112,7 +112,8 @@ class snc:
         try:
             return self._snc.read(len, timeout)
         except Exception as e:
-            log.error("failed to read:\n{0!r}" . format(e))
+            log.error("failed to read [len={0}]:\n{1!r}" .
+                    format(len, e))
             raise Error
 
     def write(self, data, timeout = 0):
@@ -151,6 +152,8 @@ class snc:
 
     def write_str(self, data, timeout = 0):
         """write a string"""
+        if type(data) is unicode:
+            data = str(data.encode('UTF-8'))
         self.write_uint32(len(data), timeout)
         self.write(data, timeout)
 
