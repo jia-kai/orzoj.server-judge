@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Oct 21 18:47:45 2010 +0800
+# $Date: Wed Oct 27 17:22:08 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -29,7 +29,7 @@ from orzoj.server import web
 _judge_online = {}
 _lock_judge_online = threading.Lock()
 
-_task_queue = Queue.Queue()
+_task_queue = None
 _max_queue_size = None
 
 _refresh_interval = None
@@ -50,7 +50,7 @@ def _add_task(task):
             continue
 
 def _thread_fetch_task():
-    global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
+    global _judge_online, _lock_judge_online, _refresh_interval, _id_max_len
     global _QUEUE_TIMEOUT
 
     while not control.test_termination_flag():
@@ -120,14 +120,19 @@ def thread_work():
                     log.warning("no judge for task #{0} (lang: {1!r})" . format(task.id, task.lang))
                     task.no_judge_reported = True
             else:
+                log.info('distribute task #{0} to judge {1!r}' .
+                        format(task.id, judge.id))
                 while not control.test_termination_flag():
                     try:
                         with _lock_judge_online: # the chosen judge may have just deleted itself, so we have to lock
                             if judge.id in _judge_online:
                                 judge.queue.put(task, True, _QUEUE_TIMEOUT)
                             else:
-                                _task_queue.put(task, True, _QUEUE_TIMEOUT)
+                                _add_task(task)
+                                break
                     except Queue.Full:
+                        log.warning('task queue for judge {0!r} is full, retrying...' . 
+                                format(judge.id))
                         continue
                     break
 
@@ -171,11 +176,10 @@ class thread_new_judge_connection(threading.Thread):
         self._sock = sock
 
     def _clean(self):
-        global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _QUEUE_TIMEOUT
+        global _judge_online, _lock_judge_online
 
         if self._cur_task != None:
-            _task_queue.put(self._cur_task, True)
+            _add_task(self._cur_task)
             self._cur_task = None
 
         judge = self._judge
@@ -195,11 +199,9 @@ class thread_new_judge_connection(threading.Thread):
             try:
                 while not control.test_termination_flag():
                     task = judge.queue.get_nowait()
-                    while not control.test_termination_flag():
-                        try:
-                            _task_queue.put(task, True, _QUEUE_TIMEOUT)
-                        except Queue.Full:
-                            continue
+                    log.info("[judge {0!r}] sending task #{1} back to main task queue" .
+                            format(judge.id, task.id))
+                    _add_task(task)
             except Queue.Empty:
                 return
 
@@ -229,9 +231,6 @@ class thread_new_judge_connection(threading.Thread):
                         format(self._id))
                 raise _internal_error
 
-        global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-        global _QUEUE_TIMEOUT
-
         judge = self._judge
         try:
             task = judge.queue.get(True, _QUEUE_TIMEOUT)
@@ -239,8 +238,8 @@ class thread_new_judge_connection(threading.Thread):
             _write_msg(msg.TELL_ONLINE)
             return
         
-        log.info("[judge {0!r}] received task for problem {1!r}" .
-                format(judge.id, task.prob))
+        log.info("[judge {0!r}] received task #{1} for problem {2!r}" .
+                format(self._id, task.id, task.prob))
 
         self._cur_task = task
 
@@ -272,7 +271,7 @@ class thread_new_judge_connection(threading.Thread):
                 self._cur_task = None
                 reason = _read_str()
                 log.error("[judge {0!r}] data error [prob: {1!r}]: {2!r}" . 
-                        format(judge.id, task.prob, reason))
+                        format(self._id, task.prob, reason))
                 web.report_error(task, "data error: {0!r}" . format(reason))
                 return
 
@@ -284,7 +283,7 @@ class thread_new_judge_connection(threading.Thread):
             fpath = os.path.normpath(os.path.join(task.prob, _read_str()))
             speed = filetrans.send(fpath, self._snc)
             log.info("[judge {0!r}] file transfer speed: {1} kb/s" .
-                    format(judge.id, speed))
+                    format(self._id, speed))
 
         ncase = _read_uint32()
 
@@ -353,8 +352,8 @@ class thread_new_judge_connection(threading.Thread):
 
         self._cur_task = None
 
-        log.info("[judge {0!r}] finished task for problem {1!r} normally" .
-                format(judge.id, task.prob))
+        log.info("[judge {0!r}] finished task #{1} normally" .
+                format(self._id, task.id))
 
 
     def run(self):
@@ -379,7 +378,7 @@ class thread_new_judge_connection(threading.Thread):
                         format(self._id))
                 raise _internal_error
 
-        global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
+        global _judge_online, _lock_judge_online, _refresh_interval, _id_max_len
         global _QUEUE_TIMEOUT
 
         self._cur_task = None

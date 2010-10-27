@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Oct 27 09:04:39 2010 +0800
+# $Date: Wed Oct 27 17:30:42 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -79,7 +79,7 @@ def _clean_temp():
                 os.remove(p)
     except Exception as e:
         log.error("failed to clean temporary directory [{0!r}]: {1!r}" .
-                format(_dir_temp_abs))
+                format(_dir_temp_abs, e))
         raise Error
 
 class _thread_report_case_result(threading.Thread):
