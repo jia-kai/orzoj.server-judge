@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Oct 20 09:11:52 2010 +0800
+# $Date: Wed Oct 27 09:04:39 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -171,11 +171,11 @@ class _Executor:
             l = self._limiter
             _cmd_vars["TARGET"] = args
 
-            l.run(_cmd_vars, stderr = limiter.SAVE_OUTPUT)
+            l.run(_cmd_vars, stdout = limiter.SAVE_OUTPUT, stderr = limiter.SAVE_OUTPUT)
 
             if l.exe_status:
                 if l.exe_status == structures.EXESTS_EXIT_NONZERO:
-                    return (False, l.stderr)
+                    return (False, l.stdout + l.stderr)
                 else:
                     return (False, "failed to compile: {0}: details: {1}" .
                             format(structures.EXECUTION_STATUS_STR[l.exe_status],
