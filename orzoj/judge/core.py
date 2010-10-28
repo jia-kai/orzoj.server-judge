@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Oct 27 23:22:44 2010 +0800
+# $Date: Thu Oct 28 08:39:48 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -550,6 +550,8 @@ def _set_temp_dir(arg):
     global _cmd_vars, _dir_temp, _dir_temp_abs, _prog_path, _prog_path_abs
     _dir_temp = arg[1]
     if "CHROOT_DIR" in _cmd_vars:
+        if os.path.isabs(_dir_temp):
+            raise conf.UserError("If ChrootDir is set, Option {0} takes a relative path as argument" . format(arg[0]))
         _dir_temp_abs = _join_path(_cmd_vars["CHROOT_DIR"], _dir_temp)
         _dir_temp = os.path.join('/', _dir_temp)
     else:
