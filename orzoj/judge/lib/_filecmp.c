@@ -1,7 +1,7 @@
 /*
  * $File: _filecmp.c
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Wed Sep 22 23:15:08 2010 +0800
+ * $Date: Thu Oct 28 11:52:33 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -107,19 +107,25 @@ PyObject* filecmp(PyObject *self, PyObject *args)
 		}
 		if (a != b)
 		{
-			if (a == ' ' || a == '\r')
+			if (a == ' ')
 				a = read_char(&ctx, 0);
-			if (a ==  '\r')
+			if (a == '\r')
 				a = read_char(&ctx, 0);
 
-			if (b == ' ' || b == '\r')
+			if (b == ' ')
 				b = read_char(&ctx, 1);
-			if (b ==  '\r')
+			if (b == '\r')
 				b = read_char(&ctx, 1);
 
 			if (a == CHAR_ERR || b == CHAR_ERR)
 			{
 				strcpy(info_buf, "failed to read file");
+				RETURN(0);
+			}
+
+			if ((a == CHAR_EOF && b == '\n') || (a == '\n' && b == CHAR_EOF))
+			{
+				strcpy(info_buf, "premature end of file, expecting end of line");
 				RETURN(0);
 			}
 
