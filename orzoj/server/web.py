@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Oct 21 18:53:31 2010 +0800
+# $Date: Thu Oct 28 21:59:22 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -58,6 +58,8 @@ _timeout = None
 _web_addr = None
 _sched_interval = None
 _thread_req_id = dict()
+_lock_thread_req_id = threading.Lock()
+_lock_relogin = threading.Lock()
 
 class _internal_error(Exception):
     def __init__(self, msg):
@@ -220,16 +222,17 @@ def _read(data, maxlen = None):
 
     Note: @maxlen is not None iff now trying to login
     """
-    global _retry_cnt, _web_addr, _thread_req_id, _passwd
+    global _retry_cnt, _web_addr, _thread_req_id, _lock_thread_req_id, _passwd
 
     def make_data():
         """return a tuple (checksum_base, data_sent)"""
         thread_id = threading.current_thread().ident
-        try:
-            req_id = _thread_req_id[thread_id]
-        except KeyError:
-            req_id = 0
-        _thread_req_id[thread_id] = req_id + 1
+        with _lock_thread_req_id:
+            try:
+                req_id = _thread_req_id[thread_id]
+            except KeyError:
+                req_id = 0
+            _thread_req_id[thread_id] = req_id + 1
         checksum_base = str(thread_id) + str(req_id) + _passwd
         data_sent = urllib.urlencode({"data" :
                 json.dumps({"thread_id" : thread_id, "data" : data,
@@ -246,6 +249,8 @@ def _read(data, maxlen = None):
     cnt = _retry_cnt
 
     while cnt:
+        if control.test_termination_flag():
+            raise Error
         cnt -= 1
         try:
             ret = None
@@ -256,11 +261,18 @@ def _read(data, maxlen = None):
             ret = urllib2.urlopen(_web_addr, data_sent, _timeout).read()
 
             if ret == 'relogin':
-                log.warning("website requests relogin")
-                _login()
-                cnt = _retry_cnt
-                _thread_req_id = dict()
+                if _lock_relogin.acquire(False):
+                    log.warning("website requests relogin")
+                    _login()
+                    with _lock_thread_req_id:
+                        _thread_req_id.clear()
+                    _lock_relogin.release()
+                else:
+                    _lock_relogin.acquire()
+                    # wait until relogin finishes
+                    _lock_relogin.release()
                 (checksum_base, data_sent) = make_data()
+                cnt = _retry_cnt
                 continue
 
             ret = json.loads(ret)
@@ -277,13 +289,11 @@ def _read(data, maxlen = None):
             return json.loads(ret_data)
 
         except Exception as e:
-            log.debug("raw data from server: {0!r}" . format(ret))
             log.error("website communication error [left retries: {0}]: {1!r}" .
                     format(cnt, e))
             sys.stderr.write("orzoj-server: website communication error. See the log for details.\n")
+            log.debug("raw data from server: {0!r}" . format(ret))
             time.sleep(_retry_wait);
-            if control.test_termination_flag():
-                raise Error
             continue
 
     raise Error
