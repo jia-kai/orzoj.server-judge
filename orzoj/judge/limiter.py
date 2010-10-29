@@ -1,6 +1,6 @@
 # $File: limiter.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Oct 20 09:09:49 2010 +0800
+# $Date: Fri Oct 29 10:38:42 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -21,7 +21,7 @@
 #
 """parse limiter configuration and export functions to use limiter"""
 
-import subprocess, tempfile, struct, os, sys, time
+import subprocess, tempfile, struct, os, sys, time, uuid
 
 from orzoj import conf, log
 
@@ -74,6 +74,16 @@ class _Limiter:
             if not conf.is_unix:
                 raise conf.UserError("{0}: socket method is only avaliable on Unix systems" . format(args[0]))
             self._type = _LIMITER_SOCKET
+            try:
+                self._socket_name = "orzoj-limiter-socket.{0}" . format(str(uuid.uuid4()))
+
+                s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                s.bind("\0{0}".format(self._socket_name))
+                s.listen(1)
+                self._socket = s
+            except Exception as e:
+                raise conf.UserError("[limiter {0!r}] failed to establish socket: {1!r}" .
+                        format(self._name, e))
         elif args[2] == 'file':
             self._type = _LIMITER_FILE
         else:
@@ -85,6 +95,13 @@ class _Limiter:
         if args[0] in limiter_dict:
             raise conf.UserError("duplicated limiter name: {0!r}" . format(args[1]))
         limiter_dict[args[1]] = self
+
+    def __del_(self):
+        if self._type == _LIMITER_SOCKET:
+            try:
+                self._socket.close()
+            except Exception as e:
+                log.warning("failed to close socket: {0!r}" . format(e))
 
     def run(self, var_dict, stdin = None, stdout = None, stderr = None):
         """run the limiter under variables defined in @var_dict
@@ -99,27 +116,16 @@ class _Limiter:
         self.stdout = None
         self.stderr = None
 
-        if self._type == _LIMITER_SOCKET:
-            try:
-                socket_name = "orzoj-limiter-socket.{0}.{1}" . format(
-                        os.getpid(), time.time()) # use pid and time to avoid conflicting
-
-                s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                s.bind("\0{0}".format(socket_name))
-                s.listen(1)
-                trans_dict = {"SOCKNAME" : socket_name} # dict for variable for transfer data
-            except Exception as e:
-                log.error("[limiter {0!r}] failed to establish socket: {1!r}" .
-                        format(self._name, e))
-                raise SysError("limiter socket error")
-        else:
+        if self._type == _LIMITER_FILE:
             try:
                 ftmp = tempfile.mkstemp()
                 trans_dict = {"FILENAME" : ftmp[1]}
             except Exception as e:
                 log.error("[limiter {0!r}] failed to create temporary file: {1!r}" .
                         format(self._name, e))
-                raise SysError("limiter socket error")
+                raise SysError("limiter communication error")
+        else:
+            trans_dict = {"SOCKNAME" : self._socket_name}
 
 
         args = []
@@ -159,6 +165,7 @@ class _Limiter:
 
         if self._type == _LIMITER_SOCKET:
             try:
+                s = self._socket
                 s.settimeout(1)
                 (conn, addr) = s.accept()
                 s.settimeout(None)
@@ -203,9 +210,8 @@ class _Limiter:
         if self._type == _LIMITER_SOCKET:
             try:
                 conn.close()
-                s.close()
             except Exception as e:
-                log.warning("failed to close socket: {0!r}".format(e))
+                log.warning("failed to close socket connection: {0!r}".format(e))
 
 def _ch_add_limiter(args):
     if len(args) == 1:

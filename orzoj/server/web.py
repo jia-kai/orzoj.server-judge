@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Oct 29 08:53:11 2010 +0800
+# $Date: Fri Oct 29 10:47:48 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -168,12 +168,20 @@ def report_judge_waiting(task):
     return: NULL"""
     _read({"action":"report_judge_waiting", "task":task.id})
 
-def report_compiling(task, judge):
-    """now compiling @task on @judge
+def report_sync_data(task, judge):
+    """@task will be judged on @judge and now it's synchronizing data
 
-    data: action=report_compiling, task=...(id:int), judge=...(id:int)
+    data: action=report_sync_data, task=...(id:int), judge=...(id:int)
+    return: NULL
+    """
+    _read({"action":"report_sync_data", "task":task.id, "judge":judge.id_num})
+
+def report_compiling(task):
+    """now compiling @task
+
+    data: action=report_compiling, task=...(id:int)
     return: NULL"""
-    _read({"action":"report_compiling", "task":task.id, "judge":judge.id_num})
+    _read({"action":"report_compiling", "task":task.id})
 
 def report_compile_success(task, ncase):
     """successfully compiled

@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Oct 27 17:22:08 2010 +0800
+# $Date: Fri Oct 29 10:49:02 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -251,6 +251,7 @@ class thread_new_judge_connection(threading.Thread):
             web.report_no_data(task)
             return
 
+        web.report_sync_data(task, judge)
         _write_msg(msg.PREPARE_DATA)
         _write_str(task.prob)
         _write_uint32(len(datalist))
@@ -303,7 +304,7 @@ class thread_new_judge_connection(threading.Thread):
                 web.report_error(task, "message check error")
                 raise _internal_error
 
-        web.report_compiling(task, judge)
+        web.report_compiling(task)
 
         while True:
             m = _read_msg()
