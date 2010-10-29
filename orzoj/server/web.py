@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Oct 28 21:59:22 2010 +0800
+# $Date: Fri Oct 29 08:53:11 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -31,13 +31,13 @@ version 1:
         POST data=json.dumps({"thread_id" : int, 
             "data" : str (json encoded), "checksum" : str})  
 
-        checksum = sha1sum(str(thread_id) + str(req_id) + sha1sum(_dynamic_passwd + _static_passwd) + data)
+        checksum = sha1sum(str(thread_id) + "$" + str(req_id) + "$" + sha1sum(_dynamic_passwd + _static_passwd) + data)
         where req_id is an integer increasing by 1 per post for each thread
 
     response from web:
         json.dumps({"status" : int, "data" : str (json encoded), "checksum" : str})
         where status is either 0 or 1, 0 = success, 1 = error (data is a human-readable reason)
-        checksum = sha1sum(str(thread_id) + str(req_id) + sha1sum(_dynamic_passwd + _static_passwd) + str(status) + data)
+        checksum = sha1sum(str(thread_id) + "$" + str(req_id) + "$" + sha1sum(_dynamic_passwd + _static_passwd) + str(status) + data)
 
     website can send 'relogin' for reeusting a new login
 
@@ -233,7 +233,7 @@ def _read(data, maxlen = None):
             except KeyError:
                 req_id = 0
             _thread_req_id[thread_id] = req_id + 1
-        checksum_base = str(thread_id) + str(req_id) + _passwd
+        checksum_base = str(thread_id) + '$' + str(req_id) + '$' + _passwd
         data_sent = urllib.urlencode({"data" :
                 json.dumps({"thread_id" : thread_id, "data" : data,
                     "checksum" : _sha1sum(checksum_base + data)})})
