@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Oct 29 10:49:02 2010 +0800
+# $Date: Fri Oct 29 17:20:14 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -22,53 +22,75 @@
 
 """threads for waiting for tasks and managing judges"""
 
-import threading, Queue, time, os, os.path, hashlib
+import threading, time, os, os.path, hashlib
+from collections import deque
+
 from orzoj import log, snc, msg, structures, control, conf, filetrans
 from orzoj.server import web
 
-_judge_online = {}
-_lock_judge_online = threading.Lock()
+_QUEUE_TIMEOUT = 0.5
 
-_task_queue = None
 _max_queue_size = None
+
+_lang_id_dict = dict()
+_lang_id_dict_lock = threading.Lock()
+
+_judge_id_set = set()
+_judge_id_set_lock = threading.Lock()
 
 _refresh_interval = None
 _id_max_len = None
 
-_QUEUE_TIMEOUT = 0.5
-_CASE_CHECK_ADDITION_TIMEOUT = 10
-
 class _internal_error(Exception):
     pass
 
-def _add_task(task):
-    while not control.test_termination_flag():
-        try:
-            _task_queue.put(task, True, _QUEUE_TIMEOUT)
-            break
-        except Queue.Full:
-            continue
+def _get_lang_id(lang):
+    global _lang_id_dict, _lang_id_dict_lock
+    with _lang_id_dict_lock:
+        return _lang_id_dict.setdefault(lang, len(_lang_id_dict))
 
-def _thread_fetch_task():
-    global _judge_online, _lock_judge_online, _refresh_interval, _id_max_len
-    global _QUEUE_TIMEOUT
+class _Task_queue:
+    def __init__(self):
+        self._queue = dict()
+        # dict of <language id:int> => <task queue:deque>
+        self._lock = threading.Lock()
+        self._size = 0
 
-    while not control.test_termination_flag():
-        while not control.test_termination_flag():
-            try:
-                task = web.fetch_task()
-            except web.Error as e:
-                log.error("ending program because of communication error with website")
-                control.set_termination_flag()
-                return
-            if task is None:
-                break
+    def put(self, task):
+        global _QUEUE_TIMEOUT
+        while self._is_full() and not control.test_termination_flag():
+            time.sleep(_QUEUE_TIMEOUT)
+        with self._lock:
+            if task.lang_id not in self._queue:
+                self._queue[task.lang_id] = deque()
+            self._queue[task.lang_id].append(task)
+            self._size += 1
 
-            _add_task(task)
+    def get(self, lang_id_set):
+        """ return None if no usable"""
+        ret = None
+        with self._lock:
+            min_tid = None
+            for lid in lang_id_set:
+                try:
+                    q = self._queue[lid]
+                    task = q[0]
+                    if min_tid is None or task.id < min_tid:
+                        min_tid = task.id
+                        min_tid_q = q
+                except Exception: # KeyError or IndexError
+                    pass
+            if min_tid is not None:
+                ret = min_tid_q.popleft()
+                self._size -= 1
+        return ret
 
-            log.debug("fetched task #{0}" . format(task.id))
+    def _is_full(self):
+        global _max_queue_size
+        with self._lock:
+            return self._size >= _max_queue_size
 
-        time.sleep(_refresh_interval)
+_task_queue = _Task_queue()
 
 class _thread_report_judge_progress(threading.Thread):
     def __init__(self, task):
@@ -94,50 +116,32 @@ class _thread_report_judge_progress(threading.Thread):
         with self._lock:
             self._now = now
 
+
+
 def thread_work():
     """wait for tasks and distribute them to judges"""
-    global _judge_online, _lock_judge_online, _task_queue, _refresh_interval, _id_max_len
-    global _QUEUE_TIMEOUT
+    global _task_queue, _refresh_interval
 
-    threading.Thread(target = _thread_fetch_task, name = "work._thread_fetch_task").start()
     threading.Thread(target = web.thread_sched_work, name = "web.thread_web_sched_work").start()
 
     while not control.test_termination_flag():
-        try:
-            task = _task_queue.get(True, _QUEUE_TIMEOUT)
-            judge = None
+        while not control.test_termination_flag():
+            try:
+                task = web.fetch_task()
+            except web.Error as e:
+                log.error("ending program because of communication error with website")
+                control.set_termination_flag()
+                return
+            if task is None:
+                break
 
-            with _lock_judge_online:
-                for (i, j) in _judge_online.iteritems():
-                    if task.lang in j.lang_supported:
-                        if judge is None or j.queue.qsize() < judge.queue.qsize():
-                            judge = j
+            task.lang_id = _get_lang_id(task.lang)
+            _task_queue.put(task)
 
-            if judge is None:
-                _add_task(task)
-                time.sleep(0.5)
-                if "no_judge_reported" not in task.__dict__:
-                    log.warning("no judge for task #{0} (lang: {1!r})" . format(task.id, task.lang))
-                    task.no_judge_reported = True
-            else:
-                log.info('distribute task #{0} to judge {1!r}' .
-                        format(task.id, judge.id))
-                while not control.test_termination_flag():
-                    try:
-                        with _lock_judge_online: # the chosen judge may have just deleted itself, so we have to lock
-                            if judge.id in _judge_online:
-                                judge.queue.put(task, True, _QUEUE_TIMEOUT)
-                            else:
-                                _add_task(task)
-                                break
-                    except Queue.Full:
-                        log.warning('task queue for judge {0!r} is full, retrying...' . 
-                                format(judge.id))
-                        continue
-                    break
+            log.debug("fetched task #{0} from website" . format(task.id))
 
-        except Queue.Empty:
-            pass
+        time.sleep(_refresh_interval)
+
 
 def _get_file_list(path):
     """return a dict containing regular files and their corresponding sha1 digests in the direcory @path.
@@ -174,39 +178,132 @@ class thread_new_judge_connection(threading.Thread):
         No exceptions are raised, exit silently on error."""
         threading.Thread.__init__(self, name = "work.thread_new_judge_connection")
         self._sock = sock
+        self._cur_task = None
+        self._web_registered = False
+        self._judge = structures.judge()
+        self._lang_id_set = set()
 
     def _clean(self):
-        global _judge_online, _lock_judge_online
+        global _task_queue, _judge_id_set, _judge_id_set_lock
 
-        if self._cur_task != None:
-            _add_task(self._cur_task)
+        if self._cur_task:
+            _task_queue.put(self._cur_task)
             self._cur_task = None
 
         judge = self._judge
-        if judge.id is not None:
-            with _lock_judge_online:
-                if judge.id in _judge_online:
-                    del _judge_online[judge.id]
-            log.info("[judge {0!r}] disconnected" . format(judge.id))
+        if judge.id:
+            with _judge_id_set_lock:
+                _judge_id_set.remove(judge.id)
 
         if self._web_registered:
             try:
                 web.remove_judge(judge)
             except web.Error:
-                pass
+                log.warning("[judge {0!r}] failed to unregister on website" . format(judge.id))
 
-        if judge.queue:
-            try:
-                while not control.test_termination_flag():
-                    task = judge.queue.get_nowait()
-                    log.info("[judge {0!r}] sending task #{1} back to main task queue" .
-                            format(judge.id, task.id))
-                    _add_task(task)
-            except Queue.Empty:
-                return
+        log.info("[judge {0!r}] disconnected" . format(judge.id))
 
+    def run(self):
+        judge = self._judge
+        def _write_msg(m):
+            msg.write_msg(self._snc, m)
+
+        def _write_str(s):
+            self._snc.write_str(s)
+
+        def _read_msg():
+            return msg.read_msg(self._snc)
+
+        def _read_str():
+            return self._snc.read_str()
+
+        def _read_uint32():
+            return self._snc.read_uint32()
+
+        def _check_msg(m):
+            if m != _read_msg():
+                log.warning("[judge {0!r}] message check error" .
+                        format(judge.id))
+                raise _internal_error
+
+        global _id_max_len, _judge_id_set, _judge_id_set_lock
+
+        try:
+            self._snc = snc.snc(self._sock, True)
+            _check_msg(msg.HELLO)
+            judge_id = _read_str()
+
+            if len(judge_id) > _id_max_len:
+                _write_msg(msg.ID_TOO_LONG)
+                raise _internal_error
+
+            with _judge_id_set_lock:
+                if judge_id in _judge_id_set:
+                    _write_msg(msg.DUPLICATED_ID)
+                    log.warning("another judge declares duplicated id {0!r}" .
+                            format(judge.id))
+                    raise _internal_error
+
+                _judge_id_set.add(judge_id)
+
+            judge.id = judge_id
+            del judge_id
+
+            if _read_uint32() != msg.PROTOCOL_VERSION:
+                log.warning("[judge {0!r}] version check error" .
+                        format(judge.id))
+                _write_msg(msg.ERROR)
+                raise _internal_error
+
+            cnt = _read_uint32()
+            while cnt:
+                cnt -= 1
+                lang = _read_str()
+                judge.lang_supported.add(lang)
+                self._lang_id_set.add(_get_lang_id(lang))
+
+            _write_msg(msg.CONNECT_OK)
+
+            query_ans = dict()
+            for i in web.get_query_list():
+                _write_msg(msg.QUERY_INFO)
+                _write_str(i)
+                _check_msg(msg.ANS_QUERY)
+                query_ans[i] = _read_str()
+
+            web.register_new_judge(judge, query_ans)
+            self._web_registered = True
+
+            log.info("[judge {0!r}] successfully connected" . format(judge.id))
+
+            while not control.test_termination_flag():
+                self._solve_task()
+
+            self._snc.close()
+            self._sock.close()
+
+        except snc.Error:
+            log.warning("[judge {0!r}] failed because of network error" . format(judge.id))
+            self._clean()
+        except _internal_error:
+            self._snc.close()
+            self._sock.close()
+            self._clean()
+        except web.Error:
+            log.warning("[judge {0!r}] failed because of error while communicating with website" . format(judge.id))
+            _write_msg(msg.ERROR)
+            self._snc.close()
+            self._sock.close()
+            self._clean()
+        except filetrans.OFTPError:
+            log.warning("[judge {0!r}] failed to transfer file" .
+                    format(judge.id))
+            self._snc.close()
+            self._sock.close()
+            self._clean()
 
     def _solve_task(self):
+        judge = self._judge
         def _write_msg(m):
             msg.write_msg(self._snc, m)
 
@@ -228,26 +325,26 @@ class thread_new_judge_connection(threading.Thread):
         def _check_msg(m):
             if m != _read_msg():
                 log.warning("[judge {0!r} message check error" .
-                        format(self._id))
+                        format(judge.id))
                 raise _internal_error
 
-        judge = self._judge
-        try:
-            task = judge.queue.get(True, _QUEUE_TIMEOUT)
-        except Queue.Empty:
+        global _task_queue, _QUEUE_TIMEOUT
+        task = _task_queue.get(self._lang_id_set)
+        if task is None:
             _write_msg(msg.TELL_ONLINE)
+            time.sleep(_QUEUE_TIMEOUT)
             return
         
         log.info("[judge {0!r}] received task #{1} for problem {2!r}" .
-                format(self._id, task.id, task.prob))
+                format(judge.id, task.id, task.prob))
 
         self._cur_task = task
 
         datalist = _get_file_list(task.prob)
         if datalist is None:
             self._cur_task = None
-            log.error("No data for problem {0!r}, task discarded" .
-                    format(task.prob))
+            log.error("No data for problem {0!r}, task #{1} discarded" .
+                    format(task.prob, task.id))
             web.report_no_data(task)
             return
 
@@ -271,20 +368,20 @@ class thread_new_judge_connection(threading.Thread):
             if m == msg.DATA_ERROR:
                 self._cur_task = None
                 reason = _read_str()
-                log.error("[judge {0!r}] data error [prob: {1!r}]: {2!r}" . 
-                        format(self._id, task.prob, reason))
-                web.report_error(task, "data error: {0!r}" . format(reason))
+                log.error("[judge {0!r}] [task #{1}] [prob: {2!r}] data error: {3!r}" . 
+                        format(judge.id, task.id, task.prob, reason))
+                web.report_error(task, "data error")
                 return
 
             if m != msg.NEED_FILE:
-                log.warning("[judge {0!r}] message check error" . format(self._id))
+                log.warning("[judge {0!r}] message check error" . format(judge.id))
                 web.report_error(task, "message check error")
                 raise _internal_error
 
             fpath = os.path.normpath(os.path.join(task.prob, _read_str()))
             speed = filetrans.send(fpath, self._snc)
             log.info("[judge {0!r}] file transfer speed: {1} kb/s" .
-                    format(self._id, speed))
+                    format(judge.id, speed))
 
         ncase = _read_uint32()
 
@@ -300,7 +397,7 @@ class thread_new_judge_connection(threading.Thread):
                 break
             if m != msg.START_JUDGE_WAIT:
                 log.warning("[judge {0!r}] message check error" .
-                        format(self._id))
+                        format(judge.id))
                 web.report_error(task, "message check error")
                 raise _internal_error
 
@@ -318,7 +415,7 @@ class thread_new_judge_connection(threading.Thread):
                 if m != msg.COMPILE_FAIL:
                     web.report_error(task, "message check error")
                     log.warning("[judge {0!r}] message check error" .
-                            format(self._id))
+                            format(judge.id))
                     raise _internal_error
                 web.report_compile_failure(task, _read_str())
                 self._cur_task = None
@@ -339,7 +436,7 @@ class thread_new_judge_connection(threading.Thread):
                     th_progress.join()
                     web.report_error(task, "message check error")
                     log.warning("[judge {0!r}] message check error" .
-                            format(self._id))
+                            format(judge.id))
                     raise _internal_error
             result = structures.case_result()
             result.read(self._snc)
@@ -354,118 +451,9 @@ class thread_new_judge_connection(threading.Thread):
         self._cur_task = None
 
         log.info("[judge {0!r}] finished task #{1} normally" .
-                format(self._id, task.id))
+                format(judge.id, task.id))
 
 
-    def run(self):
-        def _write_msg(m):
-            msg.write_msg(self._snc, m)
-
-        def _write_str(s):
-            self._snc.write_str(s)
-
-        def _read_msg():
-            return msg.read_msg(self._snc)
-
-        def _read_str():
-            return self._snc.read_str()
-
-        def _read_uint32():
-            return self._snc.read_uint32()
-
-        def _check_msg(m):
-            if m != _read_msg():
-                log.warning("[judge {0!r}] message check error" .
-                        format(self._id))
-                raise _internal_error
-
-        global _judge_online, _lock_judge_online, _refresh_interval, _id_max_len
-        global _QUEUE_TIMEOUT
-
-        self._cur_task = None
-        self._web_registered = False
-        self._id = "None"
-
-        judge = structures.judge()
-        judge.queue = None
-        self._judge = judge
-        try:
-            self._snc = snc.snc(self._sock, True)
-            _check_msg(msg.HELLO)
-            judge.id = _read_str()
-            self._id = judge.id
-
-            if len(judge.id) > _id_max_len:
-                _write_msg(msg.ID_TOO_LONG)
-                raise _internal_error
-
-            with _lock_judge_online:
-                if judge.id in _judge_online:
-                    _write_msg(msg.DUPLICATED_ID)
-                    log.warning("another judge declares duplicated id {0!r}" .
-                            format(judge.id))
-                    raise _internal_error
-
-            if _read_uint32() != msg.PROTOCOL_VERSION:
-                log.warning("[judge {0!r}] version check error" .
-                        format(self._id))
-                _write_msg(msg.ERROR)
-                raise _internal_error
-
-            cnt = _read_uint32()
-            while cnt:
-                cnt -= 1
-                judge.lang_supported.add(_read_str())
-
-            _write_msg(msg.CONNECT_OK)
-
-            query_ans = {}
-            for i in web.get_query_list():
-                _write_msg(msg.QUERY_INFO)
-                _write_str(i)
-                _check_msg(msg.ANS_QUERY)
-                query_ans[i] = _read_str()
-
-            web.register_new_judge(judge, query_ans)
-            self._web_registered = True
-
-            global _max_queue_size
-            judge.queue = Queue.Queue(_max_queue_size)
-
-            with _lock_judge_online:
-                _judge_online[judge.id] = judge
-
-            log.info("[judge {0!r}] successfully connected" . format(judge.id))
-
-            while not control.test_termination_flag():
-                self._solve_task()
-
-            self._snc.close()
-            self._sock.close()
-
-        except snc.Error:
-            log.warning("[judge {0!r}] failed because of network error" . format(self._id))
-            self._clean()
-            return
-        except _internal_error:
-            self._snc.close()
-            self._sock.close()
-            self._clean()
-            return
-        except web.Error:
-            log.warning("[judge {0!r}] failed because of error while communicating with website" . format(self._id))
-            _write_msg(msg.ERROR)
-            self._snc.close()
-            self._sock.close()
-            self._clean()
-            return
-        except filetrans.OFTPError:
-            log.warning("[judge {0!r}] failed to transfer file" .
-                    format(self._id))
-            self._snc.close()
-            self._sock.close()
-            self._clean()
-            return
 
 def _set_refresh_interval(arg):
     global _refresh_interval
@@ -486,14 +474,8 @@ def _set_max_queue_size(arg):
     global _max_queue_size
     _max_queue_size = int(arg[1])
 
-def _init_queue():
-    global _task_queue, _max_queue_size
-    _task_queue = Queue.Queue(_max_queue_size)
-
 conf.simple_conf_handler("RefreshInterval", _set_refresh_interval, default = "2")
 conf.simple_conf_handler("JudgeIdMaxLen", _set_id_max_len, default = "20")
 conf.simple_conf_handler("DataDir", _set_data_dir)
 conf.simple_conf_handler("MaxQueueSize", _set_max_queue_size, default = "1024")
-
-conf.register_init_func(_init_queue)
 

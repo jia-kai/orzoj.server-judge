@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 30 09:14:08 2010 +0800
+# $Date: Fri Oct 29 17:07:30 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -187,7 +187,7 @@ def connect(sock):
 
                 if _file_list is None:
                     _write_msg(msg.DATA_ERROR)
-                    _write_str("failed to list data directory")
+                    _write_str("failed to list data directory: {0!r}" . format(pcode))
                     continue
 
                 for (tfname, thash) in tlist.iteritems():
