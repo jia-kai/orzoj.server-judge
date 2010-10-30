@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Oct 28 08:39:48 2010 +0800
+# $Date: Sat Oct 30 14:17:56 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -418,6 +418,15 @@ class _Lang:
                             (case_result.score, case_result.extra_info) = pconf.verify_func(case.score, stdin_path, 
                                 _join_path(pcode, case.stdout), prog_fout_path)
 
+                    if input:
+                        try:
+                            os.unlink(tpath)
+                        except Exception as e:
+                            log.error("failed to remove program input file: {0!r}" . format(e))
+                    try:
+                        os.unlink(prog_fout_path)
+                    except Exception as e:
+                        log.error("failed to remove program output file: {0!r}" . format(e))
                 th_report_case.add(case_result)
 
             th_report_case.join()
