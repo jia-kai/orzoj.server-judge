@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Oct 30 14:17:56 2010 +0800
+# $Date: Sat Oct 30 14:29:40 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -535,12 +535,12 @@ class _Lang:
 
 def _ch_add_executor(args):
     if len(args) == 1:
-        raise UserError("Option {0} must be specified in the configuration file." . format(args[0]))
+        raise conf.UserError("Option {0} must be specified in the configuration file." . format(args[0]))
     _Executor(args)
 
 def _ch_add_lang(args):
     if len(args) == 1:
-        raise UserError("Option {0} must be specified in the configuration file." . format(args[0]))
+        raise conf.UserError("Option {0} must be specified in the configuration file." . format(args[0]))
     _Lang(args)
 
 conf.register_handler("AddExecutor", _ch_add_executor)
