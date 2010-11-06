@@ -1,5 +1,3 @@
 test-server
 test-judge
-test-server-dev
-test-judge-dev
 orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed

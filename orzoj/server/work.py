@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Oct 29 17:20:14 2010 +0800
+# $Date: Sat Nov 06 21:01:42 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -241,7 +241,7 @@ class thread_new_judge_connection(threading.Thread):
                 if judge_id in _judge_id_set:
                     _write_msg(msg.DUPLICATED_ID)
                     log.warning("another judge declares duplicated id {0!r}" .
-                            format(judge.id))
+                            format(judge_id))
                     raise _internal_error
 
                 _judge_id_set.add(judge_id)
@@ -298,6 +298,12 @@ class thread_new_judge_connection(threading.Thread):
         except filetrans.OFTPError:
             log.warning("[judge {0!r}] failed to transfer file" .
                     format(judge.id))
+            self._snc.close()
+            self._sock.close()
+            self._clean()
+        except Exception as e:
+            log.warning("[judge {0!r}] error happens: {1!r}" .
+                    format(judge.id, e))
             self._snc.close()
             self._sock.close()
             self._clean()

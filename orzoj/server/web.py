@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Oct 29 10:47:48 2010 +0800
+# $Date: Sat Nov 06 20:35:13 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -28,14 +28,14 @@ sched_work:
 
 version 1:
     request to web:
-        POST data=json.dumps({"thread_id" : int, 
-            "data" : str (json encoded), "checksum" : str})  
+        POST data=phpserialize.dumps({"thread_id" : int, 
+            "data" : (php serialized), "checksum" : str})  
 
         checksum = sha1sum(str(thread_id) + "$" + str(req_id) + "$" + sha1sum(_dynamic_passwd + _static_passwd) + data)
         where req_id is an integer increasing by 1 per post for each thread
 
     response from web:
-        json.dumps({"status" : int, "data" : str (json encoded), "checksum" : str})
+        phpserialize.dumps({"status" : int, "data" : str (php serialized), "checksum" : str})
         where status is either 0 or 1, 0 = success, 1 = error (data is a human-readable reason)
         checksum = sha1sum(str(thread_id) + "$" + str(req_id) + "$" + sha1sum(_dynamic_passwd + _static_passwd) + str(status) + data)
 
@@ -46,9 +46,9 @@ version 1:
 _VERSION = 1
 _DYNAMIC_PASSWD_MAXLEN = 128
 
-import urllib2, urllib, sys, hashlib, threading, json, time
+import urllib2, urllib, sys, hashlib, threading, time
 
-from orzoj import conf, log, structures, control
+from orzoj import conf, log, structures, control, phpserialize
 
 _static_passwd = None
 _passwd = None
@@ -100,22 +100,22 @@ def get_query_list():
 
     data: action=get_query_list
     return: array of query list"""
-    ret = _read({"action":"get_query_list"})
-    if type(ret) != list:
-        log.error("type check error")
+    try:
+        return phpserialize.dict_to_list(_read({"action":"get_query_list"}))
+    except Exception as e:
+        log.error("can not convert dict to list: {0!r}" . format(e))
         raise Error
-    return ret
 
 def register_new_judge(judge, query_ans):
     """register a new judge. @judge should be structures.judge,
     and query_ans should be a dict
 
     data: action=register_new_judge, judge=...(id:str), lang_supported=...,
-        query_ans=json.dumps(query_ans)
+        query_ans=phpserialize.dumps(query_ans)
     return: id_num=... (numeric judge id)"""
     try:
         judge.id_num = int(_read({"action":"register_new_judge", "judge":judge.id,
-            "lang_supported":list(judge.lang_supported), "query_ans":json.dumps(query_ans)})["id_num"])
+            "lang_supported":list(judge.lang_supported), "query_ans":phpserialize.dumps(query_ans)})["id_num"])
     except Exception as e:
         log.error("failed to register new judge: {0!r}" . format(e))
         raise Error
@@ -224,9 +224,9 @@ def _sha1sum(s):
     return hashlib.sha1(s).hexdigest()
 
 def _read(data, maxlen = None):
-    """if @maxlen is not None, data should be dict and is sent via GET method and without checksum
-    and return the data read;
-    otherwise @data is dumped by json and sent via POST method and return the data read
+    """if @maxlen is not None, data should be of dict type and is sent via GET method and without checksum
+    and the data read is returned;
+    otherwise @data will dumped by phpserialize and sent via POST method and the data read is returned
 
     Note: @maxlen is not None iff now trying to login
     """
@@ -243,7 +243,7 @@ def _read(data, maxlen = None):
             _thread_req_id[thread_id] = req_id + 1
         checksum_base = str(thread_id) + '$' + str(req_id) + '$' + _passwd
         data_sent = urllib.urlencode({"data" :
-                json.dumps({"thread_id" : thread_id, "data" : data,
+                phpserialize.dumps({"thread_id" : thread_id, "data" : data,
                     "checksum" : _sha1sum(checksum_base + data)})})
 
         return (checksum_base, data_sent)
@@ -251,7 +251,7 @@ def _read(data, maxlen = None):
     if maxlen:
         url = _web_addr + "?" + urllib.urlencode(data)
     else:
-        data = json.dumps(data)
+        data = phpserialize.dumps(data)
         (checksum_base, data_sent) = make_data()
 
     cnt = _retry_cnt
@@ -283,7 +283,7 @@ def _read(data, maxlen = None):
                 cnt = _retry_cnt
                 continue
 
-            ret = json.loads(ret)
+            ret = phpserialize.loads(ret)
 
             ret_status = ret["status"]
             ret_data = ret["data"]
@@ -294,7 +294,7 @@ def _read(data, maxlen = None):
             if int(ret_status):
                 raise _internal_error("website says an error happens there: {0}" . format(ret_data))
 
-            return json.loads(ret_data)
+            return phpserialize.loads(ret_data)
 
         except Exception as e:
             log.error("website communication error [left retries: {0}]: {1!r}" .
