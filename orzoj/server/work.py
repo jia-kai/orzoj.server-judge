@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Nov 06 21:01:42 2010 +0800
+# $Date: Sun Nov 07 10:35:03 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -92,30 +92,82 @@ class _Task_queue:
 
 _task_queue = _Task_queue()
 
-class _thread_report_judge_progress(threading.Thread):
-    def __init__(self, task):
-        threading.Thread.__init__(self)
-        self._task = task
-        self._now = 0
-        self._stop = threading.Event()
-        self._lock = threading.Lock()
+class _thread_web_communicate(threading.Thread):
 
-    def run(self):
-        while not self._stop.is_set():
-            with self._lock:
-                n = self._now
-            try:
-                web.report_judge_progress(self._task, n)
-            except web.Error:
-                log.error("failed to report judge progress for task #{0}" . format(self._task.id))
+    class _callable:
+        def __init__(self, func, args, par):
+            self._func = func
+            self._args = args
+            self._par = par
+
+        def call(self):
+            if self._func is not None:
+                try:
+                    self._func(*self._args)
+                except web.Error:
+                    self._par._on_error.set()
+                except Exception as e:
+                    log.error("error while communicating with orzoj-website: {0!r}" . format(e))
+                    self._par._on_error.set()
+                self._func = None
+
+
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self._is_stopped = False
+        self._on_error = threading.Event()
+        self._cd = threading.Condition()
+
+        self._queue = deque()
+        self._lazy = None
+
+    def lazy_report(self, func, args):
+        self._cd.acquire()
+        self._lazy = _thread_web_communicate._callable(func, args, self)
+        self._cd.notify()
+        self._cd.release()
+
+    def report(self, func, args):
+        self._cd.acquire()
+        self._queue.append(_thread_web_communicate._callable(func, args, self))
+        self._cd.notify()
+        self._cd.release()
+
+    def clean_lazy(self):
+        self._cd.acquire()
+        self._lazy = None
+        self._cd.notify()
+        self._cd.release()
+
+    def check_error(self):
+        return self._on_error.is_set()
 
     def stop(self):
-        self._stop.set()
+        self._cd.acquire()
+        self._is_stopped = True
+        self._cd.notify()
+        self._cd.release()
 
-    def set_progress(self, now):
-        with self._lock:
-            self._now = now
+    def run(self):
+        while True:
+            self._cd.acquire()
+            if self._is_stopped and len(self._queue) == 0:
+                return
 
+            if len(self._queue):
+                cur_task = self._queue.popleft()
+            elif (self._lazy):
+                cur_task = self._lazy
+                self._lazy = None
+            else:
+                cur_task = None
+
+            if cur_task is None:
+                self._cd.wait()
+                self._cd.release()
+            else:
+                self._cd.release()
+                cur_task.call()
 
 
 def thread_work():
@@ -333,6 +385,15 @@ class thread_new_judge_connection(threading.Thread):
                 log.warning("[judge {0!r} message check error" .
                         format(judge.id))
                 raise _internal_error
+            
+        def _stop_web_report(tell_online = True):
+            th_report.stop()
+            if tell_online:
+                while th_report.is_alive():
+                    th_report.join(0.5)
+                    _write_msg(msg.TELL_ONLINE)
+            else:
+                th_report.join()
 
         global _task_queue, _QUEUE_TIMEOUT
         task = _task_queue.get(self._lang_id_set)
@@ -346,15 +407,19 @@ class thread_new_judge_connection(threading.Thread):
 
         self._cur_task = task
 
+        th_report = _thread_web_communicate()
+        th_report.start()
+
         datalist = _get_file_list(task.prob)
         if datalist is None:
             self._cur_task = None
             log.error("No data for problem {0!r}, task #{1} discarded" .
                     format(task.prob, task.id))
-            web.report_no_data(task)
+            th_report.report(web.report_no_data, [task])
+            _stop_web_report()
             return
 
-        web.report_sync_data(task, judge)
+        th_report.report(web.report_sync_data, [task, judge])
         _write_msg(msg.PREPARE_DATA)
         _write_str(task.prob)
         _write_uint32(len(datalist))
@@ -376,12 +441,14 @@ class thread_new_judge_connection(threading.Thread):
                 reason = _read_str()
                 log.error("[judge {0!r}] [task #{1}] [prob: {2!r}] data error: {3!r}" . 
                         format(judge.id, task.id, task.prob, reason))
-                web.report_error(task, "data error")
+                th_report.report(web.report_error, [task, "data error"])
+                _stop_web_report()
                 return
 
             if m != msg.NEED_FILE:
                 log.warning("[judge {0!r}] message check error" . format(judge.id))
-                web.report_error(task, "message check error")
+                th_report.report(web.report_error, [task, "message check error"])
+                _stop_web_report(False)
                 raise _internal_error
 
             fpath = os.path.normpath(os.path.join(task.prob, _read_str()))
@@ -404,10 +471,11 @@ class thread_new_judge_connection(threading.Thread):
             if m != msg.START_JUDGE_WAIT:
                 log.warning("[judge {0!r}] message check error" .
                         format(judge.id))
-                web.report_error(task, "message check error")
+                th_report.report(web.report_error, [task, "message check error"])
+                _stop_web_report(False)
                 raise _internal_error
 
-        web.report_compiling(task)
+        th_report.report(web.report_compiling, [task])
 
         while True:
             m = _read_msg()
@@ -415,49 +483,52 @@ class thread_new_judge_connection(threading.Thread):
                 continue
 
             if m == msg.COMPILE_SUCCEED:
-                web.report_compile_success(task, ncase)
+                th_report.report(web.report_compile_success, [task, ncase])
                 break
             else:
                 if m != msg.COMPILE_FAIL:
-                    web.report_error(task, "message check error")
+                    th_report.report(web.report_error, [task, "message check error"])
                     log.warning("[judge {0!r}] message check error" .
                             format(judge.id))
+                    _stop_web_report(False)
                     raise _internal_error
-                web.report_compile_failure(task, _read_str())
                 self._cur_task = None
+                th_report.report(web.report_compile_failure, [task, _read_str()])
+                _stop_web_report()
                 return
 
-        th_progress = _thread_report_judge_progress(task)
-        th_progress.start()
         prob_res = list()
 
         for i in range(ncase):
-            th_progress.set_progress(i)
+            th_report.lazy_report(web.report_judge_progress, [task, i])
             while True:
                 m = _read_msg()
                 if m == msg.REPORT_CASE:
                     break
                 if m != msg.TELL_ONLINE:
-                    th_progress.stop()
-                    th_progress.join()
-                    web.report_error(task, "message check error")
                     log.warning("[judge {0!r}] message check error" .
                             format(judge.id))
+                    th_report.report(web.report_error, [task, "message check error"])
+                    _stop_web_report(False)
                     raise _internal_error
             result = structures.case_result()
             result.read(self._snc)
             prob_res.append(result)
 
-        th_progress.stop()
-        _check_msg(msg.REPORT_JUDGE_FINISH)
-        th_progress.join()
+        th_report.clean_lazy()
+        th_report.report(web.report_prob_result, [task, prob_res])
 
-        web.report_prob_result(task, prob_res)
+        _check_msg(msg.REPORT_JUDGE_FINISH)
 
         self._cur_task = None
+        _stop_web_report()
 
-        log.info("[judge {0!r}] finished task #{1} normally" .
-                format(judge.id, task.id))
+        if th_report.check_error():
+            log.warning("[judge {0!r}] error while reporting judge results for task #{1}" .
+                    format(judge.id, task.id))
+        else:
+            log.info("[judge {0!r}] finished task #{1} normally" .
+                    format(judge.id, task.id))
 
 
 

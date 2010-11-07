@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Nov 06 20:35:13 2010 +0800
+# $Date: Sun Nov 07 11:16:57 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -126,19 +126,25 @@ def remove_judge(judge):
     return: NULL"""
     _read({"action":"remove_judge", "judge":judge.id_num})
 
+_fetch_task_prev = None
 def fetch_task():
     """try to fetch a new task. return None if no new task available.
     this function does not raise exceptions
 
-    data: action=fetch_task
+    data: action=fetch_task, prev=array("type"=><type of previous task>, <type specified arguments>)|None
     return: array("type"=>type, <type specified arguments>)
         type:
             "none" -- no new task
                       args: none
             "src"  -- new source file to be judged
                       args: id, prob, lang, src, input, output (see structures.py)"""
+    global _fetch_task_prev
     try:
-        ret = _read({"action":"fetch_task"})
+        if _fetch_task_prev is not None:
+            if _fetch_task_prev['type'] == 'src':
+                _fetch_task_prev = {'type':'src', 'id':_fetch_task_prev['id']}
+        ret = _read({"action":"fetch_task", "prev": _fetch_task_prev})
+        _fetch_task_prev = ret
         t = ret["type"]
         if t == "none":
             return
