@@ -30,12 +30,14 @@
 
 	<extra>extra input file to be copied from data directory</extra>
 
-	<case>
-		<input>standard input file name (must be in the problem data directory)</input>
-		<output>standard output file name</output>
-		<time>integer, time limit in milliseconds</time>
-		<mem>integer, memory limit in kb (0 means do not limit)</mem>
-		<score>integer</score>
+	<case input=... output=... time=... mem=... score=...>
+	<!--
+		input: standard input file name (must be in the problem data directory)
+		output: standard output file name
+		time: integer, time limit in milliseconds
+		mem: integer, memory limit in kb (0 means do not limit)
+		score: integer
+	-->
 	</case>
 
 </orzoj-prob-conf>

@@ -2,3 +2,4 @@ TEST:
   custom verifier
   IPv6
   judge lock file
+  additional compiler option in probconf.xml

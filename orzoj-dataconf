@@ -1,0 +1,416 @@
+#!/usr/bin/env python
+# $File: orzoj-dataconf
+# $Author: Jiakai <jia.kai66@gmail.com>
+# $Date: Mon Nov 08 22:05:50 2010 +0800
+#
+# This file is part of orzoj
+# 
+# Copyright (C) <2010>  Jiakai <jia.kai66@gmail.com>
+# 
+# Orzoj is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# Orzoj is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with orzoj.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import sys, os
+import xml.dom.minidom
+
+
+PROB_CONF_FNAME = "probconf.xml"
+
+# We can devide the form of test data files of various problems into two classes:
+#   1.
+#     <common prefix><case identifier><I/O identifier>
+#
+#   2.
+#     <I/O identifier><case identifier><common suffix>
+#
+
+def common_prefix(strlist):
+    """return the common prefix of all strings in @strlist"""
+    for i in range(len(strlist[0])):
+        ch = strlist[0][i]
+        for j in strlist:
+            if j[i] != ch:
+                return strlist[0][:i]
+
+def common_suffix(strlist):
+    """return the common prefix of all strings in @strlist"""
+    for i in range(1, len(strlist[0]) + 1):
+        ch = strlist[0][-i]
+        for j in strlist:
+            if j[-i] != ch:
+                if i == 1:
+                    return ''
+                return strlist[0][-i + 1:]
+
+def check(lfin, lfout):
+    in_prelen = len(common_prefix(lfin))
+    in_suflen = len(common_suffix(lfin))
+    out_prefix = common_prefix(lfout)
+    out_suffix = common_suffix(lfout)
+
+    for i in range(len(lfin)):
+        if out_prefix + lfin[i][in_prelen : len(lfin[i]) - in_suflen] + out_suffix != lfout[i]:
+            return False
+
+    return True
+
+def check_swap_io(fin, fout):
+    if fout.find('in') != -1 and fin.find('in') == -1:
+        return True
+    if fin.find('out') != -1 and fout.find('out') == -1:
+        return True
+    if fin.find('ans') != -1 and fans.find('ans') == -1:
+        return True
+    return False
+
+def work():
+    """return list(tuple(<input filename>, <output filename>)) or False on failure"""
+
+    global flist, PROB_CONF_FNAME
+    flist = [(i.lower(), i) for i in flist if i != PROB_CONF_FNAME]
+    if len(flist) % 2 or len(flist) < 4:
+        return False
+    flist.sort(key = lambda x: x[0])
+
+    lfin = list()
+    lfin_orig = list()
+    lfout = list()
+    lfout_orig = list()
+    for i in range(len(flist)):
+        if i % 2:
+            lfout.append(flist[i][0])
+            lfout_orig.append(flist[i][1])
+        else:
+            lfin.append(flist[i][0])
+            lfin_orig.append(flist[i][1])
+
+    if not check(lfin, lfout):
+        half = len(flist) / 2
+        lfin = [flist[i][0] for i in range(half)]
+        lfout = [flist[i][0] for i in range(half, half * 2)]
+        if not check(lfin, lfout):
+            return False
+        lfin_orig = [flist[i][1] for i in range(half)]
+        lfout_orig = [flist[i][1] for i in range(half, half * 2)]
+
+    if check_swap_io(lfin[0], lfout[0]):
+        (lfin, lfout, lfin_orig, lfout_orig) = (lfout, lfin, lfout_orig, lfin_orig)
+
+    in_prelen = len(common_prefix(lfin))
+    in_suflen = len(common_suffix(lfin))
+    
+    ret = [(lfin_orig[i], lfout_orig[i]) for i in range(len(lfin))]
+
+    try:
+        ret.sort(key = lambda x: int(x[0][in_prelen : len(x[0]) - in_suflen], 36))
+    except ValueError:
+        ret.sort(key = lambda x: x[0])
+
+    return ret
+
+def manual_conf(iolist):
+    """ @iolist: current I/O files
+
+    return list(tuple(<input filename>, <output filename>))"""
+
+    class Fname:
+        def __init__(self, name, id, l):
+            self._name = name
+            self._id = id
+            self._list = l
+            l.append(self)
+
+        def get_name(self):
+            return self._name
+
+        def get_id(self):
+            return self._id
+
+        def move_to_list(self, tl):
+            if self._list is tl:
+                return
+            self._list.remove(self)
+            self._list = tl
+            tl.append(self)
+
+        def inlist_move(self, delta):
+            l = self._list
+            curpos = l.index(self)
+            tpos = curpos + delta
+            if tpos >= 0 and tpos < len(l):
+                tmp = l[curpos]
+                l[curpos] = l[tpos]
+                l[tpos] = tmp
+
+        def swap(self, tfname):
+            l = self._list
+            if l is tfname._list:
+                p1 = l.index(self)
+                p2 = l.index(tfname)
+                tmp = l[p1]
+                l[p1] = l[p2]
+                l[p2] = tmp
+            else:
+                l1 = tfname._list
+                self._list = l1
+                tfname._list = l
+                l[l.index(self)] = tfname
+                l1[l1.index(tfname)] = self
+
+        def __eq__(self, other):
+            return self is other
+
+        def __ne__(self, other):
+            return self is not other
+
+    def show_help(argv):
+        print "HELP" . center(60)
+        for i in cmds_list:
+            print i[0].ljust(10) + i[1]
+
+    def _move_base(argv, errmsg, func):
+        if len(argv) == 1:
+            print errmsg
+            return
+        error = False
+        for i in range(1, len(argv)):
+            try:
+                v = int(argv[i])
+                if v < 0:
+                    raise LookupError
+                func(flist_idx[int(argv[i])])
+            except LookupError:
+                sys.stderr.write("no file with ID {0!r}\n" . format(v))
+                error = True
+            except Exception as e:
+                sys.stderr.write(repr(e) + "\n")
+                error = True
+        if not error:
+            get_list(list())
+
+    def add_input(argv):
+        _move_base(argv, "Please tell me the IDs of files to be added",
+                lambda tgt: tgt.move_to_list(flist_in))
+
+    def add_output(argv):
+        _move_base(argv, "Please tell me the IDs of files to be removed",
+                lambda tgt: tgt.move_to_list(flist_out))
+
+    def move_up(argv):
+        _move_base(argv, "Please tell me the IDs of files to be moved up",
+                lambda tgt: tgt.inlist_move(-1))
+
+    def move_down(argv):
+        _move_base(argv, "Please tell me the IDs of files to be moved down",
+                lambda tgt: tgt.inlist_move(1))
+
+    def swap(argv):
+        if len(argv) != 3:
+            print "Please tell me the IDs of two files involved in the swap"
+            return
+        try:
+            flist_idx[int(argv[1])].swap(flist_idx[int(argv[2])])
+        except KeyError as e:
+            sys.stderr.write("no file with ID {0!r}\n", e.args[0])
+        except Exception as e:
+            sys.stderr.write(repr(e) + "\n")
+        else:
+            get_list(list())
+
+    def remove(argv):
+        _move_base(argv, "Please tell me the IDs of files to be removed",
+                lambda tgt: tgt.move_to_list(flist_nouse))
+
+    def _print_list(prompt, list_):
+        print prompt.center(25)
+        print "NO." . ljust(5) + "FILE ID" . ljust(10) + "FILENAME"
+        num = 0
+        for i in list_:
+            num += 1
+            print str(num).ljust(5) + str(i.get_id()).ljust(10) + i.get_name()
+        print '-' * 25
+
+    def get_list(argv):
+        _print_list('INPUT FILES', flist_in)
+        _print_list('OUTPUT FILES', flist_out)
+        _print_list('UNUSED FILES', flist_nouse)
+    
+    cmds_list = (
+        # (<command>, (<help message>, <corresponding function>)
+        ("help", "show this help message", show_help),
+        ("addinput", "mark a file as input file", add_input),
+        ("addoutput", "mark a file as output file", add_output),
+        ("up", "move a file in a list upward", move_up),
+        ("down", "move a file in a list down", move_down),
+        ("swap", "swap two files", swap),
+        ("remove", "remove a file from the input/output list", remove),
+        ("list", "list of current input, output and unused files", get_list),
+        ("done", "finish the manual configuration process and confirm", None)
+    )
+
+    cmds = dict()
+    for i in cmds_list:
+        cmds[i[0]] = i[1:]
+
+    flist_idx = list()
+
+    flist_in = list()
+    flist_out = list()
+    flist_nouse = list()
+
+    flist = os.listdir('.')
+    flist.sort()
+    for i in range(len(flist)):
+        flist_idx.append(Fname(flist[i], i, flist_nouse))
+
+    for i in iolist:
+        flist_idx[flist.index(i[0])].move_to_list(flist_in)
+        flist_idx[flist.index(i[1])].move_to_list(flist_out)
+
+    print '-' * 50
+    print "Manual Test Data Configuration" . center(50)
+    print "type help to get a list of usable commands"
+
+    try:
+        import readline
+        class Completer:
+            def __init__(self):
+                self.clist = list()
+            def func(self, text, stat):
+                if stat == 0:
+                    if text:
+                        text = text.split()[0]
+                        self.clist = [i for i in cmds if i.startswith(text)]
+                    else:
+                        self.clist = cmds.keys()
+                if stat == len(self.clist):
+                    return None
+                return self.clist[stat]
+
+        completer = Completer()
+        readline.parse_and_bind('tab: complete')
+        readline.set_completer(completer.func)
+    except Exception as e:
+        sys.stderr.write("Warning: failed to set up readline library: {0!r}\n" . format(e))
+
+    cmd_input_prev = list()
+    while True:
+        try:
+            cmd_input = raw_input('> ')
+            cmd_input = cmd_input.split()
+            if not len(cmd_input):
+                cmd_input = cmd_input_prev
+            else:
+                cmd_input_prev = cmd_input
+            if not len(cmd_input):
+                continue
+
+            if cmd_input[0] == 'done':
+                raise EOFError
+            usable = [i for i in cmds if i.startswith(cmd_input[0])]
+            if not len(usable):
+                print "no such command"
+                continue
+            if len(usable) > 1:
+                print "Ambiguous command. Usable ones:"
+                print usable
+                continue
+            cmds[usable[0]][1](cmd_input)
+        except EOFError:
+            if len(flist_in) != len(flist_out):
+                sys.stderr.write("lengths of input and output file lists do not match\n")
+                continue
+            ret = list()
+            for i in range(len(flist_in)):
+                ret.append((flist_in[i].get_name(), flist_out[i].get_name()))
+            print ''
+            return ret
+
+def read_int(prompt, default = None):
+    if default:
+        prompt = prompt + "[default: {0}]" . format(default)
+    while True:
+        try:
+            val = raw_input(prompt)
+            if not val and default:
+                return default
+            return int(val)
+        except ValueError:
+            pass
+
+
+if len(sys.argv) != 2:
+    sys.exit("usage: {0} <test data directory>" . format(sys.argv[0]))
+
+try:
+    os.chdir(sys.argv[1])
+    flist = os.listdir('.')
+except OSError as e:
+    sys.exit("failed to change directory to {0!r}: {1!r}" . format(sys.argv[0], e))
+
+iolist = work()
+if iolist is False:
+    ch = raw_input("Sorry, I can not automatically configure the test data.\nIf there are" +
+            " any files other than input/output data in the directory, please remove them and retry.\n" +
+            "You can also choose to manually enter input/output file patterns.\n" +
+            "Do you want to configure manually now? (y/n)  ")
+    if ch != 'y':
+        sys.exit()
+    iolist = manual_conf(list())
+
+while True:
+    c1_width = max([len(i[0]) for i in iolist]) + 1
+    if c1_width < 15:
+        c1_width = 15
+    print "CASE".ljust(5) + "INPUT FILENAME".ljust(c1_width) + "OUTPUT FILENAME"
+    num = 0
+    for  i in iolist:
+        num += 1
+        print str(num).ljust(5) + i[0].ljust(c1_width) + i[1]
+
+    print ''
+    
+    while True:
+        ch = raw_input("Is this correct? (y/n) ")
+        if ch == 'y' or ch == 'n':
+            break
+    if ch == 'y':
+        break
+    iolist = manual_conf(iolist)
+
+cs_time = str(read_int("please enter case time limit (in microseconds)", 1000))
+cs_mem = str(read_int("please enter case memory limit (in megabytes, 0 for unlimited)", 256) * 1024)
+cs_score = str(read_int("please enter case score", 100 / len(iolist)))
+
+try:
+    doc = xml.dom.minidom.Document()
+    root = doc.createElement("orzoj-prob-conf")
+    root.setAttribute("version", "1.0")
+    verifier = doc.createElement("verifier")
+    verifier.setAttribute("standard", "1")
+    root.appendChild(verifier)
+    for i in iolist:
+        cs_ele = doc.createElement("case")
+        cs_ele.setAttribute("input", i[0])
+        cs_ele.setAttribute("output", i[1])
+        cs_ele.setAttribute("time", cs_time)
+        cs_ele.setAttribute("mem", cs_mem)
+        cs_ele.setAttribute("score", cs_score)
+        root.appendChild(cs_ele)
+    doc.appendChild(root)
+    with open(PROB_CONF_FNAME, "w") as f:
+        doc.writexml(f, encoding = "utf-8", addindent = "  ", newl = "\n")
+except Exception as e:
+    sys.stderr.write("failed to write configuration file: {0!r}\n" . format(e))
+

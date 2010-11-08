@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Nov 07 21:54:02 2010 +0800
+# $Date: Mon Nov 08 21:51:08 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -387,7 +387,7 @@ class _Lang:
                         prog_fout_path = _join_path(_dir_temp_abs, output)
                         prog_fout = limiter.get_null_dev()
                 except Exception as e:
-                    log.error("failed to open data file: {0!r}" . format(e))
+                    log.error("failed to open data file [{0!r}]: {1!r}" . format(stdin_path, e))
                     case_result = structures.case_result()
                     case_result.exe_status = structures.EXESTS_SYSTEM_ERROR
                     case_result.score = 0

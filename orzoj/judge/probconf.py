@@ -1,6 +1,6 @@
 # $File: probconf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Oct 18 08:43:12 2010 +0800
+# $Date: Mon Nov 08 22:11:14 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -153,11 +153,11 @@ class Prob_conf:
             if section.tag == "case":
                 case = Case_conf()
                 try:
-                    case.stdin = section.find("input").text
-                    case.stdout = section.find("output").text
-                    case.time = int(section.find("time").text)
-                    case.mem = int(section.find("mem").text)
-                    case.score = int(section.find("score").text)
+                    case.stdin = section.attrib["input"]
+                    case.stdout = section.attrib["output"]
+                    case.time = int(section.attrib["time"])
+                    case.mem = int(section.attrib["mem"])
+                    case.score = int(section.attrib["score"])
                 except ValueError as e:
                     raise _Parse_error("failed to convert to int: {0!r}" . format(e))
                 except AttributeError as e:
