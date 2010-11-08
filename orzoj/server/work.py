@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Nov 07 10:35:03 2010 +0800
+# $Date: Mon Nov 08 09:50:18 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -22,13 +22,11 @@
 
 """threads for waiting for tasks and managing judges"""
 
-import threading, time, os, os.path, hashlib
+import threading, time, os, os.path, traceback
 from collections import deque
 
-from orzoj import log, snc, msg, structures, control, conf, filetrans
+from orzoj import log, snc, msg, structures, control, conf, sync_dir
 from orzoj.server import web
-
-_QUEUE_TIMEOUT = 0.5
 
 _max_queue_size = None
 
@@ -57,9 +55,8 @@ class _Task_queue:
         self._size = 0
 
     def put(self, task):
-        global _QUEUE_TIMEOUT
         while self._is_full() and not control.test_termination_flag():
-            time.sleep(_QUEUE_TIMEOUT)
+            time.sleep(msg.TELL_ONLINE_INTERVAL)
         with self._lock:
             if task.lang_id not in self._queue:
                 self._queue[task.lang_id] = deque()
@@ -195,41 +192,14 @@ def thread_work():
         time.sleep(_refresh_interval)
 
 
-def _get_file_list(path):
-    """return a dict containing regular files and their corresponding sha1 digests in the direcory @path.
-    return None on error"""
-    def _sha1_file(path):
-        with open(path, 'rb') as f:
-            sha1_ctx = hashlib.sha1()
-            while True:
-                buf = f.read(sha1_ctx.block_size)
-                if not buf:
-                    return sha1_ctx.digest()
-                sha1_ctx.update(buf)
-
-    try:
-        ret = {}
-        for i in os.listdir(path):
-            pf = os.path.normpath(os.path.join(path, i))
-            if os.path.isfile(pf):
-                ret[i] = _sha1_file(pf)
-        return ret
-            
-    except OSError as e:
-        log.error("failed to obtain file list of {0!r}: [errno {1}] [filename {2!r}]: {3}" .
-                format(path, e.errno, e.filename, e.strerror))
-        return None
-    except Exception as e:
-        log.error("failed to obtain file list of {0!r}: {1!r}" .
-                format(path, e))
-        return None
-
 class thread_new_judge_connection(threading.Thread):
     def __init__(self, sock):
         """serve a new connection, which should be orzoj-judge.
-        No exceptions are raised, exit silently on error."""
+        No exceptions are raised, exit silently on error
+        sock will be closed"""
         threading.Thread.__init__(self, name = "work.thread_new_judge_connection")
         self._sock = sock
+        self._snc = None
         self._cur_task = None
         self._web_registered = False
         self._judge = structures.judge()
@@ -338,27 +308,25 @@ class thread_new_judge_connection(threading.Thread):
             log.warning("[judge {0!r}] failed because of network error" . format(judge.id))
             self._clean()
         except _internal_error:
-            self._snc.close()
-            self._sock.close()
             self._clean()
         except web.Error:
             log.warning("[judge {0!r}] failed because of error while communicating with website" . format(judge.id))
             _write_msg(msg.ERROR)
-            self._snc.close()
-            self._sock.close()
             self._clean()
-        except filetrans.OFTPError:
-            log.warning("[judge {0!r}] failed to transfer file" .
+        except sync_dir.Error:
+            log.warning("[judge {0!r}] failed to synchronize data directory" .
                     format(judge.id))
-            self._snc.close()
-            self._sock.close()
             self._clean()
         except Exception as e:
             log.warning("[judge {0!r}] error happens: {1!r}" .
                     format(judge.id, e))
-            self._snc.close()
-            self._sock.close()
+            log.debug(traceback.format_exc())
             self._clean()
+
+    def __del__(self):
+        if self._snc:
+            self._snc.close()
+        self._sock.close()
 
     def _solve_task(self):
         judge = self._judge
@@ -390,16 +358,16 @@ class thread_new_judge_connection(threading.Thread):
             th_report.stop()
             if tell_online:
                 while th_report.is_alive():
-                    th_report.join(0.5)
+                    th_report.join(msg.TELL_ONLINE_INTERVAL)
                     _write_msg(msg.TELL_ONLINE)
             else:
                 th_report.join()
 
-        global _task_queue, _QUEUE_TIMEOUT
+        global _task_queue
         task = _task_queue.get(self._lang_id_set)
         if task is None:
             _write_msg(msg.TELL_ONLINE)
-            time.sleep(_QUEUE_TIMEOUT)
+            time.sleep(msg.TELL_ONLINE_INTERVAL)
             return
         
         log.info("[judge {0!r}] received task #{1} for problem {2!r}" .
@@ -410,8 +378,7 @@ class thread_new_judge_connection(threading.Thread):
         th_report = _thread_web_communicate()
         th_report.start()
 
-        datalist = _get_file_list(task.prob)
-        if datalist is None:
+        if not os.path.isdir(task.prob):
             self._cur_task = None
             log.error("No data for problem {0!r}, task #{1} discarded" .
                     format(task.prob, task.id))
@@ -422,39 +389,24 @@ class thread_new_judge_connection(threading.Thread):
         th_report.report(web.report_sync_data, [task, judge])
         _write_msg(msg.PREPARE_DATA)
         _write_str(task.prob)
-        _write_uint32(len(datalist))
+        
+        sync_dir.send(task.prob, self._snc)
 
-        for (f, sha1) in datalist.iteritems():
-            _write_str(f)
-            _write_str(sha1)
+        m = _read_msg()
 
-        while True:
-            m = _read_msg()
-            if m == msg.DATA_OK:
-                break
-
-            if m == msg.DATA_COMPUTING_SHA1:
-                continue
-
-            if m == msg.DATA_ERROR:
-                self._cur_task = None
-                reason = _read_str()
-                log.error("[judge {0!r}] [task #{1}] [prob: {2!r}] data error: {3!r}" . 
-                        format(judge.id, task.id, task.prob, reason))
-                th_report.report(web.report_error, [task, "data error"])
-                _stop_web_report()
-                return
-
-            if m != msg.NEED_FILE:
-                log.warning("[judge {0!r}] message check error" . format(judge.id))
-                th_report.report(web.report_error, [task, "message check error"])
-                _stop_web_report(False)
-                raise _internal_error
-
-            fpath = os.path.normpath(os.path.join(task.prob, _read_str()))
-            speed = filetrans.send(fpath, self._snc)
-            log.info("[judge {0!r}] file transfer speed: {1} kb/s" .
-                    format(judge.id, speed))
+        if m == msg.DATA_ERROR:
+            self._cur_task = None
+            reason = _read_str()
+            log.error("[judge {0!r}] [task #{1}] [prob: {2!r}] data error: {3!r}" . 
+                    format(judge.id, task.id, task.prob, reason))
+            th_report.report(web.report_error, [task, "data error"])
+            _stop_web_report()
+            return
+        elif m != msg.DATA_OK:
+            log.warning("[judge {0!r}] message check error" . format(judge.id))
+            th_report.report(web.report_error, [task, "message check error"])
+            _stop_web_report(False)
+            raise _internal_error
 
         ncase = _read_uint32()
 

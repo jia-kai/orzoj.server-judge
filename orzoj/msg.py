@@ -1,6 +1,6 @@
 # $File: msg.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Oct 18 09:09:40 2010 +0800
+# $Date: Mon Nov 08 08:56:26 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -22,6 +22,8 @@
 
 """definition of network messages"""
 
+TELL_ONLINE_INTERVAL = 0.5
+
 ERROR = 0xffffffff
 
 PROTOCOL_VERSION = 0xff000001
@@ -32,8 +34,6 @@ PROTOCOL_VERSION = 0xff000001
 (
 # packet format: (TELL_ONLINE)
 # used when server or judge is wating for some task to be finished
-# currently, it's used when server waiting for task or user's program
-# compiling or executing on judge
 TELL_ONLINE, # s2c, c2s
 
 # packet format: (HELLO, id:string, PROTOCOL_VERSION:uint32_t,
@@ -54,15 +54,10 @@ QUERY_INFO, # s2c
 # packet format: (ANS_QUERY, ans:string)
 ANS_QUERY, # c2s 
 
-# check problem data
-# packet format: (PREPARE_DATA, problem:string,
-# cnt:uint32_t, for (0<=i<cnt) (filename[i]:string, sha-1[i]:string))
+# prepare the judge process for a problem
+# about to synchronize the data directory
+# packet format: (PREPARE_DATA, problem code:string)
 PREPARE_DATA, # s2c 
-# packet format: (DATA_COMPUTING_SHA1) 
-# should be sent every 0.5 seconds during computing the sha1-sums
-DATA_COMPUTING_SHA1,
-# packet format: (NEED_FILE, filename:string)
-NEED_FILE, # c2s 
 # packet format: (DATA_ERROR, reason:string)
 DATA_ERROR, #c2s
 # packet format:  (DATA_OK, cnt_case:uint32_t)
@@ -79,9 +74,9 @@ START_JUDGE, # s2c
 START_JUDGE_OK, # c2s 
 # packet format: (START_JUDGE_WAIT)
 START_JUDGE_WAIT, # c2s 
-# packet format: (REPORT_COMPILE_SUCCEED)
+# packet format: (COMPILE_SUCCEED)
 COMPILE_SUCCEED, # c2s 
-# packet format: (REPORT_COMPILE_FAIL, reason:string)
+# packet format: (COMPILE_FAIL, reason:string)
 COMPILE_FAIL, # c2s 
 # packet format: (REPORT_CASE, result:case_result)
 REPORT_CASE, # c2s 
@@ -95,7 +90,19 @@ OFTP_FDATA_RECVED,
 OFTP_CHECK_OK, 
 OFTP_CHECK_FAIL, 
 OFTP_END, 
-OFTP_SYSTEM_ERROR) = range(27)
+OFTP_SYSTEM_ERROR,
+
+SYNCDIR_BEGIN, #s2c
+# marks the beginning of synchronizing a directory
+# packet format: (SYNCDIR_BEGIN, nfile:int, (filename[i]:string, checksum[i]:string))
+SYNCDIR_FILELIST, #c2s
+# packet format: (SYNCDIR_FILELIST, nfile:int, filenum[i]:int)
+#            where filenum is the index of the file in the list sent by server
+SYNCDIR_FTRANS, # s2c
+# tell the client that filetrans is ready
+# packet format: (SYNCDIR_FTRANS)
+SYNCDIR_DONE # c2s
+) = range(29)
 
 def write_msg(conn, m, timeout = 0):
     conn.write_uint32(m, timeout)

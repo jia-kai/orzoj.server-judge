@@ -1,6 +1,6 @@
 # $File: limiter.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Oct 29 10:38:42 2010 +0800
+# $Date: Mon Nov 08 09:06:42 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -193,7 +193,7 @@ class _Limiter:
 
         if self._type == _LIMITER_FILE:
             try:
-                with os.fdopen(ftmp[0], 'rb') as f:
+                with open(ftmp[1], 'rb') as f:
                     (self.exe_status, self.exe_time, self.exe_mem, info_len) = \
                             struct.unpack("IIII", f.read(16))
                     if info_len:

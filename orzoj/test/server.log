@@ -1,0 +1,69 @@
+[2010-11-08 08:56:47,212] [ERROR] from recv in sync_dir at sync_dir.py:316 :
+failed to synchronize directory: AttributeError("'int' object has no attribute 'TELL_ONLINE'",)
+
+[2010-11-08 08:58:04,392] [ERROR] from recv in sync_dir at sync_dir.py:316 :
+failed to synchronize directory: AttributeError("'int' object has no attribute 'TELL_ONLINE'",)
+
+[2010-11-08 08:59:08,962] [ERROR] from read in snc at snc.py:116 :
+failed to read [len=4]:
+error('SSL error [func SSL_read] [errno: Success]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-11-08 08:59:08,962] [WARNING] from recv in sync_dir at sync_dir.py:308 :
+network error while synchronizing directory
+
+[2010-11-08 09:02:44,223] [ERROR] from read in snc at snc.py:116 :
+failed to read [len=4]:
+error('SSL error [func SSL_read] [errno: Success]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-11-08 09:02:44,223] [WARNING] from recv in sync_dir at sync_dir.py:308 :
+network error while synchronizing directory
+
+[2010-11-08 09:05:27,306] [ERROR] from read in snc at snc.py:116 :
+failed to read [len=4]:
+error('SSL error [func SSL_read] [errno: Success]: error:00000005:lib(0):func(0):DH lib',)
+
+[2010-11-08 09:05:27,307] [WARNING] from recv in sync_dir at sync_dir.py:308 :
+network error while synchronizing directory
+
+[2010-11-08 09:07:50,051] [ERROR] from recv in sync_dir at sync_dir.py:318 :
+failed to synchronize directory: OSError(2, 'No such file or directory')
+
+[2010-11-08 09:16:11,569] [ERROR] from recv in sync_dir at sync_dir.py:319 :
+failed to synchronize directory: OSError(2, 'No such file or directory')
+
+[2010-11-08 09:17:16,818] [ERROR] from recv in sync_dir at sync_dir.py:319 :
+failed to synchronize directory: OSError(2, 'No such file or directory')
+
+[2010-11-08 09:17:16,818] [DEBUG] from recv in sync_dir at sync_dir.py:320 :
+Traceback:
+Traceback (most recent call last):
+  File "/home/jiakai/programming/orzoj/server-judge/orzoj/test/orzoj/sync_dir.py", line 275, in recv
+    os.remove(os.path.join(path, fname))
+OSError: [Errno 2] No such file or directory: '/tmp/recv/f0'
+
+
+[2010-11-08 09:18:36,641] [ERROR] from recv in sync_dir at sync_dir.py:320 :
+failed to synchronize directory: OSError(2, 'No such file or directory')
+
+[2010-11-08 09:18:36,642] [DEBUG] from recv in sync_dir at sync_dir.py:321 :
+Traceback:
+Traceback (most recent call last):
+  File "/home/jiakai/programming/orzoj/server-judge/orzoj/test/orzoj/sync_dir.py", line 276, in recv
+    os.remove(os.path.join(path, fname))
+OSError: [Errno 2] No such file or directory: '/tmp/recv/f0'
+
+
+[2010-11-08 09:19:09,522] [ERROR] from recv in sync_dir at sync_dir.py:320 :
+failed to synchronize directory: OSError(2, 'No such file or directory')
+
+[2010-11-08 09:19:09,524] [DEBUG] from recv in sync_dir at sync_dir.py:321 :
+Traceback:
+Traceback (most recent call last):
+  File "/home/jiakai/programming/orzoj/server-judge/orzoj/test/orzoj/sync_dir.py", line 276, in recv
+    os.remove(os.path.join(path, fname))
+OSError: [Errno 2] No such file or directory: '/tmp/recv/f0'
+
+
+[2010-11-08 09:24:28,480] [ERROR] from socket in snc at snc.py:53 :
+socket error: error(98, 'Address already in use')
+

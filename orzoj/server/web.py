@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Nov 07 11:16:57 2010 +0800
+# $Date: Sun Nov 07 21:39:35 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -140,15 +140,13 @@ def fetch_task():
                       args: id, prob, lang, src, input, output (see structures.py)"""
     global _fetch_task_prev
     try:
-        if _fetch_task_prev is not None:
-            if _fetch_task_prev['type'] == 'src':
-                _fetch_task_prev = {'type':'src', 'id':_fetch_task_prev['id']}
         ret = _read({"action":"fetch_task", "prev": _fetch_task_prev})
         _fetch_task_prev = ret
         t = ret["type"]
         if t == "none":
             return
         if t == "src":
+            _fetch_task_prev = {'type':'src', 'id':ret['id']}
             v = structures.task()
             for i in v.__dict__:
                 v.__dict__[i] = ret[i]

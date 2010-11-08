@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Fri Oct 29 17:07:30 2010 +0800
+# $Date: Mon Nov 08 09:50:42 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -22,9 +22,9 @@
 
 """connect to orzoj-server and wait for tasks"""
 
-import platform, os, os.path, hashlib, threading, time
+import platform, os, os.path, traceback
 
-from orzoj import msg, snc, conf, log, control, filetrans
+from orzoj import msg, snc, conf, log, control, sync_dir
 from orzoj.judge import core, probconf
 
 _judge_id = None
@@ -44,37 +44,6 @@ except:
 class Error(Exception):
     pass
 
-
-_file_list = None
-def _get_file_list(path):
-    """set _file_list a dict containing regular files and their corresponding sha1 digests in the direcory @path.
-    _file_list will be None on error"""
-    def _sha1_file(path):
-        with open(path, 'rb') as f:
-            sha1_ctx = hashlib.sha1()
-            while True:
-                buf = f.read(sha1_ctx.block_size)
-                if not buf:
-                    return sha1_ctx.digest()
-                sha1_ctx.update(buf)
-
-    global _file_list
-
-    try:
-        _file_list = dict()
-        for i in os.listdir(path):
-            pf = os.path.normpath(os.path.join(path, i))
-            if os.path.isfile(pf):
-                _file_list[i] = _sha1_file(pf)
-            
-    except OSError as e:
-        log.error("failed to obtain file list of {0!r}: [errno {1}] [filename {2!r}]: {3}" .
-                format(path, e.errno, e.filename, e.strerror))
-        _file_list = None
-    except Exception as e:
-        log.error("failed to obtain file list of {0!r}: {1!r}" .
-                format(path, e))
-        _file_list = None
 
 def connect(sock):
     """connect to orzoj-server via socket @sock
@@ -160,65 +129,23 @@ def connect(sock):
                 raise Error
 
             pcode = _read_str()
-            cnt = _read_uint32()
-            tlist = dict()
-            while cnt:
-                cnt -= 1
-                fname = _read_str()
-                tlist[fname] = _read_str()
-
             try:
-                if os.path.exists(pcode):
-                    if not os.path.isdir(pcode):
-                        os.remove(pcode)
-                        os.mkdir(pcode)
-                else:
-                    os.mkdir(pcode)
-
-                global _file_list
-                _file_list = None
-
-                th_hash = threading.Thread(target = _get_file_list, args = (pcode, ))
-                th_hash.start()
-
-                while th_hash.is_alive():
-                    _write_msg(msg.DATA_COMPUTING_SHA1)
-                    time.sleep(0.5)
-
-                if _file_list is None:
-                    _write_msg(msg.DATA_ERROR)
-                    _write_str("failed to list data directory: {0!r}" . format(pcode))
-                    continue
-
-                for (tfname, thash) in tlist.iteritems():
-                    if tfname not in _file_list or thash != _file_list[tfname]:
-                        _write_msg(msg.NEED_FILE)
-                        _write_str(tfname)
-                        speed = filetrans.recv(os.path.join(pcode, tfname), conn)
-                        log.info("file transfer speed with orzoj-server: {0}" .
-                                format(speed))
-
-                for lfname in _file_list:
-                    if lfname not in tlist:
-                        os.remove(os.path.join(pcode, lfname))
-
+                sync_dir.recv(pcode, conn)
                 pconf = probconf.Prob_conf(pcode)
 
-            except filetrans.OFTPError:
-                raise Error
-            except snc.Error:
+            except sync_dir.Error:
+                log.error("failed to synchronize data for problem {0!r}" . format(pcode))
                 raise Error
             except probconf.Error:
                 _write_msg(msg.DATA_ERROR)
-                _write_str("failed to analyse problem configuration (please contact the administrator to view log)")
+                _write_str("failed to parse problem configuration (for detailed information, please see the log)")
                 continue
-            except Error:
-                raise
             except Exception as e:
                 log.error("failed to transfer data for problem {0!r}: {1!r}" .
                         format(pcode, e))
+                log.debug(traceback.format_exc())
                 _write_msg(msg.DATA_ERROR)
-                _write_str("unexpected error (please contact the administrator to view log)")
+                _write_str("unexpected error (for detailed information, please see the log)")
                 raise Error
 
             _write_msg(msg.DATA_OK)

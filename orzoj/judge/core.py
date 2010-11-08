@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sat Oct 30 14:29:40 2010 +0800
+# $Date: Sun Nov 07 21:54:02 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -100,7 +100,7 @@ class _thread_report_case_result(threading.Thread):
                     self._ncase -= 1
                 except Queue.Empty:
                     msg.write_msg(self._conn, msg.TELL_ONLINE)
-                    time.sleep(0.5)
+                    time.sleep(msg.TELL_ONLINE_INTERVAL)
         except Exception as e:
             log.error("failed to report case result: {0!r}" . format(e))
             self._error = e
@@ -122,7 +122,7 @@ class _thread_tell_online(threading.Thread):
     def run(self):
         while not self._stop.is_set():
             msg.write_msg(self._conn, msg.TELL_ONLINE)
-            time.sleep(0.5)
+            time.sleep(msg.TELL_ONLINE_INTERVAL)
 
     def stop(self):
         self._stop.set()
@@ -304,7 +304,7 @@ class _Lang:
                 except IOError as e:
                     if e.errno == errno.EACCES or e.errno == errno.EAGAIN:
                         _write_msg(msg.START_JUDGE_WAIT)
-                        time.sleep(0.5)
+                        time.sleep(msg.TELL_ONLINE_INTERVAL)
                         continue
                     else:
                         log.error("failed to lock file: {0!r}" . format(e))
