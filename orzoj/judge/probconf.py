@@ -1,6 +1,6 @@
 # $File: probconf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Nov 09 14:24:20 2010 +0800
+# $Date: Tue Nov 09 15:25:42 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -183,6 +183,8 @@ class Prob_conf:
                 raise _Parse_error("error while parsing section {0!r}: {1}" . format(section.tag, e))
 
             raise _Parse_error("unknown tag: {0!r}" . format(section.tag))
+        if self.verify_func is None:
+            raise _Parse_error("no verifier specified")
 
 def _std_verifier(score, fstdin, fstdout, fusrout):
     (ok, info) = _filecmp.filecmp(fstdout, fusrout)
