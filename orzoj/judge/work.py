@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Nov 08 09:50:42 2010 +0800
+# $Date: Tue Nov 09 11:08:59 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -129,24 +129,25 @@ def connect(sock):
                 raise Error
 
             pcode = _read_str()
+            log.info("received task for problem {0!r}" . format(pcode))
             try:
-                sync_dir.recv(pcode, conn)
-                pconf = probconf.Prob_conf(pcode)
+                speed = sync_dir.recv(pcode, conn)
+                if speed:
+                    log.info("file transfer speed: {0!r}" . format(speed))
 
             except sync_dir.Error:
                 log.error("failed to synchronize data for problem {0!r}" . format(pcode))
                 raise Error
-            except probconf.Error:
-                _write_msg(msg.DATA_ERROR)
-                _write_str("failed to parse problem configuration (for detailed information, please see the log)")
-                continue
+
+            try:
+                pconf = probconf.Prob_conf(pcode)
             except Exception as e:
-                log.error("failed to transfer data for problem {0!r}: {1!r}" .
-                        format(pcode, e))
-                log.debug(traceback.format_exc())
+                errmsg = "failed to parse problem configuration: {0}" . format(e)
                 _write_msg(msg.DATA_ERROR)
-                _write_str("unexpected error (for detailed information, please see the log)")
-                raise Error
+                _write_str(errmsg)
+                log.error(errmsg)
+                log.debug(traceback.format_exc())
+                continue
 
             _write_msg(msg.DATA_OK)
             _write_uint32(len(pconf.case))

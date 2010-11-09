@@ -1,6 +1,6 @@
 # $File: conf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 22 20:58:15 2010 +0800
+# $Date: Tue Nov 09 09:03:55 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -146,7 +146,7 @@ def parse_file(filename):
         sys.exit("error while parsing configuration file on line {0}: {1}" .
                 format(linenu, e.msg))
     except Exception as e:
-        sys.exit("error while parsing configuration file on line {0}: {1!r}" .
+        sys.exit("error while parsing configuration file on line {0}: {1}" .
                 format(linenu, e))
 
 

@@ -1,6 +1,6 @@
 # $File: sync_dir.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Nov 08 09:56:18 2010 +0800
+# $Date: Tue Nov 09 09:04:36 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -69,12 +69,8 @@ class _thread_get_file_list(threading.Thread):
                         ret[i] = checksum
             self.result = ret
                 
-        except OSError as e:
-            log.error("failed to obtain file list of {0!r}: [errno {1}] [filename {2!r}]: {3}" .
-                    format(path, e.errno, e.filename, e.strerror))
         except Exception as e:
-            log.error("failed to obtain file list of {0!r}: {1!r}" .
-                    format(path, e))
+            log.error("failed to obtain file list of: {0}" . format(e))
 
 class _thread_make_tar(threading.Thread):
     def __init__ (self, fobj, dirpath, flist):
@@ -91,7 +87,7 @@ class _thread_make_tar(threading.Thread):
                 tf.add(os.path.join(self._dirpath, f), f)
             tf.close()
         except Exception as e:
-            log.error("failed to create tar file: {0!r}" . format(e))
+            log.error("failed to create tar file: {0}" . format(e))
             self.error = True
 
 class _thread_extract_tar(threading.Thread):
@@ -107,7 +103,7 @@ class _thread_extract_tar(threading.Thread):
             tf.extractall(self._dirpath)
             tf.close()
         except Exception as e:
-            log.error("failed to extract tar file: {0!r}" . format(e))
+            log.error("failed to extract tar file: {0}" . format(e))
             self.error = True
 
 def send(path, conn):
@@ -206,7 +202,7 @@ def send(path, conn):
         raise Error
 
     except Exception as e:
-        log.error("failed to synchronize directory: {0!r}" . format(e))
+        log.error("failed to synchronize directory: {0}" . format(e))
         log.debug(traceback.format_exc())
         raise Error
 
@@ -318,7 +314,7 @@ def recv(path, conn):
         raise Error
 
     except Exception as e:
-        log.error("failed to synchronize directory: {0!r}" . format(e))
+        log.error("failed to synchronize directory: {0}" . format(e))
         log.debug(traceback.format_exc())
         raise Error
 

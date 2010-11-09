@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Nov 07 21:39:35 2010 +0800
+# $Date: Tue Nov 09 08:45:02 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -103,7 +103,7 @@ def get_query_list():
     try:
         return phpserialize.dict_to_list(_read({"action":"get_query_list"}))
     except Exception as e:
-        log.error("can not convert dict to list: {0!r}" . format(e))
+        log.error("can not convert dict to list: {0}" . format(e))
         raise Error
 
 def register_new_judge(judge, query_ans):
@@ -117,7 +117,7 @@ def register_new_judge(judge, query_ans):
         judge.id_num = int(_read({"action":"register_new_judge", "judge":judge.id,
             "lang_supported":list(judge.lang_supported), "query_ans":phpserialize.dumps(query_ans)})["id_num"])
     except Exception as e:
-        log.error("failed to register new judge: {0!r}" . format(e))
+        log.error("failed to register new judge: {0}" . format(e))
         raise Error
 
 def remove_judge(judge):
@@ -154,7 +154,7 @@ def fetch_task():
             return v
         raise _internal_error("unknown task type: {0!r}" . format(t))
     except Exception as e:
-        log.error("failed to fetch task: {0!r}" . format(e))
+        log.error("failed to fetch task: {0}" . format(e))
         raise Error
 
 def report_no_data(task):
@@ -301,7 +301,7 @@ def _read(data, maxlen = None):
             return phpserialize.loads(ret_data)
 
         except Exception as e:
-            log.error("website communication error [left retries: {0}]: {1!r}" .
+            log.error("website communication error [left retries: {0}]: {1}" .
                     format(cnt, e))
             sys.stderr.write("orzoj-server: website communication error. See the log for details.\n")
             log.debug("raw data from server: {0!r}" . format(ret))

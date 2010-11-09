@@ -1,6 +1,6 @@
 # $File: limiter.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Nov 08 09:06:42 2010 +0800
+# $Date: Tue Nov 09 11:35:06 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -33,6 +33,10 @@ limiter_dict = {}
 class SysError(Exception):
     def __init__(self, msg):
         self.msg = msg
+    def __str__(self):
+        return self.msg
+    def __repr__(self):
+        return self.msg
 
 class _empty_class:
     pass
@@ -59,9 +63,62 @@ def get_null_dev(for_writing = True):
             f = open('/dev/null', method)
         return f
     except Exception as e:
-        log.error("failed to open NULL device: {0!r}", e)
+        log.error("failed to open NULL device: {0}", e)
         raise SysError("limiter system error")
 
+def eval_arg(s, var_dict):
+    """evaluate the argument"""
+    class _eval_error(Exception):
+        def __init__(self, msg):
+            self.msg = msg
+        def __str__(self):
+            return self.msg
+    s0 = s
+    try:
+        start = 0
+        while True:
+            pos = s.find("$", start)
+            if pos == -1:
+                return s
+            if pos == len(s) - 1:
+                raise _eval_error("$ can not be at the end of argument")
+            end = pos + 1
+            if s[end] == '(':
+                cnt = 1
+                end += 1
+                while cnt:
+                    if end == len(s):
+                        raise _eval_error("brackets do not match")
+                    if s[end] == '(':
+                        cnt += 1
+                    elif s[end] == ')':
+                        cnt -= 1
+                    end += 1
+            else:
+                while end < len(s) and (s[end].isalnum() or s[end] == '_'):
+                    end += 1
+
+            val = eval(s[pos + 1:end], {}, var_dict)
+            if type(val) is list:
+                if s != s0:
+                    raise _eval_error("Python expression in this argument should not return a list")
+                return val
+            len_tail = len(s) - end
+            s = s[:pos] + str(val) + s[end:]
+            start = len(s) - len_tail
+    except Exception as e:
+        raise _eval_error("error while evaluating argument {0!r}: {1}" .
+                format(s0, e))
+
+def eval_arg_list(arglist, var_dict):
+    ret = list()
+    for i in arglist:
+        tmp = eval_arg(i, var_dict)
+        if type(tmp) is list:
+            ret.extend(tmp)
+        else:
+            ret.append(tmp)
+    return ret
 
 class _Limiter:
     def __init__(self, args):
@@ -82,7 +139,7 @@ class _Limiter:
                 s.listen(1)
                 self._socket = s
             except Exception as e:
-                raise conf.UserError("[limiter {0!r}] failed to establish socket: {1!r}" .
+                raise conf.UserError("[limiter {0!r}] failed to establish socket: {1}" .
                         format(self._name, e))
         elif args[2] == 'file':
             self._type = _LIMITER_FILE
@@ -101,10 +158,11 @@ class _Limiter:
             try:
                 self._socket.close()
             except Exception as e:
-                log.warning("failed to close socket: {0!r}" . format(e))
+                log.warning("failed to close socket: {0}" . format(e))
 
     def run(self, var_dict, stdin = None, stdout = None, stderr = None):
         """run the limiter under variables defined in @var_dict
+        Note: @var_dict may be changed
         
         execution result can be accessed via self.exe_status, self.exe_time (in microseconds),
         self.exe_mem (in kb) and self.exe_extra_info
@@ -119,30 +177,21 @@ class _Limiter:
         if self._type == _LIMITER_FILE:
             try:
                 ftmp = tempfile.mkstemp()
-                trans_dict = {"FILENAME" : ftmp[1]}
+                var_dict["FILENAME"] = ftmp[1]
             except Exception as e:
-                log.error("[limiter {0!r}] failed to create temporary file: {1!r}" .
+                log.error("[limiter {0!r}] failed to create temporary file: {1}" .
                         format(self._name, e))
                 raise SysError("limiter communication error")
         else:
-            trans_dict = {"SOCKNAME" : self._socket_name}
+            var_dict["SOCKNAME"] = self._socket_name
 
 
-        args = []
-        for i in self._args:
-            if i[0] != '$':
-                args.append(i)
-            else:
-                try:
-                    v = eval(i[1:], trans_dict, var_dict)
-                    if type(v) is list:
-                        args.extend(v)
-                    else:
-                        args.append(str(v))
-                except Exception as e:
-                    log.error("[limiter {0!r}] error while evaluating argument {1!r}: {2!r}" .
-                            format(self._name, i, e))
-                    raise SysError("limiter configuration error")
+        try:
+            args = eval_arg_list(self._args, var_dict)
+        except Exception as e:
+            log.error("[limiter {0!r}] failed to evaluate argument: {1}" .
+                    format(self._name, e))
+            raise SysError("limiter configuration error")
 
         log.debug("executing command: {0!r}" . format(args))
 
@@ -160,7 +209,7 @@ class _Limiter:
                     "[filename {1!r}]: {2}" . format(e.errno, e.filename, e.strerror))
             raise SysError("failed to execute limiter")
         except Exception as e:
-            log.error("error while calling Popen: {0!r}" .  format(e))
+            log.error("error while calling Popen: {0}" .  format(e))
             raise SysError("failed to execute limiter")
 
         if self._type == _LIMITER_SOCKET:
@@ -180,7 +229,7 @@ class _Limiter:
                         format(self._name))
                 raise SysError("limiter socket error")
             except Exception as e:
-                log.error("[limiter {0!r}] failed to retrieve data through socket: {1!r}" .
+                log.error("[limiter {0!r}] failed to retrieve data through socket: {1}" .
                         format(self._name, e))
                 raise SysError("limiter socket error")
 
@@ -203,7 +252,7 @@ class _Limiter:
                 os.close(ftmp[0])
                 os.remove(ftmp[1])
             except Exception as e:
-                log.error("[limiter {0!r}] failed to retrieve data through file: {1!r}" .
+                log.error("[limiter {0!r}] failed to retrieve data through file: {1}" .
                         format(self._name, e))
                 raise SysError("limiter file error")
 
@@ -211,7 +260,7 @@ class _Limiter:
             try:
                 conn.close()
             except Exception as e:
-                log.warning("failed to close socket connection: {0!r}".format(e))
+                log.warning("failed to close socket connection: {0}".format(e))
 
 def _ch_add_limiter(args):
     if len(args) == 1:

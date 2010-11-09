@@ -1,6 +1,6 @@
 # $File: core.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Nov 08 21:51:08 2010 +0800
+# $Date: Tue Nov 09 14:22:59 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -23,7 +23,7 @@
 and executes (by running the executor under limiter) user's
 program and verifies the output"""
 
-import os.path, errno, shutil, time, os, shlex, threading, Queue, stat
+import os.path, errno, shutil, time, os, threading, Queue, stat, traceback
 
 try:
     import fcntl
@@ -55,18 +55,6 @@ _cmd_vars = dict()
 def _join_path(p1, p2):
     return os.path.normpath(os.path.join(p1, p2))
 
-def _eval(s, prog):
-    """evaluate argument passed to AddExecutor"""
-    global _cmd_vars
-    if s[0] != '$':
-        return s.replace("%s", prog)
-    try:
-        return eval(s[1:], {}, _cmd_vars)
-    except Exception as e:
-        log.error("[executor {0!r}] error while evaluating argument {1!r}: {2!r}" .
-                format(self._name, s, e))
-        raise
-
 def _clean_temp():
     """clean temporary directory"""
     global _dir_temp_abs
@@ -78,7 +66,7 @@ def _clean_temp():
             else:
                 os.remove(p)
     except Exception as e:
-        log.error("failed to clean temporary directory [{0!r}]: {1!r}" .
+        log.error("failed to clean temporary directory [{0!r}]: {1}" .
                 format(_dir_temp_abs, e))
         raise Error
 
@@ -102,7 +90,7 @@ class _thread_report_case_result(threading.Thread):
                     msg.write_msg(self._conn, msg.TELL_ONLINE)
                     time.sleep(msg.TELL_ONLINE_INTERVAL)
         except Exception as e:
-            log.error("failed to report case result: {0!r}" . format(e))
+            log.error("failed to report case result: {0}" . format(e))
             self._error = e
 
     def check_error(self):
@@ -147,31 +135,34 @@ class _Executor:
         self._args = args[3:]
 
     def run_as_compiler(self, fsrc, extra_args = None):
-        """run the executor as compiler (retrieve stderr) and substitute "%s" for @fsrc,
+        """run the executor as compiler (retrieve stderr and stdout)
         return a tuple (success, info),
         where success is a boolean value indicating whether it's compiled successfully,
         while info is the executor output or a string indicating some system error (human readable)
         if successfully compiled, info is None
 
-        @extra_args can be a list of string
+        @extra_args can be a list of string (will be evaluated using limiter.eval_arg_list)
             
         no exceptions are raised"""
 
         global _cmd_vars
 
+        var_dict = dict(_cmd_vars)
+        var_dict['SRC'] = fsrc;
         try:
-            try:
-                if extra_args is None:
-                    args = [_eval(i, fsrc) for i in self._args]
-                else:
-                    args = [_eval(i, fsrc) for i in self._args + extra_args]
-            except Exception:
-                return (False, "failed to compile: executor configuration error")
+            args = limiter.eval_arg_list(self._args, var_dict)
+            if extra_args:
+                args.extend(limiter.eval_arg_list(extra_args, var_dict))
+        except Exception as e:
+            log.error("failed to parse executor configuration: {0}" . format(e))
+            return (False, "failed to compile: executor configuration error")
 
+        try:
             l = self._limiter
-            _cmd_vars["TARGET"] = args
+            del var_dict['SRC']
+            var_dict["TARGET"] = args
 
-            l.run(_cmd_vars, stdout = limiter.SAVE_OUTPUT, stderr = limiter.SAVE_OUTPUT)
+            l.run(var_dict, stdin = limiter.get_null_dev(False), stdout = limiter.SAVE_OUTPUT, stderr = limiter.SAVE_OUTPUT)
 
             if l.exe_status:
                 if l.exe_status == structures.EXESTS_EXIT_NONZERO:
@@ -182,18 +173,20 @@ class _Executor:
                                 l.exe_extra_info))
             return (True, None)
         except limiter.SysError as e:
-            return (False, "failed to compile: limiter error: {0} [stderr: {1!r}]" .
+            return (False, "failed to compile: limiter error: {0} [stderr: {1}]" .
                     format(e.msg, l.stderr))
         except Exception as e:
-            return (False, "failed to compile: caught exception: {0!r}" .
+            return (False, "failed to compile: caught exception: {0}" .
                     format(e))
 
     def run(self, prog, stdin = None, stdout = None, retrieve_stdout = False, extra_args = None):
         """execute user's program @prog, stdin and stdout can be redirected to file
         allowed @stdin and @stdout values are the same as that of subprocess.Popen
-        return an instance of structures.case_result
 
-        if retrieve_stdout is True, return a tuple(res:structures.case_result, stdout:str),
+        if retrieve_stdout is False,
+            return an instance of structures.case_result
+        if retrieve_stdout is True,
+            return a tuple(res:structures.case_result, stdout:str),
         and @stdin and @stdout are ignored
         
         no exceptions are raised"""
@@ -209,25 +202,30 @@ class _Executor:
             res.memory = 0
             res.extra_info = msg
             if retrieve_stdout:
-                res = (res, None)
+                return (res, None)
+            return res
+
+        var_dict = dict(_cmd_vars)
+        var_dict['SRC'] = prog
+        try:
+            args = limiter.eval_arg_list(self._args, var_dict)
+        except Exception as e:
+            log.error("failed to execute user program: executor configuration error: {0}" . format(e))
+            return mkerror("failed to execute: executor configuration error")
 
         try:
-            try:
-                args = [_eval(i, prog) for i in self._args]
-            except Exception:
-                mkerror("failed to execute: executor configuration error")
-                return res
 
             if extra_args:
                 args.extend(extra_args)
 
             l = self._limiter
-            _cmd_vars["TARGET"] = args
+            del var_dict['SRC']
+            var_dict["TARGET"] = args
 
             if retrieve_stdout:
-                l.run(_cmd_vars, stdout = limiter.SAVE_OUTPUT, stderr = limiter.get_null_dev())
+                l.run(var_dict, stdout = limiter.SAVE_OUTPUT, stderr = limiter.get_null_dev())
             else:
-                l.run(_cmd_vars, stdin = stdin, stdout = stdout, stderr = limiter.get_null_dev())
+                l.run(var_dict, stdin = stdin, stdout = stdout, stderr = limiter.get_null_dev())
 
             res.score = 0
             res.full_score = 0
@@ -241,14 +239,12 @@ class _Executor:
             return res
         
         except limiter.SysError as e:
-            mkerror("failed to execute: limiter error: {0}" .
+            return mkerror("failed to execute: limiter error: {0}" .
                     format(e.msg))
-            return res
 
         except Exception as e:
-            mkerror("failed to execute: caught exception: {0!r}" .
+            return mkerror("failed to execute: caught exception: {0}" .
                     format(e))
-            return res
 
 class _Lang:
     def __init__(self, args):
@@ -307,12 +303,12 @@ class _Lang:
                         time.sleep(msg.TELL_ONLINE_INTERVAL)
                         continue
                     else:
-                        log.error("failed to lock file: {0!r}" . format(e))
+                        log.error("failed to lock file: {0}" . format(e))
                         _write_msg(msg.ERROR)
                         raise Error
 
                 except Exception as e:
-                    log.error("failed to lock file: {0!r}" . format(e))
+                    log.error("failed to lock file: {0}" . format(e))
                     _write_msg(msg.ERROR)
                     raise Error
 
@@ -353,16 +349,11 @@ class _Lang:
 
             global _dir_temp_abs
 
-            if pconf.extra_input:
-                for i in pconf.extra_input:
-                    shutil.copy(_join_path(pcode, i), _dir_temp_abs)
-
             os.chmod(_prog_path_abs + self._exe_ext,
                     stat.S_IRUSR | stat.S_IXUSR |
                     stat.S_IRGRP | stat.S_IXGRP |
                     stat.S_IROTH | stat.S_IXOTH)
             global _prog_path
-            prog_path = _prog_path + self._exe_ext
 
             th_report_case = _thread_report_case_result(conn, len(pconf.case))
             th_report_case.start()
@@ -370,6 +361,10 @@ class _Lang:
             for case in pconf.case:
 
                 try:
+                    if pconf.extra_input:
+                        for i in pconf.extra_input:
+                            shutil.copy(_join_path(pcode, i), _dir_temp_abs)
+
                     stdin_path = _join_path(pcode, case.stdin)
                     if not input: # use stdin
                         prog_fin = open(stdin_path)
@@ -387,7 +382,7 @@ class _Lang:
                         prog_fout_path = _join_path(_dir_temp_abs, output)
                         prog_fout = limiter.get_null_dev()
                 except Exception as e:
-                    log.error("failed to open data file [{0!r}]: {1!r}" . format(stdin_path, e))
+                    log.error("failed to open data file: {0}" . format(stdin_path, e))
                     case_result = structures.case_result()
                     case_result.exe_status = structures.EXESTS_SYSTEM_ERROR
                     case_result.score = 0
@@ -402,7 +397,7 @@ class _Lang:
                     _cmd_vars["MEMORY"] = case.mem
 
                     umask_prev = os.umask(0)
-                    case_result = self._executor.run(prog_path, stdin = prog_fin, stdout = prog_fout)
+                    case_result = self._executor.run(_prog_path, stdin = prog_fin, stdout = prog_fout)
                     case_result.full_score = case.score
                     os.umask(umask_prev)
 
@@ -417,16 +412,19 @@ class _Lang:
                         else:
                             (case_result.score, case_result.extra_info) = pconf.verify_func(case.score, stdin_path, 
                                 _join_path(pcode, case.stdout), prog_fout_path)
+                            if case_result.score is None:
+                                case_result.score = 0
+                                case_result.exe_status = structures.EXESTS_SYSTEM_ERROR
 
                     if input:
                         try:
                             os.unlink(tpath)
                         except Exception as e:
-                            log.error("failed to remove program input file: {0!r}" . format(e))
+                            log.warning("failed to remove program input file: {0}" . format(e))
                     try:
                         os.unlink(prog_fout_path)
                     except Exception as e:
-                        log.error("failed to remove program output file: {0!r}" . format(e))
+                        log.warning("failed to remove program output file: {0}" . format(e))
                 th_report_case.add(case_result)
 
             th_report_case.join()
@@ -447,58 +445,66 @@ class _Lang:
         except Exception as e:
             if locked:
                 fcntl.flock(_lock_file_fd, fcntl.LOCK_UN)
-            log.error("[lang {0!r}] failed to judge: {1!r}" .
+            log.error("[lang {0!r}] failed to judge: {1}" .
                     format(self._name, e))
+            log.debug(traceback.format_exc())
             _write_msg(msg.ERROR)
             raise Error
 
-    def verifier_compile(self, pcode, fsrc, src, extra_args = None):
-        """return a tuple(success, info, exe_path), for success and info, refer to _Executor::run_as_compiler
-        @fsrc is the expected file path (no extention)
+    def verifier_compile(self, pcode, fexe, src, extra_args = None):
+        """return a tuple(success, info), for their meanings, refer to _Executor::run_as_compiler
+        @fexe is the expected executable file path without extention
         @src is the source (string)
 
-        @extra_args can be a string and will be splited
+        @extra_args should be of type list if not None
 
         may raise Error if failed to write source file"""
         if not self._compiler:
             try:
-                fsrc = fsrc + self._exe_ext
-                with open(fsrc, "w") as f:
+                fexe = fexe + self._exe_ext
+                with open(fexe, "w") as f:
                     f.write(src)
-                return (True, None, fsrc)
+                return (True, None)
             except Exception as e:
-                log.error("failed to write source to {0!r}: {1!f}" .
-                        format(fsrc, e))
+                log.error("failed to write verifier source: {0}" .
+                        format(e))
                 raise Error
 
-        srcpath = fsrc + self._src_ext
+        srcpath = fexe + self._src_ext
+        try:
+            with open(srcpath, "r") as f:
+                src_old = f.read()
+            if src_old == src:
+                return (True, None)
+        except:
+            pass
+
         try:
             with open(srcpath, "w") as f:
                 f.write(src)
         except Exception as e:
-            log.error("failed to write source to {0!r}: {1!f}" .
-                    format(srcpath, e))
+            log.error("failed to write verifier source: {0}" .
+                    format(e))
             raise Error
 
         _cmd_vars["MEMORY"] = 0
         _cmd_vars["DATADIR"] = os.path.abspath(pcode)
 
-        if extra_args:
-            extra_args = shlex.split(extra_args)
-        ret = self._compiler.run_as_compiler(fsrc, extra_args)
+        ret = self._compiler.run_as_compiler(fexe, extra_args)
 
-        ret = (ret[0], ret[1], fsrc + self._exe_ext)
+        if ret[0]:
+            return ret
 
         try:
             os.remove(srcpath)
             return ret
         except Exception as e:
-            log.error("failed to remove file {0!r}: {1!f}" .
-                    format(srcpath, e))
+            log.error("failed to remove file: {0}" .
+                    format(e))
             raise Error
 
 
-    def verifier_execute(self, pcode, exe, time, mem, args):
+    def verifier_execute(self, pcode, fexe, time, mem, args):
         """return a tuple (res:structures.case_result, verifier_output:str)
         
         no exceptions are raised"""
@@ -517,17 +523,26 @@ class _Lang:
         except KeyError:
             pass
 
+        chroot_dir = None
+        try:
+            chroot_dir = _cmd_vars["CHROOT_DIR"]
+            _cmd_vars["CHROOT_DIR"] = "/"
+        except KeyError:
+            pass
+
         _cmd_vars["TIME"] = time
         _cmd_vars["MEMORY"] = mem
 
         _cmd_vars["DATADIR"] = os.path.abspath(pcode)
 
-        ret = self._executor.run(exe, retrieve_stdout = True, extra_args = args)
+        ret = self._executor.run(fexe, retrieve_stdout = True, extra_args = args)
 
         if user is not None:
             _cmd_vars["USER"] = user
         if group is not None:
             _cmd_vars["GROUP"] = group
+        if chroot_dir is not None:
+            _cmd_vars["CHROOT_DIR"] = chroot_dir
 
         return ret
 
@@ -577,7 +592,7 @@ def _set_temp_dir(arg):
                 stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP |
                 stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
     except Exception as e:
-        raise conf.UserError("failed to change permission for temporary directory: {0!r}" . format(e))
+        raise conf.UserError("failed to change permission for temporary directory: {0}" . format(e))
 
     _prog_path = _join_path(_dir_temp, _DEFAULT_PROG_NAME)
     _prog_path_abs = _join_path(_dir_temp_abs, _DEFAULT_PROG_NAME)

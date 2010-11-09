@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Nov 08 09:50:18 2010 +0800
+# $Date: Tue Nov 09 11:07:30 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -104,7 +104,7 @@ class _thread_web_communicate(threading.Thread):
                 except web.Error:
                     self._par._on_error.set()
                 except Exception as e:
-                    log.error("error while communicating with orzoj-website: {0!r}" . format(e))
+                    log.error("error while communicating with orzoj-website: {0}" . format(e))
                     self._par._on_error.set()
                 self._func = None
 
@@ -318,7 +318,7 @@ class thread_new_judge_connection(threading.Thread):
                     format(judge.id))
             self._clean()
         except Exception as e:
-            log.warning("[judge {0!r}] error happens: {1!r}" .
+            log.warning("[judge {0!r}] error happens: {1}" .
                     format(judge.id, e))
             log.debug(traceback.format_exc())
             self._clean()
@@ -390,14 +390,17 @@ class thread_new_judge_connection(threading.Thread):
         _write_msg(msg.PREPARE_DATA)
         _write_str(task.prob)
         
-        sync_dir.send(task.prob, self._snc)
+        speed = sync_dir.send(task.prob, self._snc)
+        if speed:
+            log.info("[judge {0!r}] file transfer speed: {1!r} kb/s" . 
+                    format(judge.id, speed))
 
         m = _read_msg()
 
         if m == msg.DATA_ERROR:
             self._cur_task = None
             reason = _read_str()
-            log.error("[judge {0!r}] [task #{1}] [prob: {2!r}] data error: {3!r}" . 
+            log.error("[judge {0!r}] [task #{1}] [prob: {2!r}] data error:\n{3}" . 
                     format(judge.id, task.id, task.prob, reason))
             th_report.report(web.report_error, [task, "data error"])
             _stop_web_report()

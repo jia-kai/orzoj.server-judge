@@ -1,6 +1,6 @@
 # $File: daemon.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Sun Sep 19 16:24:13 2010 +0800
+# $Date: Tue Nov 09 08:46:24 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -69,7 +69,7 @@ def pid_end():
         try:
             os.remove(_pid_file)
         except Exception as e:
-            sys.exit("orzoj: faield to remove pid file: {0!r}" .
+            sys.exit("orzoj: faield to remove pid file: {0}" .
                     format(e))
 
     sys.exit("orzoj: program exited")

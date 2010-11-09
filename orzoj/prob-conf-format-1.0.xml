@@ -1,22 +1,27 @@
 <orzoj-prob-conf version="1.0">
 
-	<compiler>
-		<name>name of the language (specified in orzoj-judge config)</name>
-		<opt>additional option (like -O2 for gcc)</opt>
-	</compiler>
+	<compiler name=... opt=... >
+	<!--
+		name: name of the language (specified in orzoj-judge config)
+		opt: additional options (variables described in judge configuration file are usable, such as $DATADIR)
+		-->
 	<!-- for additional compiler options -->
 
 	<verifier standard="1"></verifier>
 	<!-- standard verifier ignore trailing space (at most one space) of each line-->
 
 	<verifier>
-		<source lang="language" time="0" mem="0" [opt="..."]>compile and/or execute the verifier from source </source>
+		<source lang="language" [time="0"] [mem="0"] [opt="..."]>verifier source code</source>
+		<source lang=... [time=...] [mem=...] [opt=...] file=... />
 		<!-- there can be multiple sources of difference languages and the first whose language
 			 is supported is used
+			lang: name of the language (specified in orzoj-judge config)
 			time: the maximal CPU time in milliseconds
 			mem:  memory limit in kb
+			(0 means unlimited)
 			opt: extra compiler flags
-			(0 means unlimited)-->
+			file: verifier source filename
+			-->
 		<!-- custom verifier takes four arguments from command line:
 				the fullscore
 				the standard input file path
@@ -28,7 +33,10 @@
 			 -->
 	</verifier>
 
-	<extra>extra input file to be copied from data directory</extra>
+	<extra file=... />
+	<!--
+		 extra input file to be copied from data directory
+		 -->
 
 	<case input=... output=... time=... mem=... score=...>
 	<!--

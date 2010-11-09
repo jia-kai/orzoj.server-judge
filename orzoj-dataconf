@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # $File: orzoj-dataconf
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Mon Nov 08 22:05:50 2010 +0800
+# $Date: Tue Nov 09 09:06:48 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -74,10 +74,10 @@ def check_swap_io(fin, fout):
         return True
     return False
 
-def work():
+def auto_conf(flist):
     """return list(tuple(<input filename>, <output filename>)) or False on failure"""
-
-    global flist, PROB_CONF_FNAME
+    
+    global PROB_CONF_FNAME
     flist = [(i.lower(), i) for i in flist if i != PROB_CONF_FNAME]
     if len(flist) % 2 or len(flist) < 4:
         return False
@@ -194,7 +194,7 @@ def manual_conf(iolist):
                 sys.stderr.write("no file with ID {0!r}\n" . format(v))
                 error = True
             except Exception as e:
-                sys.stderr.write(repr(e) + "\n")
+                sys.stderr.write(str(e) + "\n")
                 error = True
         if not error:
             get_list(list())
@@ -224,7 +224,7 @@ def manual_conf(iolist):
         except KeyError as e:
             sys.stderr.write("no file with ID {0!r}\n", e.args[0])
         except Exception as e:
-            sys.stderr.write(repr(e) + "\n")
+            sys.stderr.write(str(e) + "\n")
         else:
             get_list(list())
 
@@ -302,7 +302,7 @@ def manual_conf(iolist):
         readline.parse_and_bind('tab: complete')
         readline.set_completer(completer.func)
     except Exception as e:
-        sys.stderr.write("Warning: failed to set up readline library: {0!r}\n" . format(e))
+        sys.stderr.write("Warning: failed to set up readline library: {0}\n" . format(e))
 
     cmd_input_prev = list()
     while True:
@@ -357,9 +357,9 @@ try:
     os.chdir(sys.argv[1])
     flist = os.listdir('.')
 except OSError as e:
-    sys.exit("failed to change directory to {0!r}: {1!r}" . format(sys.argv[0], e))
+    sys.exit("failed to change directory to {0!r}: {1}" . format(sys.argv[0], e))
 
-iolist = work()
+iolist = auto_conf(flist)
 if iolist is False:
     ch = raw_input("Sorry, I can not automatically configure the test data.\nIf there are" +
             " any files other than input/output data in the directory, please remove them and retry.\n" +
@@ -412,5 +412,5 @@ try:
     with open(PROB_CONF_FNAME, "w") as f:
         doc.writexml(f, encoding = "utf-8", addindent = "  ", newl = "\n")
 except Exception as e:
-    sys.stderr.write("failed to write configuration file: {0!r}\n" . format(e))
+    sys.stderr.write("failed to write configuration file: {0}\n" . format(e))
 

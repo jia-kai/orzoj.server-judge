@@ -75,6 +75,10 @@ JudgeId "orzoj-judge-default"
 # format: DataCache <directory path>
 DataCache /home/orzoj/data
 
+# VerifierCache: problem verifiers cache directory
+# format: VerifierCache <directory path>
+VerifierCache /home/orzoj/verifier
+
 # SetUmask: set octal umask value
 SetUmask 077
 
@@ -84,11 +88,19 @@ SetUmask 077
 # <communication method> must be one of "socket" or "file"
 # socket is not supported on Windows
 #
-# variables usable in arguments:
+# Python expressions can be used in arguments, in the following format:
+# $expr or $(expr)
+# the value of python expression should be str or list
+# if it is str, the original expression will be replaced
+# if it is list, it will be expanded to a list of arguments
+#
+# if you want to use dolor sign, you can use $('$')
+#
+# variables usable in expressions:
 #   TARGET		--	the executor
 #					(each argument of executor will be passed as an individual
-#					argument to the limiter. e.g. If the executor is "java %s", then
-#					the limiter will receive two arguments, "java" and "%s" respectively)
+#					argument to the limiter. e.g. If the executor is "java $SRC", then
+#					the limiter will receive two arguments, "java" and "$SRC" respectively)
 #   TIME		--	time limit, in milliseconds
 #   MEMORY		--	memory limit, in kb
 #   WORKDIR		--	working directory (if ChrootDir is set, it's relative to ChrootDir)
@@ -100,10 +112,6 @@ SetUmask 077
 #   USER		--	the id of user as which to run TARGET
 #   GROUP		--	the id of group as which to run TARGET
 #
-# NOTES:
-# variables can be included in a quoted part and evaluated as a Python expression
-# all arguments including variables must begin with a dollar sign
-#
 # you can set LogLevel to debug to see the actual commands executed
 #
 # you can use orzoj-limiter to generate allowed syscall list (Unix only)
@@ -111,10 +119,10 @@ SetUmask 077
 # on Windows, CHROOT_DIR, USER and GROUP are not supported
 #
 AddLimiter lim-default socket /usr/bin/orzoj-limiter --socket $SOCKNAME --chroot $CHROOT_DIR \
-	--time $TIME --hard-time "$TIME + 5000" --mem $MEMORY --chdir $WORKDIR --user $USER --group $GROUP \
+	--time $TIME --hard-time "$(TIME + 5000)" --mem $MEMORY --chdir $WORKDIR --user $USER --group $GROUP \
 	--nproc 1 --syscall /etc/orzoj/syscall.allowed --exec $TARGET
 
-AddLimiter lim-java socket /usr/bin/orzoj-limiter --socket $SOCKNAME --time "$TIME * 2" --hard-time "$TIME * 2 + 5000" \
+AddLimiter lim-java socket /usr/bin/orzoj-limiter --socket $SOCKNAME --time "$(TIME * 2)" --hard-time "$(TIME * 2 + 5000)" \
 	--chdir $WORKDIR_ABS --user $USER --group $GROUP --syscall /etc/orzoj/syscall.allowed.java --exec $TARGET 
 
 
@@ -130,7 +138,7 @@ AddLimiter lim-compiler socket /usr/bin/orzoj-limiter --socket $SOCKNAME \
 # AddExecutor: add an executor, which is used to execute the compiler or target program
 # format: AddExecutor <executor name> <limiter name> <executable path> <arg0> <arg1> ...
 #
-# in the args, use %s to represent the source file name without extension.
+# in the args, use $SRC to represent the source file name without extension.
 #
 # Note: for compiler executors, this is the basic part of compilation arguments,
 # while another part is stored in the problem configuration
@@ -138,13 +146,20 @@ AddLimiter lim-compiler socket /usr/bin/orzoj-limiter --socket $SOCKNAME \
 # variables except TARGET in AddLimiter can also be used
 
 # compiler executors:
-AddExecutor cmp-gcc		lim-compiler	/usr/bin/gcc %s.c -o %s -static -lm
-AddExecutor cmp-g++		lim-compiler	/usr/bin/g++ %s.cpp -o %s -static
-AddExecutor cmp-fpc		lim-compiler	/usr/bin/fpc %s.pas -Xt
-AddExecutor cmp-java	lim-compiler	/usr/bin/javac %s.java
+AddExecutor cmp-gcc		lim-compiler	/usr/bin/gcc $SRC.c -o $SRC -static -lm
+AddExecutor cmp-g++		lim-compiler	/usr/bin/g++ $SRC.cpp -o $SRC -static
+AddExecutor cmp-fpc		lim-compiler	/usr/bin/fpc $SRC.pas -Xt
+AddExecutor cmp-java	lim-compiler	/usr/bin/javac $SRC.java
 # program executors:
-AddExecutor exe-default	lim-default		%s
-AddExecutor exe-java	lim-java		/usr/bin/java "$\"-Xmx{0}k\".format(MEMORY)" %s
+AddExecutor exe-default	lim-default		$SRC
+AddExecutor exe-java	lim-java		/usr/bin/java "$(\"-Xmx{0}k\".format(MEMORY))" $SRC
+
+# Note:
+# on Windows, you should add .exe to executable files.
+# e.g.
+#	gcc $SRC.c -o $SRC.exe
+#
+#	lim-default $SRC.exe
 
 # AddLang: add a language
 # format: AddLang <language> <source file extention> <executable file exetention> <compiler executor> <program executor> 
