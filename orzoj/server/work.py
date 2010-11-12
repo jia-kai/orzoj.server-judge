@@ -1,6 +1,6 @@
 # $File: work.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Nov 09 11:07:30 2010 +0800
+# $Date: Wed Nov 10 15:09:01 2010 +0800
 #
 # This file is part of orzoj
 # 
@@ -187,7 +187,7 @@ def thread_work():
             task.lang_id = _get_lang_id(task.lang)
             _task_queue.put(task)
 
-            log.debug("fetched task #{0} from website" . format(task.id))
+            log.info("fetched task #{0} from website" . format(task.id))
 
         time.sleep(_refresh_interval)
 

@@ -1,7 +1,7 @@
 /*
  * $File: execute.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Wed Oct 27 20:34:14 2010 +0800
+ * $Date: Fri Nov 12 15:05:35 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -178,7 +178,8 @@ int execute(char * const argv[], Execute_arg &arg)
 
 		if (arg.time)
 		{
-			limit.rlim_cur = limit.rlim_max = (arg.time - 1) / 1000 + 1;
+			limit.rlim_cur = (arg.time - 1) / 1000 + 1;
+			limit.rlim_max = limit.rlim_cur + 1;
 			if (setrlimit(RLIMIT_CPU, &limit))
 				ERROR("setrlimit");
 		}
@@ -370,13 +371,16 @@ int execute(char * const argv[], Execute_arg &arg)
 		arg.result_mem = ((unsigned long long)ru.ru_minflt *
 				(unsigned long long)sysconf(_SC_PAGESIZE)) / 1024ull;
 
-		if (arg.time && arg.result_time > (arg.time - 50) * 1000)
+		if (arg.time && arg.result_time > arg.time * 1000)
 			return EXESTS_TLE;
 
 		if (WIFSIGNALED(status) || sig != -1)
 		{
 			if (sig == -1)
 				sig = WTERMSIG(status);
+
+			if (sig == SIGXCPU)
+				return EXESTS_TLE;
 
 			if (sig == SIGKILL)
 				return EXESTS_SIGKILL;
