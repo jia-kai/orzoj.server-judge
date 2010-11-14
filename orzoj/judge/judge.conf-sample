@@ -132,7 +132,7 @@ AddLimiter lim-java socket /usr/bin/orzoj-limiter --socket $SOCKNAME --time "$(T
 # and maximal output length should be limited because
 # some code can cause the compiler to produce large error infomation
 AddLimiter lim-compiler socket /usr/bin/orzoj-limiter --socket $SOCKNAME \
-	--mem 262144 --hard-time 30000 --stderr-max 65536 --exec $TARGET
+	--mem 262144 --hard-time 30000 --stderr-max 65536 --stdout-max 65536 --exec $TARGET
 
 
 # AddExecutor: add an executor, which is used to execute the compiler or target program
