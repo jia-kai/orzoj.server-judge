@@ -1,7 +1,7 @@
 /*
  * $File: main.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Wed Sep 29 23:41:22 2010 +0800
+ * $Date: Sun Nov 14 20:52:04 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -25,9 +25,13 @@ along with orzoj.  If not, see <http://www.gnu.org/licenses/>.
 #include "execute.h"
 #include "exe_status.h"
 
-#include <string>
-
 #include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <cstdarg>
+#include <cstdlib>
+
+#include <errno.h>
 #include <getopt.h>
 
 #include <stdint.h>
@@ -37,7 +41,15 @@ along with orzoj.  If not, see <http://www.gnu.org/licenses/>.
 static const int SYSNR_MAX = 65536;
 
 class Cleanup{};
-class Error{};
+class Error
+{
+	static const int MSG_LEN_MAX = 1024;
+	static char msg[];
+public:
+	Error(const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+	const char *get_msg() {return msg;}
+};
+char Error::msg[Error::MSG_LEN_MAX];
 
 static void usage(const char *argv0);
 static int opensocket(const char *name);
@@ -86,10 +98,7 @@ int main(int argc, char **argv)
 			{
 				case 0:
 					if (sockfd != -1)
-					{
-						fprintf(stderr, "%s: duplicated --socket option.\n", PROG_NAME);
-						throw Error();
-					}
+						throw Error("%s: duplicated --socket option", PROG_NAME);
 					sockfd = opensocket(optarg);
 					break;
 #define SET(_id_, _arg_, _func_) \
@@ -112,16 +121,11 @@ int main(int argc, char **argv)
 						break;
 				case 12:
 						if (syscall_flog)
-						{
-							fprintf(stderr, "%s: duplicated --gen-list option.\n", PROG_NAME);
-							throw Error();
-						}
+							throw Error("%s: duplicated --gen-list option", PROG_NAME);
 						syscall_flog = fopen(optarg, "w");
 						if (!syscall_flog)
-						{
-							perror(PROG_NAME ": failed to open file for --gen-list");
-							throw Error();
-						}
+							throw Error("%s: failed to open file for --gen-list: %s (filename: %s)",
+									PROG_NAME, strerror(errno), optarg);
 						exe_arg.log_syscall = true;
 						break;
 				case 13:
@@ -129,10 +133,7 @@ int main(int argc, char **argv)
 						break;
 				case 14:
 						if (sockfd == -1)
-						{
-							fprintf(stderr, "%s: option --socket not found.\n", PROG_NAME);
-							usage(PROG_NAME);
-						}
+							throw Error("%s: option --socket not found", PROG_NAME);
 						exe_status = execute(argv + optind, exe_arg);
 						report_result(sockfd, exe_status, exe_arg);
 						break;
@@ -140,18 +141,20 @@ int main(int argc, char **argv)
 						usage(PROG_NAME);
 			}
 		}
-	} catch (Error)
+	} catch (Error e)
 	{
 		if (sockfd != -1)
 		{
-			exe_arg.extra_info = "limiter error";
+			exe_arg.extra_info = e.get_msg();
 			try
 			{
 				report_result(sockfd, EXESTS_SYSTEM_ERROR, exe_arg);
-			} catch (Cleanup)
+			}
+			catch (Cleanup)
 			{
 			}
 		}
+		else fprintf(stderr, "%s\n", e.get_msg());
 	}
 	catch (Cleanup)
 	{
@@ -163,6 +166,14 @@ int main(int argc, char **argv)
 			fprintf(syscall_flog, "%d %d\n", iter->first, iter->second);
 		fclose(syscall_flog);
 	}
+}
+
+Error::Error(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(msg, MSG_LEN_MAX, fmt, ap);
+	va_end(ap);
 }
 
 static void usage(const char *argv0)
@@ -202,17 +213,14 @@ static void usage(const char *argv0)
 			"\n\nWritten by jiakai<jia.kai66@gmail.com>\n"
 			"report bugs to: jia.kai66@gmail.com\n"
 			);
-	throw Error();
+	exit(1);
 }
 
 int opensocket(const char *name)
 {
 	int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sockfd < 0)
-	{
-		perror(PROG_NAME ": socket");
-		throw Error();
-	}
+		throw Error("%s: failed to open socket: %s", PROG_NAME, strerror(errno));
 	struct sockaddr_un adr_unix;
 	memset(&adr_unix, 0, sizeof(adr_unix));
 	adr_unix.sun_family = AF_UNIX;
@@ -223,10 +231,7 @@ int opensocket(const char *name)
 	adr_unix.sun_path[0] = 0;
 
 	if (connect(sockfd, (sockaddr*)(&adr_unix), len_unix))
-	{
-		perror(PROG_NAME ": connect");
-		throw Error();
-	}
+		throw Error("%s: failed to connect to socket: %s", PROG_NAME, strerror(errno));
 	return sockfd;
 }
 
@@ -253,10 +258,9 @@ void report_result(int sockfd, int exe_status, const Execute_arg &arg)
 		int t = write(sockfd, buf + tot, buflen - tot);
 		if (t <= 0)
 		{
-			perror(PROG_NAME ": write");
 			delete []buf;
 			close(sockfd);
-			throw Error();
+			throw Error("%s: failed to write to socket: %s", PROG_NAME, strerror(errno));
 		}
 		tot += t;
 	}
@@ -268,24 +272,15 @@ void report_result(int sockfd, int exe_status, const Execute_arg &arg)
 void init_syscall(Execute_arg &arg, const char *fname)
 {
 	if (arg.syscall_left)
-	{
-		fprintf(stderr, "%s: duplicated --syscall option.\n", PROG_NAME);
-		throw Error();
-	}
+		throw Error("%s: duplicated --syscall option", PROG_NAME);
 	FILE *fin = fopen(fname, "r");
 	if (!fin)
-	{
-		perror(PROG_NAME ": failed to open syscall list");
-		throw Error();
-	}
+		throw Error("%s: failed to open syscall list: %s", PROG_NAME, strerror(errno));
 	int max_nr = 0, nr, cnt;
 	while (fscanf(fin, "%d%d", &nr, &cnt) == 2)
 	{
 		if (nr > SYSNR_MAX)
-		{
-			fprintf(stderr, "%s: syscall number too large: %d\n", PROG_NAME, nr);
-			throw Error();
-		}
+			throw Error("%s: syscall number too large: %d", PROG_NAME, nr);
 		if (nr > max_nr)
 			max_nr = nr;
 	}
@@ -295,30 +290,26 @@ void init_syscall(Execute_arg &arg, const char *fname)
 	fclose(fin);
 	fin = fopen(fname, "r");
 	if (!fin)
-	{
-		perror(PROG_NAME ": failed to open syscall list");
-		throw Error();
-	}
+		throw Error("%s: failed to open syscall list: %s", PROG_NAME, strerror(errno));
 	while (fscanf(fin, "%d%d", &nr, &cnt) == 2)
 	{
 		if (nr > max_nr)
-		{
-			fprintf(stderr, "%s: syscall list chanded ?!\n", PROG_NAME);
-			throw Error();
-		}
+			throw Error("%s: syscall list chanded ?!", PROG_NAME);
 		arg.syscall_left[nr] = cnt;
 	}
 }
 
 int str2int(const char *str)
 {
-	int ret;
-	if (sscanf(str, "%d", &ret) != 1)
+	int ret = 0;
+	const char *str0 = str;
+	while (*str)
 	{
-		fprintf(stderr, "%s: failed to convert \"%s\" to an integer.\n", PROG_NAME, str);
-		throw Error();
+		if (!isdigit(*str))
+			throw Error("%s: convert to \"%s\" to int: invalid char '%c' (%d)",
+					PROG_NAME, str0, *str, *str);
+		ret = ret * 10 + *(str ++);
 	}
 	return ret;
 }
-
 
