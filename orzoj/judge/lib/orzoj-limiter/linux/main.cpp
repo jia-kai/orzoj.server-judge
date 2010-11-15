@@ -1,7 +1,7 @@
 /*
  * $File: main.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Sun Nov 14 20:52:04 2010 +0800
+ * $Date: Mon Nov 15 12:59:09 2010 +0800
  */
 /*
 This file is part of orzoj
@@ -308,7 +308,7 @@ int str2int(const char *str)
 		if (!isdigit(*str))
 			throw Error("%s: convert to \"%s\" to int: invalid char '%c' (%d)",
 					PROG_NAME, str0, *str, *str);
-		ret = ret * 10 + *(str ++);
+		ret = ret * 10 + *(str ++) - '0';
 	}
 	return ret;
 }
