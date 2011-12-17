@@ -94,6 +94,6 @@ RefreshInterval 1
 
 
 # Password: static password used to communicate with website (must be the same as
-# the password set in config.php on the website)
+# the password set in on the website (perhaps set during installation))
 Password  ????????
 
