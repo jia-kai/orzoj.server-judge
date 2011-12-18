@@ -104,7 +104,8 @@ SetUmask 077
 #   TIME		--	time limit, in milliseconds
 #   MEMORY		--	memory limit, in kb
 #   WORKDIR		--	working directory (if ChrootDir is set, it's relative to ChrootDir)
-#   WORKDIR_ABS --  absolute working directory (relative to the current root directory, regardless of ChrootDir)
+#   WORKDIR_ABS --  absolute working directory
+#					(relative to the current root directory, regardless of ChrootDir)
 #   DATADIR		--	problem data directory
 #   SOCKNAME	--	socket name for communication (Unix only)
 #   FILENAME	--	file name for communication
@@ -118,12 +119,15 @@ SetUmask 077
 #
 # on Windows, CHROOT_DIR, USER and GROUP are not supported
 #
-AddLimiter lim-default socket /usr/bin/orzoj-limiter --socket $SOCKNAME --chroot $CHROOT_DIR \
-	--time $TIME --hard-time "$(TIME + 5000)" --mem $MEMORY --chdir $WORKDIR --user $USER --group $GROUP \
+AddLimiter lim-default socket /usr/bin/orzoj-limiter --socket $SOCKNAME \
+	--chroot $CHROOT_DIR --time $TIME --hard-time "$(TIME + 5000)" \
+	--mem $MEMORY --chdir $WORKDIR --user $USER --group $GROUP \
 	--nproc 1 --syscall /etc/orzoj/syscall.allowed --exec $TARGET
 
-AddLimiter lim-java socket /usr/bin/orzoj-limiter --socket $SOCKNAME --time "$(TIME * 2)" --hard-time "$(TIME * 2 + 5000)" \
-	--chdir $WORKDIR_ABS --user $USER --group $GROUP --syscall /etc/orzoj/syscall.allowed.java --exec $TARGET 
+AddLimiter lim-java socket /usr/bin/orzoj-limiter --socket $SOCKNAME \
+	--time "$(TIME * 2)" --hard-time "$(TIME * 2 + 5000)" \
+	--chdir $WORKDIR_ABS --user $USER --group $GROUP \
+	--syscall /etc/orzoj/syscall.allowed.java --exec $TARGET 
 
 
 # compiler limiters is necessary because some bad code 

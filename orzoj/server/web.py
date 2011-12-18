@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Nov 09 08:45:02 2010 +0800
+# $Date: Sat Dec 17 19:26:20 2011 +0800
 #
 # This file is part of orzoj
 # 
@@ -39,7 +39,7 @@ version 1:
         where status is either 0 or 1, 0 = success, 1 = error (data is a human-readable reason)
         checksum = sha1sum(str(thread_id) + "$" + str(req_id) + "$" + sha1sum(_dynamic_passwd + _static_passwd) + str(status) + data)
 
-    website can send 'relogin' for reeusting a new login
+    website can send 'relogin' for requesting a new login
 
 """
 
