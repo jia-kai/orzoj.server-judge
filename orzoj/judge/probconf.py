@@ -1,6 +1,6 @@
 # $File: probconf.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Nov 09 15:25:42 2010 +0800
+# $Date: Tue Dec 20 20:57:24 2011 +0800
 #
 # This file is part of orzoj
 # 

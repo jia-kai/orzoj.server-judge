@@ -1,6 +1,6 @@
 # $File: setup.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Thu Sep 23 10:35:49 2010 +0800
+# $Date: Tue Dec 20 21:30:18 2011 +0800
 #
 # This file is part of orzoj
 # 
@@ -27,7 +27,7 @@ cflags = None
 libs = None
 
 if platform.system() == "Linux":
-    cflags = ["-Wall"]
+    cflags = ["-Wall", "-DORZOJ_DEBUG"]
     cflags.extend(commands.getoutput("pkg-config --cflags openssl").split())
     libs = commands.getoutput("pkg-config --libs openssl").split()
 

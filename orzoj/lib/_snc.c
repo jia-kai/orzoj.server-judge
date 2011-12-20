@@ -1,7 +1,9 @@
 /*
  * $File: _snc.c
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Thu Sep 23 11:16:14 2010 +0800
+ * $Date: Tue Dec 20 22:01:22 2011 +0800
+ *
+ * usable compilation flags: ORZOJ_DEBUG
  */
 /*
 This file is part of orzoj
@@ -29,8 +31,17 @@ along with orzoj.  If not, see <http://www.gnu.org/licenses/>.
 //
 // SSL module needs re-implementing because SSL socket wrapper in Python
 // will hang if remove closes while reding (see Issue 1 on Google Code)
+//
+//
 
 #include <Python.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
+#ifdef ORZOJ_DEBUG
+#warning "Debug mode on"
+#endif
 
 #ifdef WITH_THREAD
 // serves as a flag to see whether we've initialized the SSL thread support
@@ -97,6 +108,7 @@ typedef SOCKET Socket_t;
 
 #endif // PLATFORM_WINDOWS
 
+const int SSL_PRINT_ERR_BUF_LEN = 2048;
 
 #include <string.h>
 #include <math.h>
@@ -180,6 +192,14 @@ static void snc_dealloc(Snc_obj_snc *self);
 static int os_init(void);
 static int ssl_init(void);
 
+static void _print_debug(const char *func, int line, const char *fmt, ...)
+	__attribute__((format(printf, 3, 4)));
+
+#ifdef ORZOJ_DEBUG
+#define print_debug(fmt, ...) _print_debug(__func__, __LINE__, fmt,  ## __VA_ARGS__)
+#else
+#define print_debug(fmt, ...)
+#endif
 
 // Convenience function to raise an error according to errno
 // and return a NULL pointer from a function.
@@ -555,8 +575,10 @@ int set_timeout(Socket_t sockfd, double val)
 Snc_obj_snc* snc_new(Snc_obj_socket *sock, int is_server, double timeout_default,
 		const char *fname_cert, const char *fname_priv_key, const char *fname_ca)
 {
+	print_debug("fname_cert=%s fname_priv_key=%s fname_ca=%s",
+			fname_cert, fname_priv_key, fname_ca);
 	Snc_obj_snc *self = NULL;
-	int ret;
+	int ret, ret1;
 
 	if (!set_timeout(sock->sockfd, timeout_default))
 		return NULL;
@@ -632,20 +654,21 @@ Snc_obj_snc* snc_new(Snc_obj_socket *sock, int is_server, double timeout_default
 
 	SNC_BEGIN_ALLOW_THREADS
 	if  (is_server)
-		ret = SSL_accept(self->ssl);
-	else ret = SSL_connect(self->ssl);
+		ret1 = SSL_accept(self->ssl);
+	else ret1 = SSL_connect(self->ssl);
 	SNC_END_ALLOW_THREADS
-
-	if (ret != 1)
-	{
-		snc_set_error(is_server ? "SSL_accept" : "SSL_connect",
-				SSL_get_error(self->ssl, ret));
-		goto FAIL;
-	}
 
 	if ((ret = SSL_get_verify_result(self->ssl)) != X509_V_OK)
 	{
-		PyErr_Format(snc_error_obj, "Certificate doesn't verify. Verify result: %d.", ret);
+		PyErr_Format(snc_error_obj, "Certificate doesn't verify. Verify result: %d "
+				"(see man 3 SSL_get_verify_result for details)", ret);
+		goto FAIL;
+	}
+
+	if (ret1 != 1)
+	{
+		snc_set_error(is_server ? "SSL_accept" : "SSL_connect",
+				SSL_get_error(self->ssl, ret1));
 		goto FAIL;
 	}
 
@@ -855,8 +878,12 @@ PyObject* socket_set_error(void)
 
 PyObject* snc_set_error(const char *func, int err_code)
 {
-	return PyErr_Format(snc_error_obj, "SSL error [func %s] [errno: %s]: %s",
-			func, strerror(errno), ERR_error_string(err_code, NULL));
+	static char buf[SSL_PRINT_ERR_BUF_LEN + 1];
+	FILE *fp = fmemopen(buf, SSL_PRINT_ERR_BUF_LEN, "w");
+	ERR_print_errors_fp(fp);
+	fclose(fp);
+	return PyErr_Format(snc_error_obj, "SSL error [func %s] [errno: %s]: %s  err queue:\n%s",
+			func, strerror(errno), ERR_error_string(err_code, NULL), buf);
 }
 
 
@@ -949,6 +976,16 @@ int ssl_init()
 #endif
 	OpenSSL_add_all_algorithms();
 	return 1;
+}
+
+void _print_debug(const char *func, int line, const char *fmt, ...)
+{
+	static char fmt_new[1024];
+	va_list ap;
+	snprintf(fmt_new, 1023, "[%s:%s:%d] %s\n", __FILE__, func, line, fmt);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt_new, ap);
+	va_end(ap);
 }
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
