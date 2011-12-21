@@ -1,7 +1,7 @@
 /*
  * $File: _filecmp.c
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Thu Oct 28 11:52:33 2010 +0800
+ * $Date: Wed Dec 21 14:46:59 2011 +0800
  */
 /*
 This file is part of orzoj
@@ -105,6 +105,7 @@ PyObject* filecmp(PyObject *self, PyObject *args)
 			strcpy(info_buf, "failed to read file");
 			RETURN(0);
 		}
+
 		if (a != b)
 		{
 			if (a == ' ')
@@ -123,17 +124,26 @@ PyObject* filecmp(PyObject *self, PyObject *args)
 				RETURN(0);
 			}
 
-			if ((a == CHAR_EOF && b == '\n') || (a == '\n' && b == CHAR_EOF))
+			if (a == CHAR_EOF || b == CHAR_EOF)
 			{
-				strcpy(info_buf, "premature end of file, expecting end of line");
-				RETURN(0);
+				if (a != CHAR_EOF)
+				{
+					if (a != '\n')
+						goto FAIL;
+					a = read_char(&ctx, 0);
+				}
+				if (b != CHAR_EOF)
+				{
+					if (b != '\n')
+						goto FAIL;
+					b = read_char(&ctx, 1);
+				}
+				if (a != b)
+					goto FAIL;
 			}
 
 			if (a != b || (a != '\n' && a != CHAR_EOF))
-			{
-				snprintf(info_buf, sizeof(info_buf), "file differs on line %d", linenr);
-				RETURN(0);
-			}
+				goto FAIL;
 		}
 
 		if (a == CHAR_EOF)
@@ -141,6 +151,12 @@ PyObject* filecmp(PyObject *self, PyObject *args)
 
 		if (a == '\n')
 			linenr ++;
+
+		continue;
+
+FAIL:
+		snprintf(info_buf, sizeof(info_buf), "file differs on line %d", linenr);
+		RETURN(0);
 	}
 
 #undef RETURN
