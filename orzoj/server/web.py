@@ -1,6 +1,6 @@
 # $File: web.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Dec 20 20:57:37 2011 +0800
+# $Date: Wed Dec 21 09:09:55 2011 +0800
 #
 # This file is part of orzoj
 # 
@@ -119,6 +119,13 @@ def register_new_judge(judge, query_ans):
     except Exception as e:
         log.error("failed to register new judge: {0}" . format(e))
         raise Error
+
+def remove_judge_all():
+    """
+    data: action=remove_judge_all
+    return: NULL
+    """
+    _read({"action" : "remove_judge_all"})
 
 def remove_judge(judge):
     """
@@ -337,7 +344,6 @@ def _login():
 
             data = {"action" : "login2", "checksum" : _sha1sum(_passwd)}
             if _first_login:
-                _first_login = False
                 data["refetch"] = 1
 
             pwd_peer = _read(data, len(vpwd));
@@ -345,6 +351,10 @@ def _login():
             if pwd_peer != vpwd:
                 raise _internal_error("website verification error [peer returned: {0!r}]" .
                         format(pwd_peer))
+
+            if _first_login:
+                _first_login = False
+                remove_judge_all()
 
         except Error:
             raise _internal_error("failed to login to the website")
