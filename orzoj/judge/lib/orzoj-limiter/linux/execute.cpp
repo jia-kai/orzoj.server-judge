@@ -1,7 +1,7 @@
 /*
  * $File: execute.cpp
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Fri Nov 12 15:05:35 2010 +0800
+ * $Date: Wed Dec 21 21:04:48 2011 +0800
  */
 /*
 This file is part of orzoj
@@ -276,6 +276,12 @@ int execute(char * const argv[], Execute_arg &arg)
 
 
 							int scnr = regs.orig_eax; // system call number
+#ifdef __x86_64
+							scnr = regs.orig_rax;
+#else
+							scnr = regs.orig_eax;
+#endif
+
 
 							if (arg.syscall_left)
 							{
