@@ -1,6 +1,7 @@
+#!/usr/bin/env python2
 # $File: setup.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Tue Dec 20 21:30:18 2011 +0800
+# $Date: Sat Dec 31 21:13:53 2011 +0800
 #
 # This file is part of orzoj
 # 
@@ -21,15 +22,15 @@
 #
 
 from distutils.core import setup, Extension
-import commands, platform
+import subprocess, platform
 
 cflags = None
 libs = None
 
 if platform.system() == "Linux":
     cflags = ["-Wall", "-DORZOJ_DEBUG"]
-    cflags.extend(commands.getoutput("pkg-config --cflags openssl").split())
-    libs = commands.getoutput("pkg-config --libs openssl").split()
+    cflags.extend(subprocess.check_output(["pkg-config", "--cflags", "openssl"]).split())
+    libs = subprocess.check_output(["pkg-config", "--libs", "openssl"]).split()
 
 
 module = Extension("orzoj._snc", sources = ["_snc.c"], 

@@ -1,6 +1,7 @@
+#!/usr/bin/env python2
 # $File: setup.py
 # $Author: Jiakai <jia.kai66@gmail.com>
-# $Date: Wed Sep 22 23:04:51 2010 +0800
+# $Date: Sat Dec 31 21:08:25 2011 +0800
 #
 # This file is part of orzoj
 # 
@@ -21,7 +22,6 @@
 #
 
 from distutils.core import setup, Extension
-import commands
 
 module = Extension("orzoj._filecmp", sources = ["_filecmp.c"])
 

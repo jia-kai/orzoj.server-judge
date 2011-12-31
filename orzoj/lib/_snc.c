@@ -1,7 +1,7 @@
 /*
  * $File: _snc.c
  * $Author: Jiakai <jia.kai66@gmail.com>
- * $Date: Tue Dec 20 22:01:22 2011 +0800
+ * $Date: Sat Dec 31 21:14:24 2011 +0800
  *
  * usable compilation flags: ORZOJ_DEBUG
  */
@@ -108,7 +108,7 @@ typedef SOCKET Socket_t;
 
 #endif // PLATFORM_WINDOWS
 
-const int SSL_PRINT_ERR_BUF_LEN = 2048;
+#define SSL_PRINT_ERR_BUF_LEN	2048
 
 #include <string.h>
 #include <math.h>
