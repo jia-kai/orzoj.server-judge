@@ -1,6 +1,6 @@
 *.pyc
 *.swp
 
-test-server
-test-judge
-orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed
+/test-server/
+/test-judge/
+/orzoj/judge/lib/orzoj-limiter/linux/test/syscall.allowed
